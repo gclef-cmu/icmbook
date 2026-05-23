@@ -61,9 +61,40 @@
     });
   }
 
+  // Restrict the theme switcher to light/dark only. The pydata-sphinx-theme
+  // switcher is one button that cycles light → dark → auto; we force-skip
+  // the auto step so users only ever toggle between sun and moon.
+  function restrictThemeToggle() {
+    const root = document.documentElement;
+    function forceLight() {
+      root.dataset.mode = "light";
+      root.dataset.theme = "light";
+      try {
+        window.localStorage.setItem("mode", "light");
+      } catch (e) { /* ignore */ }
+    }
+    if (root.dataset.mode === "auto") {
+      forceLight();
+    } else if (root.dataset.theme !== root.dataset.mode) {
+      // Keep theme in sync with mode on initial load.
+      root.dataset.theme = root.dataset.mode;
+    }
+    const observer = new MutationObserver(() => {
+      if (root.dataset.mode === "auto") {
+        // Skip auto: go straight to light, completing the light → dark → light cycle.
+        forceLight();
+      } else if (root.dataset.theme !== root.dataset.mode) {
+        root.dataset.theme = root.dataset.mode;
+      }
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["data-mode"] });
+  }
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupCoursePartToggle);
+    document.addEventListener("DOMContentLoaded", restrictThemeToggle);
   } else {
     setupCoursePartToggle();
+    restrictThemeToggle();
   }
 })();

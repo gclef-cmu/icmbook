@@ -237,6 +237,13 @@ footer.bd-footer-content {
   display: none !important;
 }
 
+/* Hide the "auto" (system) icon in the theme switcher. The switcher is a
+   single button that cycles light → dark → auto; the matching JS in
+   course-nav.js skips the auto step, so users only ever see sun/moon. */
+.theme-switch-button svg.theme-switch[data-mode="auto"] {
+  display: none !important;
+}
+
 /* Course material is optional for textbook readers, so its sidebar part can
    collapse without changing the rest of the book navigation. */
 .bd-sidebar-primary .icm-collapsible-caption {

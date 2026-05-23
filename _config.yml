@@ -67,6 +67,9 @@ sphinx:
       use_download_button: false
       # Show the Preface (root page) as the first item in the left sidebar.
       home_page_in_toc: true
+      # Default to light theme; the auto button is hidden via custom.css so
+      # only the light/dark (sun/moon) toggles remain.
+      default_mode: light
     html_sidebars:
       "**":
         - navbar-logo.html

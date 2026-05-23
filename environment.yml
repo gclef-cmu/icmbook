@@ -7,8 +7,9 @@
 name: icmbook
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
-  - python>=3.10
+  - python=3.11
   - pip
   # Pin to the 1.x line: this book uses the classic Sphinx-based config
   # (_config.yml / _toc.yml). Jupyter Book 2.x uses a different format.
@@ -18,7 +19,7 @@ dependencies:
   - numpy
   - scipy
   - matplotlib
-  - soundfile
+  - pysoundfile
   - sphinx-exercise
   - sphinx-proof
   - pip:
