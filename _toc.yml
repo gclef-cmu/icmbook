@@ -93,7 +93,17 @@ parts:
           - file: content/ch14-spectral/SpectralProcessing
           - file: content/ch14-spectral/Exercises
 
-  - caption: Pyquist Documentation
+  - caption: Course Information
+    numbered: false
+    chapters:
+      - file: content/course/website
+      - file: content/course/about
+      - file: content/course/schedule
+      - file: content/course/projects
+      - file: content/course/resources
+      - file: content/course/showcase
+
+  - caption: Reference Materials
     numbered: false
     chapters:
       - file: content/pyquist/intro
@@ -103,21 +113,9 @@ parts:
           - file: content/pyquist/SoundModel
           - file: content/pyquist/Reference
           - file: content/pyquist/Examples
-
-  - caption: Course Information
-    numbered: false
-    chapters:
-      - file: content/course/website
-
-  - caption: Appendix
-    numbered: false
-    chapters:
       - file: content/appendix/intro
         sections:
           - file: content/appendix/Math
           - file: content/appendix/Python
-
-  - caption: Back Matter
-    chapters:
-      - file: content/references
-      - file: content/errata
+          - file: content/references
+          - file: content/errata

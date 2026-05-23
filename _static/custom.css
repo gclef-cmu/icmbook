@@ -210,11 +210,21 @@ nav.bd-links .toctree-l4 a {
 }
 
 /* Previous / Next bar — was larger than the body text. */
+.prev-next-area {
+  margin-bottom: 2.25rem;
+  margin-top: 2.25rem;
+}
 .prev-next-area a p.prev-next-title {
   font-size: 0.92rem;
 }
 .prev-next-area .prev-next-subtitle {
   font-size: 0.72rem;
+}
+.prev-next-area a.left-prev p {
+  text-align: left;
+}
+.prev-next-area a.right-next p {
+  text-align: right;
 }
 
 /* Page footer (copyright row). */
@@ -222,3 +232,58 @@ footer.bd-footer-content {
   font-size: 0.78rem;
 }
 
+/* Hide the theme search icon button; the sidebar uses a real search field. */
+.search-button {
+  display: none !important;
+}
+
+/* Course material is optional for textbook readers, so its sidebar part can
+   collapse without changing the rest of the book navigation. */
+.bd-sidebar-primary .icm-collapsible-caption {
+  margin-bottom: 0.25rem;
+}
+
+.bd-sidebar-primary .icm-part-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 0.35rem;
+  justify-content: space-between;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.bd-sidebar-primary .icm-part-toggle:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--pst-color-primary);
+  outline-offset: 2px;
+}
+
+/* Match width of the chapter chevron span so the arrow ends at the same
+   right offset as the chapter chevrons below. */
+.bd-sidebar-primary .icm-part-toggle-icon {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  justify-content: center;
+  line-height: 1;
+  margin-left: 0;
+  width: 30px;
+}
+
+.bd-sidebar-primary .icm-part-toggle[aria-expanded="true"] .icm-part-toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* Unify all sidebar chevron colors with the link text grey. */
+.bd-sidebar-primary .toctree-toggle {
+  color: var(--pst-color-text-muted);
+}

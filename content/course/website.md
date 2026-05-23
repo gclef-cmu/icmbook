@@ -1,10 +1,8 @@
-# Course Website
+# Home
 
 ```{note}
-This page is a placeholder for the **15-322 / 15-622** course website. It is kept
-in the table of contents so course material lives alongside the textbook. Expand
-it into its own part (syllabus, schedule, assignments, policies) when ready — see
-the authoring notes below.
+This course site is a working outline for **15-322 / 15-622 Introduction to
+Computer Music**. Replace the TODO items as course details are finalized.
 ```
 
 ## Course at a glance
@@ -16,44 +14,18 @@ the authoring notes below.
 - **Lectures:** TODO (time / location)
 - **Office hours:** TODO
 
-## Syllabus
+## Course sections
 
-TODO — course description, prerequisites, and learning objectives.
+Course information is split across the following sections:
 
-## Schedule
+- [About](about.md) — course description, prerequisites, learning objectives,
+  and policies.
+- [Schedule](schedule.md) — weekly topics, readings, and milestones.
+- [Projects](projects.md) — assignments, project briefs, and due dates.
+- [Resources](resources.md) — software setup, references, support, and tools.
+- [Showcase](showcase.md) — student work, listening examples, and final project
+  documentation.
 
-TODO — week-by-week topics, readings, and milestones.
+## Announcements
 
-| Week | Topic | Reading | Assignment |
-| ---- | ----- | ------- | ---------- |
-| 1    | TODO  | TODO    | TODO       |
-
-## Assignments
-
-TODO — list assignments with due dates and links.
-
-## Policies
-
-TODO — grading, late work, collaboration, and academic integrity.
-
----
-
-### Authoring notes
-
-To grow this into a full website, replace this single page with a part in
-`_toc.yml`, for example:
-
-```yaml
-  - caption: Course Information
-    numbered: false
-    chapters:
-      - file: content/course/intro
-        sections:
-          - file: content/course/syllabus
-          - file: content/course/schedule
-          - file: content/course/assignments
-          - file: content/course/policies
-```
-
-Each entry is a Markdown (or notebook) file under `content/course/`.
-```
+TODO — post current course announcements here.

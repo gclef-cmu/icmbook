@@ -67,6 +67,14 @@ sphinx:
       use_download_button: false
       # Show the Preface (root page) as the first item in the left sidebar.
       home_page_in_toc: true
+    html_sidebars:
+      "**":
+        - navbar-logo.html
+        - icon-links.html
+        - search-field.html
+        - sbt-sidebar-nav.html
+    html_js_files:
+      - course-nav.js
     # Reusable text snippets — insert with {{ name }} in any page.
     myst_substitutions:
       course: "15-322 / 15-622 Introduction to Computer Music"
