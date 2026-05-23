@@ -21,67 +21,67 @@ make clean     # remove generated outputs
 ## Repository layout
 
 ```
-icmbook/
-├── _config.yml              Jupyter Book configuration (metadata, extensions, LaTeX)
-├── _toc.yml                 Table of contents — parts, chapters, sections
-├── Makefile                 Build targets: book / pdf / serve / clean
-├── README.md                This file
-├── environment.yml          Conda environment for building the book
-├── .gitignore
-│
-├── _static/
-│   └── custom.css           Site styling (Carnegie Mellon palette, typography)
-│
-├── Alon.cls                 LaTeX document class for the PDF build
-├── epigrafica.sty           LaTeX font package for the PDF build
-├── colormap.tex.txt         Colored-math macros shared by HTML and PDF
-│
-└── content/                 All book content
-    ├── intro.md             Preface / landing page (book root)
-    ├── Template.ipynb       Feature-reference notebook (every directive demoed)
-    │
-    ├── ch01-introduction/
-    │   ├── intro.md
-    │   ├── WhatIsComputerMusic.md
-    │   ├── AShortHistory.md
-    │   └── Exercises.md
-    ├── ch02-digital-audio/         Sound / Sampling / Quantization
-    ├── ch03-getting-started/       Installation / HelloSound / Exercises
-    ├── ch04-oscillators/           Oscillators / Additive synthesis
-    ├── ch05-envelopes/             Amplitude / ADSR
-    ├── ch06-modulation/            AM / FM
-    ├── ch07-subtractive/           Noise / Filters
-    ├── ch08-wavetable/             Sample playback / Wavetables
-    ├── ch09-granular-physical/     Granular synthesis / Physical modeling
-    ├── ch10-midi/                  MIDI / Control signals
-    ├── ch11-scores/                Music representation / Sequencing
-    ├── ch12-algorithmic/           Randomness / Generative methods
-    ├── ch13-effects/               Delays / Reverberation
-    ├── ch14-spectral/              STFT / Spectral processing
-    │
-    ├── pyquist/                    Pyquist library documentation
-    │   ├── intro.md
-    │   ├── Overview.md
-    │   ├── Installation.md
-    │   ├── SoundModel.md
-    │   ├── Reference.md
-    │   └── Examples.md
-    ├── course/                     Course website placeholder
-    │   └── website.md
-    ├── appendix/                   Math & Python background
-    │   ├── intro.md
+icmbook-demo/
+├── .gitignore                Ignored build outputs, notebook checkpoints, and local tooling files
+├── Alon.cls                  LaTeX document class for the PDF build
+├── Makefile                  Build targets: book / pdf / serve / clean
+├── README.md                 This file
+├── _build/                   Generated book output (ignored)
+├── _config.yml               Jupyter Book configuration
+├── _static/                  Static assets included in the rendered site
+│   ├── course-nav.js         Course navigation behavior
+│   └── custom.css            Site styling
+├── _toc.yml                  Jupyter Book table of contents
+├── colormap.tex.txt          Colored-math macros shared by HTML and PDF
+├── environment.yml           Conda environment for building the book
+├── epigrafica.sty            LaTeX font package for the PDF build
+└── content/                  Book, course, appendix, and reference content
+    ├── Template.ipynb        Feature-reference notebook
+    ├── bauhaus.mplstyle      Matplotlib style for notebook figures
+    ├── errata.md             Post-publication corrections
+    ├── intro.md              Preface / landing page
+    ├── references.bib        BibTeX bibliography
+    ├── references.md         Rendered reference list
+    ├── appendix/             Math and Python background
     │   ├── Math.md
-    │   └── Python.md
-    │
-    ├── references.bib              BibTeX bibliography
-    ├── references.md               Rendered reference list
-    ├── errata.md                   Post-publication corrections
-    ├── bauhaus.mplstyle            Matplotlib style for notebook figures
-    └── images/                     Figures and chapter cover art
+    │   ├── Python.md
+    │   └── intro.md
+    ├── ch01-introduction/    What is computer music, history, exercises
+    ├── ch02-digital-audio/   Sound, sampling, quantization, exercises
+    ├── ch03-getting-started/ Installation, HelloSound, exercises
+    ├── ch04-oscillators/     Oscillators, additive synthesis, exercises
+    ├── ch05-envelopes/       Amplitude, ADSR, exercises
+    ├── ch06-modulation/      Amplitude and frequency modulation, exercises
+    ├── ch07-subtractive/     Noise, spectra, filters, exercises
+    ├── ch08-wavetable/       Sampling, wavetables, exercises
+    ├── ch09-granular-physical/
+    │                         Granular synthesis, physical modeling, exercises
+    ├── ch10-midi/            MIDI basics, control signals, exercises
+    ├── ch11-scores/          Music representation, sequencing, exercises
+    ├── ch12-algorithmic/     Randomness, generative methods, exercises
+    ├── ch13-effects/         Delays, reverberation, exercises
+    ├── ch14-spectral/        STFT, spectral processing, exercises
+    ├── course/               Course website pages
+    │   ├── about.md
+    │   ├── projects.md
+    │   ├── resources.md
+    │   ├── schedule.md
+    │   ├── showcase.md
+    │   └── website.md
+    ├── images/               Figures and image assets
+    │   └── template-waveform.png
+    └── pyquist/              Pyquist library documentation
+        ├── Examples.md
+        ├── Installation.md
+        ├── Overview.md
+        ├── Reference.md
+        ├── SoundModel.md
+        └── intro.md
 ```
 
-Every `chNN-*/` folder follows the shape shown for `ch01-introduction/`: a chapter
-`intro.md`, one file per section, and an `Exercises.md` at the end.
+The listing omits Git metadata, OS files, and local-only tooling settings such
+as `.claude/`. Every `chNN-*/` folder contains a chapter `intro.md`, one file
+per section, and an `Exercises.md` at the end.
 
 ## Authoring notes
 
