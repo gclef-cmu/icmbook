@@ -1,0 +1,28 @@
+# Conda environment for building "Introduction to Computer Music".
+#
+#   conda env create -f environment.yml
+#   conda activate icmbook
+#   make book
+#
+name: icmbook
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - pip
+  # Pin to the 1.x line: this book uses the classic Sphinx-based config
+  # (_config.yml / _toc.yml). Jupyter Book 2.x uses a different format.
+  - jupyter-book<2
+  - jupyter
+  - ipython
+  - numpy
+  - scipy
+  - matplotlib
+  - soundfile
+  - sphinx-exercise
+  - sphinx-proof
+  - pip:
+      - sphinxcontrib-svg2pdfconverter
+      # Pyquist: the course audio library. Needed to execute notebook pages
+      # (e.g. content/Template.ipynb) at build time.
+      - git+https://github.com/gclef-cmu/pyquist.git

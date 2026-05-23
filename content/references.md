@@ -1,4 +1,5 @@
- # References
- ```{bibliography}
- :style: alpha
- ```
+# References
+
+```{bibliography}
+:style: alpha
+```

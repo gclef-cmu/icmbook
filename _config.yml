@@ -1,94 +1,77 @@
-# Welcome to Jekyll!
-#
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
-#
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
-
-# Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
-
 #######################################################################################
-# Jekyll site settings
-title: Digital Signals Theory
-author: Brian McFee
-email: brian.mcfee@nyu.edu
-copyright:  "2020-2022"
-logo: "content/images/logo/dstlogo.png"
-exclude_patterns: [content/unused/*, content/setup.ipynb, content/chapter-covers.ipynb]
-only_build_toc_files        : true
+# Jupyter Book configuration for "Introduction to Computer Music"
+# Course: 15-322 / 15-622, Carnegie Mellon University
+#
+# Docs: https://jupyterbook.org/customize/config.html
+#######################################################################################
+
+# Book metadata
+title: Introduction to Computer Music
+author: "TODO: Instructor Name"          # course instructor / book author
+email: "TODO: instructor@andrew.cmu.edu"
+copyright: "2026"
+logo: ""                                  # path to a logo image, e.g. content/images/logo.png
+exclude_patterns: [_build, "**.ipynb_checkpoints"]
+only_build_toc_files: true
 
 #######################################################################################
 # Execution settings
+#   'auto' executes any notebook that is missing outputs. The placeholder MyST
+#   notebooks below still use a stand-in API and would fail, so they are excluded
+#   until rewritten against the real Pyquist API.
 execute:
-  execute_notebooks         : 'auto' # Whether to execute notebooks at build time. Must be one of ("auto", "force", "cache", "off")
-  timeout                   : -1
-  #cache                     : ""  # A path to the jupyter cache that will be used to store execution artifacs. Defaults to `_build/.jupyter_cache/`
-  #exclude_patterns          : []  # A list of patterns to *skip* in execution (e.g. a notebook that takes a really long time)
+  execute_notebooks: 'auto'
+  timeout: 180
+  exclude_patterns:
+    - content/ch03-getting-started/HelloSound.md
+    - content/pyquist/Examples.md
 
 #######################################################################################
 # Parse and render settings
 parse:
-  myst_enable_extensions:  # default extensions to enable in the myst parser. See https://myst-parser.readthedocs.io/en/latest/using/syntax-optional.html
+  myst_enable_extensions:
     - amsmath
     - colon_fence
     - deflist
     - dollarmath
-    # - html_admonition
-    # - html_image
     - linkify
-    # - replacements
     - smartquotes
     - substitution
-
-  myst_url_schemes          : [mailto, http, https]  # URI schemes that will be recognised as external URLs in Markdown links
-
+    - tasklist
+  myst_url_schemes: [mailto, http, https]
 
 #######################################################################################
 # HTML-specific settings
 html:
-  favicon                   : ""  # A path to a favicon image
-  navbar_number_sections    : True  # Add a number to each section in your left navbar
-  navbar_footer_text        : 'Powered by <a href="https://jupyterbook.org">Jupyter Book</a>'  # Will be displayed underneath the left navbar.
-  google_analytics_id       : "UA-89057641-1"  # A GA id that can be used to track book views.
-  home_page_in_navbar       : true  # Whether to include your home page in the left Navigation Bar
-  use_edit_page_button      : false  # Whether to add an "edit this page" button to pages. If `true`, repository information in repository: must be filled in
-  baseurl                   : ""  # The base URL where your book will be hosted. Used for creating image previews and social links. e.g.: https://mypage.com/mybook/
-  use_multitoc_numbering    : true
-
-#######################################################################################
-# Launch button settings
-launch_buttons:
-  notebook_interface        : "jupyterlab"  # The interface interactive links will activate ["classic", "jupyterlab"]
-  binderhub_url             : ""  # "https://mybinder.org"  # The URL of the BinderHub (e.g., https://mybinder.org)
-  jupyterhub_url            : ""  # The URL of the JupyterHub (e.g., https://datahub.berkeley.edu)
-  thebe                  : false  # Add a thebelab button to pages (requires the repository to run on Binder)
-  colab_url                 : "https://colab.research.google.com"
+  favicon: ""
+  navbar_number_sections: true
+  navbar_footer_text: 'Powered by <a href="https://jupyterbook.org">Jupyter Book</a>'
+  home_page_in_navbar: true
+  baseurl: ""
+  use_multitoc_numbering: true
 
 repository:
-  url                       : "https://github.com/bmcfee/dstbook"  # The URL to your book's repository
-  path_to_book              : ""  # A path to your book's folder, relative to the repository root.
-  branch                    : main  # Which branch of the repository should be used when creating links
+  url: "https://github.com/jiaweil6/icmbook"
+  path_to_book: ""
+  branch: main
 
 #######################################################################################
 # Advanced and power-user settings
 sphinx:
   extra_extensions:
-      # - sphinx_jupyterbook_latex
-      - sphinxcontrib.inkscapeconverter
-      - sphinx_exercise
-      - sphinx_proof
+    - sphinxcontrib.inkscapeconverter
+    - sphinx_exercise
+    - sphinx_proof
   config:
-    # jblatex_load_imgconverter: true
-    # jblatex_captions_to_parts: true
     html_theme_options:
       use_download_button: false
+      # Show the Preface (root page) as the first item in the left sidebar.
+      home_page_in_toc: true
+    # Reusable text snippets — insert with {{ name }} in any page.
+    myst_substitutions:
+      course: "15-322 / 15-622 Introduction to Computer Music"
+      pyquist: "[Pyquist](https://pyquist.org)"
+      pyquist_url: "https://pyquist.org"
     mathjax3_config:
       loader:
         load:
@@ -96,40 +79,39 @@ sphinx:
           - "[tex]/html"
       tex:
         packages:
-          "+": 
+          "+":
             - configMacros
             - html
         macros:
-           "blue": ["\\class{blue}{#1}", 1]
-           "red": ["\\class{red}{#1}", 1]
-           "orange": ["\\class{orange}{#1}", 1]
-           "purple": ["\\class{purple}{#1}", 1]
-           "green": ["\\class{green}{#1}", 1]
-           "dkorange": ["\\class{dkorange}{#1}", 1]
-           "cyan": ["\\class{cyan}{#1}", 1]
-           "magenta": ["\\class{magenta}{#1}", 1]
-           "yellow": ["\\class{yellow}{#1}", 1]
-           "peagreen": ["\\class{peagreen}{#1}", 1]
-           "darkblue": ["\\class{darkblue}{#1}", 1]
-           "darkorange": ["\\class{darkorange}{#1}", 1]
-
+          "blue": ["\\class{blue}{#1}", 1]
+          "red": ["\\class{red}{#1}", 1]
+          "orange": ["\\class{orange}{#1}", 1]
+          "purple": ["\\class{purple}{#1}", 1]
+          "green": ["\\class{green}{#1}", 1]
+          "dkorange": ["\\class{dkorange}{#1}", 1]
+          "cyan": ["\\class{cyan}{#1}", 1]
+          "magenta": ["\\class{magenta}{#1}", 1]
+          "yellow": ["\\class{yellow}{#1}", 1]
+          "peagreen": ["\\class{peagreen}{#1}", 1]
+          "darkblue": ["\\class{darkblue}{#1}", 1]
+          "darkorange": ["\\class{darkorange}{#1}", 1]
     latex_elements:
       extrapackages: "\\usepackage{cancel,color}\n\\usepackage{epigrafica}\n"
       preamble: \input{colormap.tex.txt}
       tableofcontents: ""
     latex_additional_files: ["colormap.tex.txt", "Alon.cls", "epigrafica.sty"]
     latex_docclass:
-        howto: "alon"
-        manual: "alon"
-        latex_toplevel_sectioning: 'part'
+      howto: "alon"
+      manual: "alon"
+      latex_toplevel_sectioning: 'part'
 
 latex:
   use_jupyterbook_latex: false
   latex_engine: xelatex
   latex_documents:
-    targetname: dstbook.tex
+    targetname: icmbook.tex
 
 bibtex_bibfiles:
-    - content/references.bib
+  - content/references.bib
 
-bibtex_reference_style: author_year  # or label, super, \supercite
+bibtex_reference_style: author_year

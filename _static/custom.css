@@ -1,71 +1,224 @@
-/* Put your custom CSS here */
-.left {
-    margin: 5px 2px 2px 0px !important;
-    float: left !important;
+/* ======================================================================
+   Introduction to Computer Music — 15-322 / 15-622
+   Carnegie Mellon University
+
+   Theme styling layered on the Sphinx Book Theme (pydata-sphinx-theme).
+
+   Design rule: never hard-code a background or text color on shared page
+   elements. Light/dark values are defined once per theme below, so both
+   color schemes stay legible. (The previous stylesheet forced a light
+   `body` background, which broke dark mode.)
+   ====================================================================== */
+
+/* ---- Carnegie Mellon brand palette ----------------------------------- */
+:root {
+  --cmu-red:        #c41230;  /* Carnegie Red — primary brand color      */
+  --cmu-red-dark:   #9b0e26;  /* hover / pressed                         */
+  --cmu-red-bright: #e8546a;  /* lightened red, legible on dark surfaces */
+  --cmu-gold:       #fdb515;  /* secondary accent                        */
+  --cmu-iron:       #6d6e71;  /* iron gray — neutral                     */
+
+  /* Typography --------------------------------------------------------- */
+  /* The book's serif typeface — body text and navigation share it.      */
+  --icm-serif: "Palatino", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  /* Sidebar/menu text — smaller than the 1rem body text. These are the  */
+  /* theme's own variables, so they size both the left and right menus.  */
+  --pst-sidebar-font-size: 0.85rem;
+  --pst-sidebar-font-size-mobile: 0.85rem;
 }
 
-body { background-color: #fefefa;}
+/* ---- Light mode ------------------------------------------------------ */
+html[data-theme="light"] {
+  --pst-color-primary:     var(--cmu-red);
+  --pst-color-link:        var(--cmu-red);
+  --pst-color-link-hover:  var(--cmu-red-dark);
+  --pst-color-inline-code: var(--cmu-red-dark);
+  --pst-color-accent:      #b07e00;            /* darkened gold for white bg */
+
+  --icm-accent:    var(--cmu-red);
+  --icm-accent-2:  #b07e00;
+  --icm-box-bg:      #faf7f4;
+  --icm-box-border:  #e7ded6;
+  --icm-title-bg:    rgba(196, 18, 48, 0.08);
+  --icm-title-bg-2:  rgba(253, 181, 21, 0.16);
+}
+
+/* ---- Dark mode ------------------------------------------------------- */
+html[data-theme="dark"] {
+  --pst-color-primary:     var(--cmu-red-bright);
+  --pst-color-link:        #ef6f81;
+  --pst-color-link-hover:  #f4a4b0;
+  --pst-color-inline-code: #f3aab3;
+  --pst-color-accent:      var(--cmu-gold);
+
+  --icm-accent:    var(--cmu-red-bright);
+  --icm-accent-2:  var(--cmu-gold);
+  --icm-box-bg:      #21262e;
+  --icm-box-border:  #3a414c;
+  --icm-title-bg:    rgba(232, 84, 106, 0.14);
+  --icm-title-bg-2:  rgba(253, 181, 21, 0.14);
+}
+
+/* ---- Typography: the textbook serif, scoped to article content ------- */
+.bd-article,
+.bd-article h1, .bd-article h2, .bd-article h3,
+.bd-article h4, .bd-article h5, .bd-article h6 {
+  font-family: var(--icm-serif);
+}
+
+/* Justified body text reads more like a printed textbook */
+.bd-article p,
+.bd-article li {
+  text-align: justify;
+  text-justify: auto;
+  hyphens: auto;
+}
+
+/* ---- Headings: Carnegie Red chapter / section accents ---------------- */
+.bd-article h1 {
+  color: var(--pst-color-primary);
+  border-bottom: 3px solid var(--icm-accent);
+  padding-bottom: 0.3rem;
+}
+
+.bd-article h2 {
+  border-bottom: 1px solid var(--icm-box-border);
+  padding-bottom: 0.2rem;
+}
+
+/* ---- A slim Carnegie Red rule under the top header ------------------- */
+.bd-header {
+  border-bottom: 3px solid var(--cmu-red);
+}
+
+/* ======================================================================
+   Callout boxes — exercises, solutions, proofs, theorems, definitions.
+
+   The sphinx-exercise / sphinx-proof extensions ship a fixed blue accent.
+   These rules rebrand them in Carnegie colors and, crucially, give them a
+   theme-aware background so they no longer render as light boxes on a
+   dark page. `!important` is used only to win against the extension CSS.
+   ====================================================================== */
+.exercise.admonition,
+.solution.admonition,
+.proof.admonition {
+  background-color: var(--icm-box-bg) !important;
+  border-color: var(--icm-box-border) !important;
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+
+/* Exercises: Carnegie Red — proofs/theorems: gold — solutions: iron gray */
+.exercise.admonition  { border-left: 0.35rem solid var(--icm-accent)   !important; }
+.proof.admonition     { border-left: 0.35rem solid var(--icm-accent-2) !important; }
+.solution.admonition  { border-left: 0.35rem solid var(--cmu-iron)     !important; }
+
+.exercise.admonition  > .admonition-title {
+  background-color: var(--icm-title-bg) !important;
+  color: var(--pst-color-primary);
+}
+.proof.admonition     > .admonition-title {
+  background-color: var(--icm-title-bg-2) !important;
+}
+.solution.admonition  > .admonition-title {
+  background-color: var(--pst-color-surface) !important;
+}
+
+/* Recolor the exercise title's pencil glyph (a Font Awesome icon the
+   extension renders blue) to match the Carnegie Red box accent. */
+.exercise.admonition  > .admonition-title::after {
+  color: var(--icm-accent) !important;
+}
+
+/* ---- Code cells: subtle iron-gray spine, theme keeps the background -- */
 div.cell div.cell_input {
-    background-color: #f7f7f3;
-}
-div.exercise {
-    background-color: #f7f7f3;
-}
-div.theorem {
-    background-color: #f7f7f3;
-}
-div.proof {
-    background-color: #f7f7f3;
+  border: 1px solid var(--icm-box-border);
+  border-left: 0.25rem solid var(--cmu-iron);
+  border-radius: 4px;
 }
 
-.blue {color: #0271AE;}
-.red {color: #DC2830;}
-.orange {color: #F2AA00;}
-.purple {color: #633B87;}
-.green {color: #007D4D;}
-.dkorange {color: #FA902D;}
-.cyan {color: #007D80;}
-.magenta {color: #C20CAA;}
-.yellow {color: #F7E43C;}
-.peagreen {color: #00A69D;}
-.darkblue {color: #444F95;}
-.darkorange {color: #F16232;}
+/* ======================================================================
+   Colored-math macros (\blue{}, \red{}, ... defined in _config.yml).
+   Each color has a light-mode and a dark-mode value so highlighted terms
+   in equations stay readable against either background.
+   ====================================================================== */
+html[data-theme="light"] {
+  --m-blue:#0271ae;   --m-red:#dc2830;     --m-orange:#f2aa00;
+  --m-purple:#633b87; --m-green:#007d4d;   --m-dkorange:#fa902d;
+  --m-cyan:#007d80;   --m-magenta:#c20caa; --m-yellow:#b89b00;
+  --m-peagreen:#00a69d; --m-darkblue:#444f95; --m-darkorange:#f16232;
+}
+html[data-theme="dark"] {
+  --m-blue:#5cb8e6;   --m-red:#ff6b78;     --m-orange:#ffc34d;
+  --m-purple:#b39ddb; --m-green:#5cc99a;   --m-dkorange:#ffab5e;
+  --m-cyan:#4fc3c5;   --m-magenta:#ef79da; --m-yellow:#f7e43c;
+  --m-peagreen:#5fd3ca; --m-darkblue:#9aa3e0; --m-darkorange:#ff8a5e;
+}
+.blue      { color: var(--m-blue); }
+.red       { color: var(--m-red); }
+.orange    { color: var(--m-orange); }
+.purple    { color: var(--m-purple); }
+.green     { color: var(--m-green); }
+.dkorange  { color: var(--m-dkorange); }
+.cyan      { color: var(--m-cyan); }
+.magenta   { color: var(--m-magenta); }
+.yellow    { color: var(--m-yellow); }
+.peagreen  { color: var(--m-peagreen); }
+.darkblue  { color: var(--m-darkblue); }
+.darkorange{ color: var(--m-darkorange); }
 
-div, h1, h2, h3, h4, h5, h6 {   
-    font-family: "Palatino", serif; 
+/* ---- Misc utilities -------------------------------------------------- */
+.left {
+  margin: 5px 2px 2px 0 !important;
+  float: left !important;
 }
 
-div.section {
-    text-align: justify;
-    text-justify: auto;
-}
-
-section {
-    text-align: justify;
-    text-justify: auto;
-}
-
-div.site-navigation {
-    background-color: #fcfcf8;
-}
+figcaption,
+.caption-text,
 p.caption {
-    text-align: left;
-    text-justify: auto;
-}
-span.caption-text {
-    text-align: left;
-    text-justify: auto;
-}
-figcaption {
-    text-align: left;
-    text-justify: auto;
+  text-align: left;
 }
 
-/* Fixing up some pygments and code-styling CSS for accessibility */
-code { font-size: 100%; color: #444F95; }
-pre { font-family: monospace; }
+/* ======================================================================
+   Navigation typography.
+   The sidebars, the prev/next bar, and the footer share the body serif,
+   but sit at smaller sizes so navigation reads as secondary to the
+   content. Overall sidebar size comes from the theme variables set in
+   :root above; the rules here shrink nested levels, the prev/next bar,
+   and the footer. Sizes are in rem (absolute) so levels don't compound.
+   ====================================================================== */
 
-/* .highlight { font-size: 125%; } */
-.highlight .c1 { color: #633B87; }
-.highlight .si { color: #633B87; }
-.highlight .nn { color: #633B87; }
+/* Menus use the same serif as the body text. */
+.bd-sidebar-primary,
+.bd-sidebar-secondary,
+.prev-next-footer,
+footer.bd-footer-content {
+  font-family: var(--icm-serif);
+}
+
+/* Left sidebar — sub-section links smaller than chapter links. */
+nav.bd-links .toctree-l2 a,
+nav.bd-links .toctree-l3 a,
+nav.bd-links .toctree-l4 a {
+  font-size: 0.78rem;
+}
+
+/* Right sidebar ("Contents") — sub-section entries smaller. */
+.bd-sidebar-secondary .toc-h3 .nav-link,
+.bd-sidebar-secondary .toc-h4 .nav-link {
+  font-size: 0.78rem;
+}
+
+/* Previous / Next bar — was larger than the body text. */
+.prev-next-area a p.prev-next-title {
+  font-size: 0.92rem;
+}
+.prev-next-area .prev-next-subtitle {
+  font-size: 0.72rem;
+}
+
+/* Page footer (copyright row). */
+footer.bd-footer-content {
+  font-size: 0.78rem;
+}
+

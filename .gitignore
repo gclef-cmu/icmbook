@@ -2,3 +2,9 @@
 */.ipynb_checkpoints
 */*/.ipynb_checkpoints
 _build
+
+# Claude Code — local AI tools
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json

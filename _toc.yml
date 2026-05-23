@@ -1,108 +1,123 @@
+# Table of contents for "Introduction to Computer Music"
+# Docs: https://jupyterbook.org/customize/toc.html
 format: jb-book
 root: content/intro
+
 parts:
-- caption: Time-domain signals
-  numbered: true
-  chapters:
-  - file: content/ch01-signals/Intro
-    sections:
-    - file: content/ch01-signals/Preliminaries
-    - file: content/ch01-signals/Waves
-    - file: content/ch01-signals/Units
-    - file: content/ch01-signals/Acoustics
-    - file: content/ch01-signals/Exercises
-  - file: content/ch02-sampling/intro
-    sections:
-    - file: content/ch02-sampling/Sampling
-    - file: content/ch02-sampling/Aliasing
-    - file: content/ch02-sampling/Nyquist
-    - file: content/ch02-sampling/Quantization
-    - file: content/ch02-sampling/Exercises
-  - file: content/ch03-convolution/intro
-    sections:
-    - file: content/ch03-convolution/Building
-    - file: content/ch03-convolution/Convolution
-    - file: content/ch03-convolution/IR
-    - file: content/ch03-convolution/Modes
-    - file: content/ch03-convolution/Properties
-    - file: content/ch03-convolution/LSI
-    - file: content/ch03-convolution/Exercises
-- caption: The frequency domain
-  numbered: true
-  chapters:
-  - file: content/ch04-complex/Intro
-    sections:
-    - file: content/ch04-complex/Definition
-    - file: content/ch04-complex/Basic-Operations
-    - file: content/ch04-complex/Exponentials
-    - file: content/ch04-complex/Multiplication-and-division
-    - file: content/ch04-complex/Powers-and-waves
-    - file: content/ch04-complex/Exercises
-  - file: content/ch05-fourier/intro
-    sections:
-    - file: content/ch05-fourier/Similarity
-    - file: content/ch05-fourier/Cosine
-    - file: content/ch05-fourier/AnalysisFrequencies
-    - file: content/ch05-fourier/Phase
-    - file: content/ch05-fourier/DFT
-    - file: content/ch05-fourier/Examples
-    - file: content/ch05-fourier/SummingSinusoids
-    - file: content/ch05-fourier/Exercises
-  - file: content/ch06-dft-properties/intro
-    sections:
-    - file: content/ch06-dft-properties/Linearity
-    - file: content/ch06-dft-properties/Shifting
-    - file: content/ch06-dft-properties/Conjugate-Symmetry
-    - file: content/ch06-dft-properties/Leakage
-    - file: content/ch06-dft-properties/Exercises
-  - file: content/ch07-inverse-dft/intro
-    sections:
-    - file: content/ch07-inverse-dft/Sinusoid
-    - file: content/ch07-inverse-dft/InverseDFT
-    - file: content/ch07-inverse-dft/Synthesis
-    - file: content/ch07-inverse-dft/Exercises
-  - file: content/ch08-fft/intro
-    sections:
-    - file: content/ch08-fft/DFT-Analysis
-    - file: content/ch08-fft/FFT
-    - file: content/ch08-fft/Exercises
-  - file: content/ch09-stft/intro
-    sections:
-    - file: content/ch09-stft/Framing
-    - file: content/ch09-stft/STFT
-    - file: content/ch09-stft/Exercises
-- caption: Filtering
-  numbered: true
-  chapters:
-  - file: content/ch10-convtheorem/intro
-    sections:
-    - file: content/ch10-convtheorem/ConvolutionTheorem
-    - file: content/ch10-convtheorem/Filtering
-    - file: content/ch10-convtheorem/FilterDesign
-    - file: content/ch10-convtheorem/Phase
-    - file: content/ch10-convtheorem/Exercises
-  - file: content/ch11-iir/intro
-    sections:
-    - file: content/ch11-iir/Feedback
-    - file: content/ch11-iir/UsingIIR
-    - file: content/ch11-iir/IIRFilters
-    - file: content/ch11-iir/Exercises
-  - file: content/ch12-ztransform/intro
-    sections:
-    - file: content/ch12-ztransform/ZT
-    - file: content/ch12-ztransform/zT-Properties
-    - file: content/ch12-ztransform/Transfer
-    - file: content/ch12-ztransform/PoleZero
-    - file: content/ch12-ztransform/Exercises
-- caption: Appendix
-  numbered: false
-  chapters:
-  - file: content/appendixA/Fundamentals
-    sections:
-    - file: content/appendixA/Sets
-    - file: content/appendixA/Sequences
-    - file: content/appendixA/ModularArithmetic
-    - file: content/appendixA/Exponents
-- chapters:
-  - file: content/references
-  - file: content/errata
+  - chapters:
+      - file: content/Template
+  - caption: Foundations of Digital Audio
+    numbered: true
+    chapters:
+      - file: content/ch01-introduction/intro
+        sections:
+          - file: content/ch01-introduction/WhatIsComputerMusic
+          - file: content/ch01-introduction/AShortHistory
+          - file: content/ch01-introduction/Exercises
+      - file: content/ch02-digital-audio/intro
+        sections:
+          - file: content/ch02-digital-audio/Sound
+          - file: content/ch02-digital-audio/Sampling
+          - file: content/ch02-digital-audio/Quantization
+          - file: content/ch02-digital-audio/Exercises
+      - file: content/ch03-getting-started/intro
+        sections:
+          - file: content/ch03-getting-started/Installation
+          - file: content/ch03-getting-started/HelloSound
+          - file: content/ch03-getting-started/Exercises
+
+  - caption: Sound Synthesis
+    numbered: true
+    chapters:
+      - file: content/ch04-oscillators/intro
+        sections:
+          - file: content/ch04-oscillators/Oscillators
+          - file: content/ch04-oscillators/AdditiveSynthesis
+          - file: content/ch04-oscillators/Exercises
+      - file: content/ch05-envelopes/intro
+        sections:
+          - file: content/ch05-envelopes/Amplitude
+          - file: content/ch05-envelopes/ADSR
+          - file: content/ch05-envelopes/Exercises
+      - file: content/ch06-modulation/intro
+        sections:
+          - file: content/ch06-modulation/AmplitudeModulation
+          - file: content/ch06-modulation/FrequencyModulation
+          - file: content/ch06-modulation/Exercises
+      - file: content/ch07-subtractive/intro
+        sections:
+          - file: content/ch07-subtractive/NoiseAndSpectra
+          - file: content/ch07-subtractive/Filters
+          - file: content/ch07-subtractive/Exercises
+      - file: content/ch08-wavetable/intro
+        sections:
+          - file: content/ch08-wavetable/Sampling
+          - file: content/ch08-wavetable/Wavetables
+          - file: content/ch08-wavetable/Exercises
+      - file: content/ch09-granular-physical/intro
+        sections:
+          - file: content/ch09-granular-physical/GranularSynthesis
+          - file: content/ch09-granular-physical/PhysicalModeling
+          - file: content/ch09-granular-physical/Exercises
+
+  - caption: Composition and Control
+    numbered: true
+    chapters:
+      - file: content/ch10-midi/intro
+        sections:
+          - file: content/ch10-midi/MIDIBasics
+          - file: content/ch10-midi/ControlSignals
+          - file: content/ch10-midi/Exercises
+      - file: content/ch11-scores/intro
+        sections:
+          - file: content/ch11-scores/MusicRepresentation
+          - file: content/ch11-scores/Sequencing
+          - file: content/ch11-scores/Exercises
+      - file: content/ch12-algorithmic/intro
+        sections:
+          - file: content/ch12-algorithmic/Randomness
+          - file: content/ch12-algorithmic/GenerativeMethods
+          - file: content/ch12-algorithmic/Exercises
+
+  - caption: Effects and Spectral Processing
+    numbered: true
+    chapters:
+      - file: content/ch13-effects/intro
+        sections:
+          - file: content/ch13-effects/Delays
+          - file: content/ch13-effects/Reverberation
+          - file: content/ch13-effects/Exercises
+      - file: content/ch14-spectral/intro
+        sections:
+          - file: content/ch14-spectral/STFT
+          - file: content/ch14-spectral/SpectralProcessing
+          - file: content/ch14-spectral/Exercises
+
+  - caption: Pyquist Documentation
+    numbered: false
+    chapters:
+      - file: content/pyquist/intro
+        sections:
+          - file: content/pyquist/Overview
+          - file: content/pyquist/Installation
+          - file: content/pyquist/SoundModel
+          - file: content/pyquist/Reference
+          - file: content/pyquist/Examples
+
+  - caption: Course Information
+    numbered: false
+    chapters:
+      - file: content/course/website
+
+  - caption: Appendix
+    numbered: false
+    chapters:
+      - file: content/appendix/intro
+        sections:
+          - file: content/appendix/Math
+          - file: content/appendix/Python
+
+  - caption: Back Matter
+    chapters:
+      - file: content/references
+      - file: content/errata
