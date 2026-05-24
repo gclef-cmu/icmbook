@@ -35,6 +35,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # Pyquist's `device` module imports `sounddevice`, which dlopens the
+      # PortAudio C library at import time. autodoc imports every module it
+      # documents, so without this system package the build dies with
+      # `OSError: PortAudio library not found`. (Same package the upstream
+      # Pyquist README's Linux install section calls out.)
+      - name: Install PortAudio (system dep of sounddevice)
+        run: sudo apt-get update && sudo apt-get install -y libportaudio2
+
       - name: Set up Conda environment
         uses: conda-incubator/setup-miniconda@v4
         with:
