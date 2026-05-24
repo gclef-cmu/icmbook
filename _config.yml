@@ -38,11 +38,6 @@ parse:
     - substitution
     - tasklist
   myst_url_schemes: [mailto, http, https]
-  # Only auto-linkify strings that include an explicit URL scheme
-  # (e.g. https://example.com). Without this, "fuzzy" mode catches
-  # things like `pyquist.web` — the `.web` TLD makes it look like a
-  # domain — and wraps the heading in a broken external link.
-  myst_linkify_fuzzy_links: false
 
 #######################################################################################
 # HTML-specific settings
@@ -75,6 +70,12 @@ sphinx:
     - sphinx.ext.napoleon
     - sphinx.ext.viewcode
   config:
+    # Only auto-linkify strings that include an explicit URL scheme
+    # (e.g. https://example.com). Without this, MyST's "fuzzy" linkify
+    # mode catches things like `pyquist.web` — `.web` is a real TLD —
+    # and wraps the heading in a broken external link.
+    myst_linkify_fuzzy_links: false
+
     # ---- Autodoc / Napoleon -----------------------------------------------
     autodoc_member_order: "bysource"   # follow source order, not alphabetical
     autodoc_typehints: "description"   # render type hints in the param list
