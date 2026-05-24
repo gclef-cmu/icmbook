@@ -15,7 +15,7 @@ Placeholder. Summarize the Python knowledge assumed by the code examples.
 - **NumPy** — numerical arrays; audio is represented as arrays of samples.
 - **Matplotlib** — plotting waveforms and spectra.
 - **Pyquist** — the course audio library; see the
-  {doc}`Pyquist reference <../pyquist/intro>`.
+  {doc}`Pyquist reference <../pyquist/Overview>`.
 
 ## Further reading
 

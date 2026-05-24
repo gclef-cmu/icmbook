@@ -31,7 +31,7 @@ The book is organized into four parts:
 4. **Effects and Spectral Processing** — transforming sound: delays, reverberation,
    and frequency-domain techniques.
 
-A dedicated {doc}`Pyquist reference <pyquist/intro>` documents the library, and
+A dedicated {doc}`Pyquist reference <pyquist/Overview>` documents the library, and
 the {doc}`Course Information <course/website>` section links to the syllabus,
 schedule, and assignments.
 

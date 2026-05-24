@@ -106,13 +106,14 @@ parts:
   - caption: Reference Materials
     numbered: false
     chapters:
-      - file: content/pyquist/intro
+      - file: content/pyquist/Overview
         sections:
-          - file: content/pyquist/Overview
-          - file: content/pyquist/Installation
-          - file: content/pyquist/SoundModel
-          - file: content/pyquist/Reference
-          - file: content/pyquist/Examples
+          - file: content/pyquist/api/audio
+          - file: content/pyquist/api/score
+          - file: content/pyquist/api/plot
+          - file: content/pyquist/api/device
+          - file: content/pyquist/api/helper
+          - file: content/pyquist/api/web
       - file: content/appendix/intro
         sections:
           - file: content/appendix/Math

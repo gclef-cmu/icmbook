@@ -14,7 +14,7 @@
 
 ## References
 
-- [Pyquist documentation](../pyquist/intro.md)
+- [Pyquist documentation](../pyquist/Overview.md)
 - [Book references](../references.md)
 
 ## Templates

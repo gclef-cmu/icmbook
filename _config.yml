@@ -24,7 +24,6 @@ execute:
   timeout: 180
   exclude_patterns:
     - content/ch03-getting-started/HelloSound.md
-    - content/pyquist/Examples.md
 
 #######################################################################################
 # Parse and render settings
@@ -62,7 +61,27 @@ sphinx:
     - sphinxcontrib.inkscapeconverter
     - sphinx_exercise
     - sphinx_proof
+    # Pull the Pyquist API reference straight from the installed package's
+    # docstrings. The API pages under content/pyquist/api/ use `{eval-rst}`
+    # blocks to invoke these directives, mirroring the upstream
+    # gclef-cmu/pyquist `docs/api/*.rst` layout. Whenever Pyquist's main
+    # branch updates, the next book build picks it up.
+    - sphinx.ext.autodoc
+    - sphinx.ext.napoleon
+    - sphinx.ext.viewcode
   config:
+    # ---- Autodoc / Napoleon -----------------------------------------------
+    autodoc_member_order: "bysource"   # follow source order, not alphabetical
+    autodoc_typehints: "description"   # render type hints in the param list
+    autodoc_default_options:
+      members: true
+      show-inheritance: true
+      inherited-members: false
+      undoc-members: false
+    napoleon_google_docstring: true
+    napoleon_numpy_docstring: true
+    napoleon_use_param: true
+    napoleon_use_rtype: true
     html_theme_options:
       use_download_button: false
       # Show the Preface (root page) as the first item in the left sidebar.

@@ -5,6 +5,14 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # Fired by a workflow in the Pyquist repo when its main branch updates,
+  # so this book rebuilds within seconds of an upstream API change.
+  repository_dispatch:
+    types: [pyquist-updated]
+  # Nightly safety net at 07:17 UTC — picks up any Pyquist change that
+  # didn't dispatch (e.g. token rotation, merged via a non-push path).
+  schedule:
+    - cron: "17 7 * * *"
 
 permissions:
   contents: read
@@ -37,6 +45,17 @@ jobs:
           channels: conda-forge
           channel-priority: strict
           conda-remove-defaults: "true"
+
+      # The autodoc-driven API pages under content/pyquist/api/ pull their
+      # content from the installed pyquist package, so every build needs the
+      # latest commit. The env file pins pyquist to its git URL; this step
+      # force-reinstalls from HEAD so a cached wheel can't shadow a new
+      # docstring or signature on a dispatch or nightly run.
+      - name: Refresh Pyquist from latest source
+        run: |
+          pip install --upgrade --force-reinstall --no-deps \
+            git+https://github.com/gclef-cmu/pyquist.git
+          python -c "import pyquist, os; print('pyquist at', os.path.dirname(pyquist.__file__))"
 
       - name: Build the book
         run: make book

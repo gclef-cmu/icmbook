@@ -167,6 +167,102 @@ html[data-theme="dark"] {
 .darkblue  { color: var(--m-darkblue); }
 .darkorange{ color: var(--m-darkorange); }
 
+/* ======================================================================
+   Auto-generated API reference (sphinx.ext.autodoc).
+
+   The Pyquist reference page is generated from docstrings, so every
+   function/class/method renders through Sphinx's default Python domain
+   markup. These rules give those entries the same Carnegie Red /
+   Palatino feel as the rest of the textbook, and reuse the same
+   theme-aware box variables the exercise admonitions use, so dark mode
+   stays legible.
+   ====================================================================== */
+
+/* Each function/class/method entry: a soft card with a Carnegie Red spine. */
+.bd-article dl.py {
+  background-color: var(--icm-box-bg);
+  border: 1px solid var(--icm-box-border);
+  border-left: 0.35rem solid var(--icm-accent);
+  border-radius: 4px;
+  padding: 0.65rem 1rem 0.25rem;
+  margin: 1rem 0 1.25rem;
+}
+
+/* Nested entries (methods inside a class) should not stack the card style —
+   only show a thin separator so the parent class card still reads as one. */
+.bd-article dl.py dl.py {
+  background-color: transparent;
+  border: 0;
+  border-top: 1px dashed var(--icm-box-border);
+  border-radius: 0;
+  padding: 0.4rem 0 0;
+  margin: 0.6rem 0 0;
+}
+
+/* The signature line (def name(args) -> ret). Keep it monospace — code is
+   code — but lift the symbol name in Carnegie Red so it scans like a
+   chapter heading inside the card. */
+.bd-article dl.py > dt.sig,
+.bd-article dl.py > dt {
+  font-family: var(--pst-font-family-monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.95rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  hyphens: none;
+}
+
+.bd-article dl.py > dt .sig-name,
+.bd-article dl.py > dt .pre.sig-name {
+  color: var(--pst-color-primary);
+  font-weight: 600;
+}
+
+/* "class", "property", "static", etc. labels before the signature. */
+.bd-article dl.py > dt .property {
+  color: var(--pst-color-accent);
+  font-style: italic;
+  font-weight: 600;
+  margin-right: 0.35em;
+}
+
+/* The body of an entry (description, params, returns) returns to the
+   textbook serif so prose docstrings read as part of the book. */
+.bd-article dl.py > dd {
+  font-family: var(--icm-serif);
+  margin-top: 0.45rem;
+}
+
+/* Don't justify autodoc paragraphs — the narrow param column looks ragged
+   when justified. Let it stay left-aligned. */
+.bd-article dl.py > dd p,
+.bd-article dl.py > dd li {
+  text-align: left;
+  hyphens: manual;
+}
+
+/* Parameters / Returns / Raises field list — give the field names the
+   Carnegie Red accent and a touch of weight so they pop out of the body. */
+.bd-article dl.py dl.field-list > dt {
+  color: var(--pst-color-primary);
+  font-weight: 600;
+  background: transparent;
+  padding: 0.1rem 0.5rem 0.1rem 0;
+}
+
+.bd-article dl.py dl.field-list > dd {
+  margin-bottom: 0.4rem;
+}
+
+/* The little "[source]" link autodoc adds (from sphinx.ext.viewcode). */
+.bd-article dl.py > dt .viewcode-link,
+.bd-article dl.py > dt .headerlink {
+  color: var(--pst-color-text-muted);
+  font-size: 0.78rem;
+  font-weight: normal;
+}
+
 /* ---- Misc utilities -------------------------------------------------- */
 .left {
   margin: 5px 2px 2px 0 !important;

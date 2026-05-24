@@ -57,5 +57,5 @@ for freq in [262, 330, 392]:   # a C major triad
 ```{warning}
 The Pyquist function names used here (`osc`, `play`, ...) are **illustrative**.
 Replace them with the real API once the library is finalized, and keep the
-{doc}`Pyquist reference <../pyquist/intro>` in sync.
+{doc}`Pyquist reference <../pyquist/Overview>` in sync.
 ```

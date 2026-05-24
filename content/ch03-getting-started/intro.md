@@ -17,5 +17,5 @@ This chapter covers:
 - The basic workflow: write code, run it, listen, adjust.
 
 ```{seealso}
-Full library documentation lives in the {doc}`Pyquist reference <../pyquist/intro>`.
+Full library documentation lives in the {doc}`Pyquist reference <../pyquist/Overview>`.
 ```
