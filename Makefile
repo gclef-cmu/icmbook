@@ -1,12 +1,18 @@
 .PHONY: book clean spotless all serve check pdf sync-pyquist-readme
 
+PYQUIST_README_URL := https://raw.githubusercontent.com/gclef-cmu/pyquist/main/README.md
+PYQUIST_README    := content/pyquist/_pyquist_readme.md
+
 all: book
 
-# Refresh the Pyquist README snapshot used by content/pyquist/Overview.md.
-# Runs on every `make book` so the Overview reflects the upstream README; the
-# script is offline-tolerant (it keeps the previous copy if the fetch fails).
+# Mirror the upstream Pyquist README into content/pyquist/Overview.md.
+# Runs on every `make book` so the Overview reflects whatever's on
+# Pyquist's main branch. The sed step rewrites `examples/…` relative
+# links to absolute GitHub URLs so they resolve from the book site.
 sync-pyquist-readme:
-	python3 tools/fetch_pyquist_readme.py
+	@curl -fsSL $(PYQUIST_README_URL) -o $(PYQUIST_README)
+	@sed -i.bak 's|](examples/|](https://github.com/gclef-cmu/pyquist/blob/main/examples/|g' $(PYQUIST_README)
+	@rm -f $(PYQUIST_README).bak
 
 book: sync-pyquist-readme
 	jupyter-book build ./

@@ -38,8 +38,6 @@ icmbook-demo/
 ├── colormap.tex.txt          Colored-math macros shared by HTML and PDF
 ├── environment.yml           Conda environment for building the book
 ├── epigrafica.sty            LaTeX font package for the PDF build
-├── tools/                    Build-time scripts
-│   └── fetch_pyquist_readme.py   Mirrors the Pyquist README into Overview.md
 └── content/                  Book, course, appendix, and reference content
     ├── Template.ipynb        Feature-reference notebook
     ├── bauhaus.mplstyle      Matplotlib style for notebook figures
@@ -113,7 +111,7 @@ book.
 
 | Page | Mirrors upstream | Mechanism |
 |---|---|---|
-| `Overview.md` | `README.md` | `tools/fetch_pyquist_readme.py`, invoked by `make book` |
+| `Overview.md` | `README.md` | `curl` + `sed` step in `make sync-pyquist-readme` |
 | `api/audio.md` | `docs/api/audio.rst` | [Sphinx autodoc][autodoc] against `pyquist.audio` |
 | `api/score.md` | `docs/api/score.rst` | autodoc against `pyquist.score` |
 | `api/plot.md` | `docs/api/plot.rst` | autodoc against `pyquist.plot` |
@@ -125,29 +123,24 @@ book.
 
 `content/pyquist/Overview.md` is a **verbatim** mirror of the Pyquist
 README, including the `# pyquist` title and the full `## Installation`
-section. The flow:
+section. The plumbing is a three-line `sync-pyquist-readme` target in
+the [Makefile](Makefile):
 
-1. `make book` runs `make sync-pyquist-readme`, which invokes
-   `tools/fetch_pyquist_readme.py`.
-2. The script downloads
+1. `curl` downloads
    `https://raw.githubusercontent.com/gclef-cmu/pyquist/main/README.md`
-   and rewrites relative links (e.g. `examples/HelloPyquist.ipynb`) to
-   absolute GitHub URLs so they resolve from the book.
-3. It writes the result to `content/pyquist/_pyquist_readme.md`, which
-   is git-ignored.
-4. `Overview.md` pulls that file in with `{include} _pyquist_readme.md`.
+   to `content/pyquist/_pyquist_readme.md` (git-ignored).
+2. `sed` rewrites relative `examples/…` links to absolute GitHub URLs
+   so they resolve from the book site.
+3. `Overview.md` pulls that file in with `{include} _pyquist_readme.md`.
 
-The script is **offline-tolerant**: if the fetch fails and a previous
-copy exists on disk, it warns and reuses it; only an empty cache + a
-failed fetch causes the build to exit non-zero. So a network blip on CI
-won't deploy a half-rendered Overview, and local builds without internet
-still work as long as you have built at least once.
+`make book` depends on `sync-pyquist-readme`, so every build refreshes
+the snapshot. If `curl` fails, the build fails — there's no offline
+fallback, so building requires network access.
 
-To preview a README change before it lands on Pyquist's `main`:
+To refresh the snapshot without rebuilding the book:
 
 ```sh
-python3 tools/fetch_pyquist_readme.py    # refresh the snapshot manually
-make book                                # rebuild
+make sync-pyquist-readme
 ```
 
 ### API pages (autodoc)
@@ -175,17 +168,22 @@ Practical consequences:
 
 ### How the rebuild pipeline works
 
-`.github/workflows/deploy-book.yml` triggers a rebuild on **four** events:
+`.github/workflows/deploy-book.yml` triggers a rebuild on **three** events:
 
 | Trigger | Fires when… | Typical latency |
 |---|---|---|
 | `push` to `main` | You push to this repo | seconds |
-| `repository_dispatch` (`pyquist-updated`) | Pyquist's `main` notifies us | seconds |
-| `schedule` (`17 7 * * *` UTC) | Nightly safety net | up to 24 h |
+| `schedule` (`22 8 * * *` UTC) | Nightly, automatic | up to 24 h |
 | `workflow_dispatch` | You click "Run workflow" in the Actions tab | seconds |
 
-Inside the job, a dedicated **"Refresh Pyquist from latest source"** step runs
-before `make book`:
+The nightly cron is what picks up changes from the upstream Pyquist repo
+without any manual action — a daily rebuild against `pyquist/main`'s HEAD.
+If you need faster propagation, raise the cron frequency (e.g.
+`"17 */6 * * *"` for every six hours, `"17 * * * *"` for hourly) — GitHub
+Actions minutes are free on public repos, so this is cheap.
+
+Inside the job, a dedicated **"Refresh Pyquist from latest source"** step
+runs before `make book`:
 
 ```sh
 pip install --upgrade --force-reinstall --no-deps \
@@ -195,61 +193,25 @@ pip install --upgrade --force-reinstall --no-deps \
 `environment.yml` already pins Pyquist to that git URL, but pip caches built
 wheels keyed by source URL — the force-reinstall guarantees the runner picks
 up the latest commit even when the URL string is unchanged. Without this
-step a dispatch or nightly run could re-deploy yesterday's docstrings.
-
-### Setting up the dispatch trigger (one-time, on the Pyquist repo)
-
-The `repository_dispatch` trigger is what makes the book update within
-**seconds** of an upstream commit (the nightly cron is just a safety net).
-It is half wired on the book side; the other half lives in the Pyquist repo.
-
-1. **Create a token.** On the GitHub account that owns the Pyquist repo,
-   create a fine-grained personal access token scoped to **this repo only**
-   (`jiaweil6/icmbook`) with the permission `Actions: Read and write`. A
-   classic PAT with `repo` scope also works.
-2. **Store it on the Pyquist repo** as a secret named
-   `ICMBOOK_DISPATCH_TOKEN` (Settings → Secrets and variables → Actions).
-3. **Add a workflow** to `gclef-cmu/pyquist` at
-   `.github/workflows/notify-icmbook.yml`:
-
-   ```yaml
-   name: notify-icmbook
-   on:
-     push:
-       branches: [main]
-   jobs:
-     dispatch:
-       runs-on: ubuntu-latest
-       steps:
-         - name: Tell icmbook to rebuild
-           run: |
-             curl -X POST \
-               -H "Authorization: Bearer ${{ secrets.ICMBOOK_DISPATCH_TOKEN }}" \
-               -H "Accept: application/vnd.github+json" \
-               https://api.github.com/repos/jiaweil6/icmbook/dispatches \
-               -d '{"event_type":"pyquist-updated"}'
-   ```
-
-After this, every push to `pyquist/main` posts the event, GitHub fires the
-`repository_dispatch` listener here, and the book redeploys.
+step a nightly run could re-deploy yesterday's docstrings.
 
 ### Verifying / troubleshooting
 
-- **Did the dispatch fire?** On the Pyquist repo, check the Actions tab for
-  the `notify-icmbook` run.
-- **Did this repo receive it?** On `icmbook`, check the Actions tab for a
-  `deploy-book` run whose triggering event is `repository_dispatch`.
-- **Did the build see the latest Pyquist?** The "Refresh Pyquist from latest
-  source" step prints the install path — its log line also indirectly
-  confirms a fresh download via pip.
-- **An API entry is missing.** Check that the symbol is exported and has a
-  docstring in its module. If both are true and it still doesn't render,
-  add it explicitly to the matching `content/pyquist/api/<module>.md`.
+- **Did the rebuild run?** Check the Actions tab on `icmbook` for the
+  most recent `deploy-book` run — its triggering event tells you whether
+  it came from a push, the schedule, or a manual dispatch.
+- **Did the build see the latest Pyquist?** The "Refresh Pyquist from
+  latest source" step prints the install path and forces a fresh pip
+  download, so its log line confirms the commit hash that was fetched.
+- **An API entry is missing.** Check that the symbol is exported and has
+  a docstring in its module. If both are true and it still doesn't
+  render, add it explicitly to the matching
+  `content/pyquist/api/<module>.md`.
 - **A new module landed in Pyquist.** Add a matching shell page under
   `content/pyquist/api/` and register it in `_toc.yml` — see how the
   existing six files are written.
-- **Token rotated / dispatch silently broken.** The nightly cron at 07:17 UTC
-  will catch the change within a day; meanwhile you can re-run manually from
-  the Actions tab via "Run workflow".
+- **You need an immediate refresh.** Open the Actions tab and click
+  "Run workflow" on `deploy-book`; it rebuilds against the current
+  Pyquist HEAD in a couple of minutes.
 
 [autodoc]: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
