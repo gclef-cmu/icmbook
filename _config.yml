@@ -38,6 +38,11 @@ parse:
     - substitution
     - tasklist
   myst_url_schemes: [mailto, http, https]
+  # Only auto-linkify strings that include an explicit URL scheme
+  # (e.g. https://example.com). Without this, "fuzzy" mode catches
+  # things like `pyquist.web` — the `.web` TLD makes it look like a
+  # domain — and wraps the heading in a broken external link.
+  myst_linkify_fuzzy_links: false
 
 #######################################################################################
 # HTML-specific settings
