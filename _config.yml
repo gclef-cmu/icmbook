@@ -76,6 +76,10 @@ sphinx:
     # and wraps the heading in a broken external link.
     myst_linkify_fuzzy_links: false
 
+    # Copy the standalone 404 page to the site root. GitHub Pages serves
+    # /404.html for any unknown URL.
+    html_extra_path: ["404.html"]
+
     # ---- Autodoc / Napoleon -----------------------------------------------
     autodoc_member_order: "bysource"   # follow source order, not alphabetical
     autodoc_typehints: "description"   # render type hints in the param list

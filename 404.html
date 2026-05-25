@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 — Introduction to Computer Music</title>
+  <style>
+    :root {
+      --cmu-red:      #c41230;
+      --cmu-red-dark: #9b0e26;
+      --cmu-gold:     #fdb515;
+      --cmu-iron:     #6d6e71;
+      --icm-serif:    "Palatino", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --icm-box-bg:     #faf7f4;
+      --icm-box-border: #e7ded6;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #1b1b1b;
+      font-family: var(--icm-serif);
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-rule {
+      height: 3px;
+      background: var(--cmu-red);
+    }
+    main {
+      flex: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 3rem;
+    }
+    .glyph {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 6.5rem;
+      line-height: 1;
+      color: var(--cmu-red);
+      letter-spacing: 0.05em;
+      margin: 0 0 0.5rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      margin: 0 0 1.25rem;
+      color: var(--cmu-red);
+      border-bottom: 3px solid var(--cmu-red);
+      padding-bottom: 0.3rem;
+    }
+    p {
+      font-size: 1.05rem;
+      line-height: 1.55;
+      text-align: justify;
+      hyphens: auto;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: #f3eee9;
+      padding: 0.05em 0.35em;
+      border-radius: 3px;
+      color: var(--cmu-red-dark);
+      font-size: 0.92em;
+    }
+    .actions {
+      margin-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    .actions a {
+      display: inline-block;
+      padding: 0.55rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      border: 1px solid var(--cmu-red);
+      color: var(--cmu-red);
+      background: #ffffff;
+      transition: background 0.15s, color 0.15s;
+    }
+    .actions a:hover {
+      background: var(--cmu-red);
+      color: #ffffff;
+    }
+    .actions a.primary {
+      background: var(--cmu-red);
+      color: #ffffff;
+    }
+    .actions a.primary:hover {
+      background: var(--cmu-red-dark);
+      border-color: var(--cmu-red-dark);
+    }
+    footer {
+      border-top: 1px solid #e6e6e6;
+      padding: 1rem 1.5rem;
+      font-size: 0.8rem;
+      color: var(--cmu-iron);
+      text-align: center;
+    }
+    .wave {
+      margin: 1.5rem 0 0;
+      width: 100%;
+      height: 60px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-rule"></div>
+  <main>
+    <p class="glyph">4&#8202;0&#8202;4</p>
+    <h1>This page is out of range.</h1>
+
+    <p>
+      The URL you requested doesn't exist in the textbook. Maybe a link rotted,
+      maybe a chapter moved, or maybe a sample was driven so far past
+      <code>&plusmn;1.0</code> that the page got soft-clipped right out of existence.
+    </p>
+
+    <svg class="wave" viewBox="0 0 720 60" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,7.25 L720,7.25" stroke="#e7ded6" stroke-width="1" stroke-dasharray="3 4"/>
+      <path d="M0,52.75 L720,52.75" stroke="#e7ded6" stroke-width="1" stroke-dasharray="3 4"/>
+      <path d="M0,30 L720,30" stroke="#e7ded6" stroke-width="1" stroke-dasharray="4 4"/>
+      <path d="M0,30.00 L6,21.13 L12,14.68 L18,10.97 L24,9.07 L30,8.14 L36,7.68 L42,7.44 L48,7.32 L54,7.27 L60,7.25 L66,7.27 L72,7.32 L78,7.44 L84,7.68 L90,8.14 L96,9.07 L102,10.97 L108,14.68 L114,21.13 L120,30.00 L126,38.87 L132,45.32 L138,49.03 L144,50.93 L150,51.86 L156,52.32 L162,52.56 L168,52.68 L174,52.73 L180,52.75 L186,52.73 L192,52.68 L198,52.56 L204,52.32 L210,51.86 L216,50.93 L222,49.03 L228,45.32 L234,38.87 L240,30.00 L246,21.13 L252,14.68 L258,10.97 L264,9.07 L270,8.14 L276,7.68 L282,7.44 L288,7.32 L294,7.27 L300,7.25 L306,7.27 L312,7.32 L318,7.44 L324,7.68 L330,8.14 L336,9.07 L342,10.97 L348,14.68 L354,21.13 L360,30.00 L366,38.87 L372,45.32 L378,49.03 L384,50.93 L390,51.86 L396,52.32 L402,52.56 L408,52.68 L414,52.73 L420,52.75 L426,52.73 L432,52.68 L438,52.56 L444,52.32 L450,51.86 L456,50.93 L462,49.03 L468,45.32 L474,38.87 L480,30.00 L486,21.13 L492,14.68 L498,10.97 L504,9.07 L510,8.14 L516,7.68 L522,7.44 L528,7.32 L534,7.27 L540,7.25 L546,7.27 L552,7.32 L558,7.44 L564,7.68 L570,8.14 L576,9.07 L582,10.97 L588,14.68 L594,21.13 L600,30.00 L606,38.87 L612,45.32 L618,49.03 L624,50.93 L630,51.86 L636,52.32 L642,52.56 L648,52.68 L654,52.73 L660,52.75 L666,52.73 L672,52.68 L678,52.56 L684,52.32 L690,51.86 L696,50.93 L702,49.03 L708,45.32 L714,38.87 L720,30.00"
+            fill="none" stroke="#c41230" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+
+    <div class="actions">
+      <a class="primary" href="/">Back to the book</a>
+      <a href="/content/course/website.html">Course page</a>
+      <a href="/content/intro.html">Preface</a>
+    </div>
+  </main>
+  <footer>
+    15-322 / 15-622 &middot; Introduction to Computer Music &middot; Carnegie Mellon University
+  </footer>
+</body>
+</html>
