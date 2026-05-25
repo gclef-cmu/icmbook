@@ -1,4 +1,22 @@
 (function () {
+  // Suppress Sphinx's post-search highlighting + "Hide Search Matches"
+  // banner. sphinx_highlight.js reads the terms from two places on every
+  // page load: localStorage["sphinx_highlight_terms"] (written by the
+  // search page and persisting across navigations — this is why the
+  // banner appeared even when clicking a sidebar link), and the URL's
+  // ?highlight=... fallback. Clearing both synchronously here, before
+  // sphinx_highlight.js's DOMContentLoaded handler runs, makes it find
+  // no terms and skip rendering the banner. SPHINX_HIGHLIGHT_ENABLED
+  // is a `const` so it can't be toggled from another script.
+  try {
+    window.localStorage.removeItem("sphinx_highlight_terms");
+  } catch (e) { /* ignore */ }
+  if (window.location.search.includes("highlight=")) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("highlight");
+    window.history.replaceState(null, "", url.toString());
+  }
+
   function setupCoursePartToggle() {
     const captions = document.querySelectorAll(".bd-sidebar-primary p.caption");
     const caption = Array.from(captions).find((node) => {
