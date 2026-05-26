@@ -140,6 +140,76 @@ html[data-theme="dark"] {
   display: none;
 }
 
+/* ----------------------------------------------------------------------
+   Standard MyST admonitions (note / tip / important / warning / seealso).
+
+   Each type gets its own pastel-tinted card at a shared luminance, with
+   a slightly deeper title band and a saturated spine of the same hue.
+   The whole set reads like color-coded highlighter on the page —
+   distinct hues, but the same recipe (light fill → mid title → dark
+   spine) ties them together. Dark mode uses deep tints of the same
+   hues so each type stays recognizable against a dark page.
+
+   Per-type colors are declared as custom properties so the rules below
+   can be written once. To retint a type, change its variables.
+   ---------------------------------------------------------------------- */
+html[data-theme="light"] {
+  --ad-note-bg:   #eaf0f6;  --ad-note-title:   #dde7f0;  --ad-note-spine:   #6a8aab;
+  --ad-tip-bg:    #ecf3e6;  --ad-tip-title:    #dde9d3;  --ad-tip-spine:    #6f9a5e;
+  --ad-imp-bg:    #f6e8ea;  --ad-imp-title:    #efd6da;  --ad-imp-spine:    #c41230;
+  --ad-warn-bg:   #f7ecd9;  --ad-warn-title:   #f0dfbe;  --ad-warn-spine:   #c08a2a;
+  --ad-see-bg:    #efeaf3;  --ad-see-title:    #e3dbeb;  --ad-see-spine:    #8773a3;
+}
+html[data-theme="dark"] {
+  --ad-note-bg:   #1d2733;  --ad-note-title:   #243140;  --ad-note-spine:   #7ea0c0;
+  --ad-tip-bg:    #1f2a1d;  --ad-tip-title:    #283627;  --ad-tip-spine:    #86b075;
+  --ad-imp-bg:    #2b1d20;  --ad-imp-title:    #38242a;  --ad-imp-spine:    #e8546a;
+  --ad-warn-bg:   #2b2418;  --ad-warn-title:   #382d1e;  --ad-warn-spine:   #d6a14a;
+  --ad-see-bg:    #241e2b;  --ad-see-title:    #2e2538;  --ad-see-spine:    #a895c0;
+}
+
+.admonition.note      { --ad-bg: var(--ad-note-bg); --ad-title: var(--ad-note-title); --ad-spine: var(--ad-note-spine); }
+.admonition.tip,
+.admonition.hint      { --ad-bg: var(--ad-tip-bg);  --ad-title: var(--ad-tip-title);  --ad-spine: var(--ad-tip-spine); }
+.admonition.important { --ad-bg: var(--ad-imp-bg);  --ad-title: var(--ad-imp-title);  --ad-spine: var(--ad-imp-spine); }
+.admonition.warning   { --ad-bg: var(--ad-warn-bg); --ad-title: var(--ad-warn-title); --ad-spine: var(--ad-warn-spine); }
+.admonition.seealso   { --ad-bg: var(--ad-see-bg);  --ad-title: var(--ad-see-title);  --ad-spine: var(--ad-see-spine); }
+
+.admonition.note,
+.admonition.tip,
+.admonition.hint,
+.admonition.important,
+.admonition.warning,
+.admonition.seealso {
+  background-color: var(--ad-bg) !important;
+  border-color: var(--ad-spine) !important;
+  border-left: 0.35rem solid var(--ad-spine) !important;
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+
+.admonition.note      > .admonition-title,
+.admonition.tip       > .admonition-title,
+.admonition.hint      > .admonition-title,
+.admonition.important > .admonition-title,
+.admonition.warning   > .admonition-title,
+.admonition.seealso   > .admonition-title {
+  background-color: var(--ad-title) !important;
+  color: var(--pst-color-text-base);
+}
+
+/* Recolor the theme's auto-injected title glyph (a Font Awesome icon
+   the theme renders in the original blue/green/orange) to match each
+   admonition's spine. */
+.admonition.note      > .admonition-title::after,
+.admonition.tip       > .admonition-title::after,
+.admonition.hint      > .admonition-title::after,
+.admonition.important > .admonition-title::after,
+.admonition.warning   > .admonition-title::after,
+.admonition.seealso   > .admonition-title::after {
+  color: var(--ad-spine) !important;
+}
+
 /* Audio "Listen" callouts carry a 🔊 emoji in their title; suppress the
    theme's auto-injected info glyph so we don't render two icons. */
 .admonition.listen > .admonition-title::after {
