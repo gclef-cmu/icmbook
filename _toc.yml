@@ -5,7 +5,7 @@ root: content/about
 
 parts:
   - chapters:
-      - file: content/template
+      - file: content/Template
   - chapters:
       - file: content/ch00/index
         sections:
