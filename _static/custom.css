@@ -17,6 +17,8 @@
   --cmu-red-bright: #e8546a;  /* lightened red, legible on dark surfaces */
   --cmu-gold:       #fdb515;  /* secondary accent                        */
   --cmu-iron:       #6d6e71;  /* iron gray — neutral                     */
+  --cmu-teal:       #008996;  /* CMU secondary palette — exercise accent */
+  --cmu-teal-bright:#3fb6c2;  /* lightened teal, legible on dark surfaces */
 
   /* Typography --------------------------------------------------------- */
   /* The book's serif typeface — body text and navigation share it.      */
@@ -37,10 +39,13 @@ html[data-theme="light"] {
 
   --icm-accent:    var(--cmu-red);
   --icm-accent-2:  #b07e00;
+  --icm-accent-3:  var(--cmu-iron);
   --icm-box-bg:      #faf7f4;
   --icm-box-border:  #e7ded6;
   --icm-title-bg:    rgba(196, 18, 48, 0.08);
   --icm-title-bg-2:  rgba(253, 181, 21, 0.16);
+  --icm-title-bg-3:  rgba(109, 110, 113, 0.10);
+  --icm-ex-bg:       #f0f0f1;
 }
 
 /* ---- Dark mode ------------------------------------------------------- */
@@ -53,16 +58,37 @@ html[data-theme="dark"] {
 
   --icm-accent:    var(--cmu-red-bright);
   --icm-accent-2:  var(--cmu-gold);
+  --icm-accent-3:  #a3a4a7;   /* lightened iron gray for dark surfaces */
   --icm-box-bg:      #21262e;
   --icm-box-border:  #3a414c;
   --icm-title-bg:    rgba(232, 84, 106, 0.14);
   --icm-title-bg-2:  rgba(253, 181, 21, 0.14);
+  --icm-title-bg-3:  rgba(163, 164, 167, 0.14);
+  --icm-ex-bg:       #262830;
 }
 
 /* ---- Typography: the textbook serif, scoped to article content ------- */
 .bd-article,
 .bd-article h1, .bd-article h2, .bd-article h3,
 .bd-article h4, .bd-article h5, .bd-article h6 {
+  font-family: var(--icm-serif);
+}
+
+/* Margin / sidenote content. sphinx-book-theme sets its own sans-serif
+   font-family on `aside.margin` and `.sidebar`, which would otherwise
+   override the inherited textbook serif. Force the serif back so margin
+   asides match the body. */
+.bd-article aside.margin,
+.bd-article aside.margin p,
+.bd-article aside.margin li,
+.bd-article aside.margin .admonition-title,
+.bd-article .margin,
+.bd-article .margin p,
+.bd-article .margin li,
+.bd-article .sidebar,
+.bd-article .sidebar p,
+.bd-article .sidebar li,
+.bd-article .sidebar-title {
   font-family: var(--icm-serif);
 }
 
@@ -99,8 +125,6 @@ html[data-theme="dark"] {
    theme-aware background so they no longer render as light boxes on a
    dark page. `!important` is used only to win against the extension CSS.
    ====================================================================== */
-.exercise.admonition,
-.solution.admonition,
 .proof.admonition {
   background-color: var(--icm-box-bg) !important;
   border-color: var(--icm-box-border) !important;
@@ -108,14 +132,24 @@ html[data-theme="dark"] {
   box-shadow: none !important;
 }
 
-/* Exercises: Carnegie Red — proofs/theorems: gold — solutions: iron gray */
-.exercise.admonition  { border-left: 0.35rem solid var(--icm-accent)   !important; }
+/* Exercises and solutions follow the standard admonition recipe (light fill
+   → mid title → dark spine) using iron gray, so they sit alongside note /
+   tip / warning rather than reading as a separate cream textbook box. */
+.exercise.admonition,
+.solution.admonition {
+  background-color: var(--icm-ex-bg) !important;
+  border-color: var(--icm-accent-3) !important;
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+
+/* Exercises: iron gray — proofs/theorems: gold — solutions: iron gray */
+.exercise.admonition  { border-left: 0.35rem solid var(--icm-accent-3) !important; }
 .proof.admonition     { border-left: 0.35rem solid var(--icm-accent-2) !important; }
 .solution.admonition  { border-left: 0.35rem solid var(--cmu-iron)     !important; }
 
 .exercise.admonition  > .admonition-title {
-  background-color: var(--icm-title-bg) !important;
-  color: var(--pst-color-primary);
+  background-color: var(--icm-title-bg-3) !important;
 }
 .proof.admonition     > .admonition-title {
   background-color: var(--icm-title-bg-2) !important;
@@ -125,9 +159,9 @@ html[data-theme="dark"] {
 }
 
 /* Recolor the exercise title's pencil glyph (a Font Awesome icon the
-   extension renders blue) to match the Carnegie Red box accent. */
+   extension renders blue) to match the teal box accent. */
 .exercise.admonition  > .admonition-title::after {
-  color: var(--icm-accent) !important;
+  color: var(--icm-accent-3) !important;
 }
 
 /* Suppress the auto-generated "Definition N" / "Exercise N" counter in

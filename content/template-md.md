@@ -38,6 +38,23 @@ notebook-only features.
 
 ## 2. Text formatting
 
+Every page pairs the **Source** (what you type) with the **Rendered** result.
+
+Source:
+
+````markdown
+**Bold**, *italic*, ***bold italic***, `inline code`, <del>strikethrough</del>,
+H<sub>2</sub>O, x<sup>2</sup>, and a [hyperlink](https://pyquist.org). Press
+{kbd}`Shift` + {kbd}`Enter` to run a cell. The {abbr}`DFT (Discrete Fourier Transform)`
+abbreviation shows its meaning on hover.
+
+> A blockquote — use it for short asides or quotations.
+
+Inline math such as $f = 440\,\text{Hz}$ flows inside running text.
+````
+
+Rendered:
+
 **Bold**, *italic*, ***bold italic***, `inline code`, <del>strikethrough</del>,
 H<sub>2</sub>O, x<sup>2</sup>, and a [hyperlink](https://pyquist.org). Press
 {kbd}`Shift` + {kbd}`Enter` to run a cell. The {abbr}`DFT (Discrete Fourier Transform)`
@@ -53,7 +70,23 @@ Inline math such as $f = 440\,\text{Hz}$ flows inside running text.
 
 ## 3. Lists
 
-Unordered, ordered, and nested:
+Unordered, ordered, and nested.
+
+Source:
+
+````markdown
+- First item
+- Second item
+  - Nested item
+  - Another nested item
+- Third item
+
+1. Step one
+2. Step two
+3. Step three
+````
+
+Rendered:
 
 - First item
 - Second item
@@ -65,13 +98,35 @@ Unordered, ordered, and nested:
 2. Step two
 3. Step three
 
-A **task list** (the `tasklist` extension):
+A **task list** (the `tasklist` extension).
+
+Source:
+
+````markdown
+- [x] Install Pyquist
+- [x] Write the template
+- [ ] Write Chapter 1
+````
+
+Rendered:
 
 - [x] Install Pyquist
 - [x] Write the template
 - [ ] Write Chapter 1
 
-A **definition list** (the `deflist` extension):
+A **definition list** (the `deflist` extension).
+
+Source:
+
+````markdown
+Sample rate
+: The number of audio samples stored per second, in hertz.
+
+Nyquist frequency
+: Half the sample rate; the highest representable frequency.
+````
+
+Rendered:
 
 Sample rate
 : The number of audio samples stored per second, in hertz.
@@ -81,15 +136,40 @@ Nyquist frequency
 
 ## 4. Admonitions
 
-Admonitions are colored callout boxes. The syntax is:
+Admonitions are colored callout boxes. Swap `note` for `tip`, `important`,
+`warning`, `seealso`, or `admonition` (with a custom title).
 
-````markdown
+Source:
+
+`````markdown
 ```{note}
-Your text here.
+A **note** — neutral, supporting information.
 ```
-````
 
-Swap `note` for any type below:
+```{tip}
+A **tip** — practical advice.
+```
+
+```{important}
+**Important** — do not miss this.
+```
+
+```{warning}
+A **warning** — something that can go wrong.
+```
+
+```{seealso}
+A **see-also** — a pointer to related material, e.g. the
+{doc}`Pyquist reference <pyquist/Overview>`.
+```
+
+```{admonition} Custom title
+:class: hint
+The generic `{admonition}` directive takes a custom title and any color class.
+```
+`````
+
+Rendered:
 
 ```{note}
 A **note** — neutral, supporting information.
@@ -117,7 +197,18 @@ A **see-also** — a pointer to related material, e.g. the
 The generic `{admonition}` directive takes a custom title and any color class.
 ```
 
-A **collapsible** admonition (`:class: dropdown`):
+A **collapsible** admonition (`:class: dropdown`).
+
+Source:
+
+````markdown
+```{admonition} Click to expand
+:class: dropdown note
+Hidden until the reader clicks.
+```
+````
+
+Rendered:
 
 ```{admonition} Click to expand
 :class: dropdown note
@@ -153,6 +244,22 @@ page with `pq.play(audio)` — see the {doc}`notebook template <template>`.
 
 ## 5. Mathematics
 
+**Inline and display math.**
+
+Source:
+
+````markdown
+Inline math: the angular frequency is $\omega = 2\pi f$.
+
+Display math:
+
+$$
+x(t) = A \sin(2\pi f t + \phi)
+$$
+````
+
+Rendered:
+
 Inline math: the angular frequency is $\omega = 2\pi f$.
 
 Display math:
@@ -161,25 +268,42 @@ $$
 x(t) = A \sin(2\pi f t + \phi)
 $$
 
-A **labeled, numbered** equation — source:
+A **labeled, numbered** equation, referenced inline with `` {eq}`eq-euler-md` ``.
+
+Source:
 
 ````markdown
 ```{math}
 :label: eq-euler-md
 e^{i\pi} + 1 = 0
 ```
+
+…see equation {eq}`eq-euler-md`.
 ````
 
-renders as:
+Rendered:
 
 ```{math}
 :label: eq-euler-md
 e^{i\pi} + 1 = 0
 ```
 
-and is referenced inline with `` {eq}`eq-euler-md` `` → see equation {eq}`eq-euler-md`.
+…see equation {eq}`eq-euler-md`.
 
-Aligned, multi-line math:
+**Aligned, multi-line math.**
+
+Source:
+
+````markdown
+$$
+\begin{aligned}
+X[k] &= \sum_{n=0}^{N-1} x[n]\, e^{-i 2\pi k n / N} \\
+     &= \sum_{n=0}^{N-1} x[n]\,\big(\cos\theta - i\sin\theta\big)
+\end{aligned}
+$$
+````
+
+Rendered:
 
 $$
 \begin{aligned}
@@ -189,7 +313,7 @@ X[k] &= \sum_{n=0}^{N-1} x[n]\, e^{-i 2\pi k n / N} \\
 $$
 
 Colored terms, using the macros defined in `_config.yml`:
-$\blue{a} + \red{b} = \green{c}$.
+`$\blue{a} + \red{b} = \green{c}$` → $\blue{a} + \red{b} = \green{c}$.
 
 ## 6. Code blocks (not executed)
 
@@ -245,7 +369,19 @@ See {numref}`fig-waveform-md` for an auto-numbered link.
 
 ## 8. Tables
 
-A plain Markdown table:
+A plain Markdown table.
+
+Source:
+
+````markdown
+| Waveform | Harmonic content |
+| -------- | ---------------- |
+| Sine     | Fundamental only |
+| Square   | Odd harmonics |
+| Sawtooth | All harmonics |
+````
+
+Rendered:
 
 | Waveform | Harmonic content |
 | -------- | ---------------- |
@@ -254,7 +390,25 @@ A plain Markdown table:
 | Sawtooth | All harmonics |
 
 The `{list-table}` directive (easier for long cell text; supports a caption and
-label):
+label).
+
+Source:
+
+````markdown
+```{list-table} Synthesis methods
+:header-rows: 1
+:name: tbl-methods-md
+
+* - Method
+  - Idea
+* - Additive
+  - Sum sinusoids
+* - Subtractive
+  - Filter a harmonically rich source
+```
+````
+
+Rendered:
 
 ```{list-table} Synthesis methods
 :header-rows: 1
@@ -268,7 +422,22 @@ label):
   - Filter a harmonically rich source
 ```
 
-The `{csv-table}` directive:
+The `{csv-table}` directive.
+
+Source:
+
+````markdown
+```{csv-table} Common sample rates
+:header-rows: 1
+
+Use, Rate (Hz)
+Telephone, 8000
+CD audio, 44100
+Studio, 48000
+```
+````
+
+Rendered:
 
 ```{csv-table} Common sample rates
 :header-rows: 1
@@ -295,17 +464,61 @@ citation is collected automatically on the {doc}`References <references>` page.
 
 ## 10. Footnotes
 
+Footnotes attach a small reference that collects at the foot of the page.
+
+Source:
+
+````markdown
+Footnotes attach a small reference[^demo] that collects at the foot of the page.
+
+[^demo]: This is the footnote text. Footnotes suit asides and source notes.
+````
+
+Rendered:
+
 Footnotes attach a small reference[^demo] that collects at the foot of the page.
 
 [^demo]: This is the footnote text. Footnotes suit asides and source notes.
 
-```{note}
-MyST also offers `{margin}` and `{sidebar}` directives for asides that float
-beside the text. This book **avoids them** — they overlap the right-hand
-*Contents* panel. Keep asides in the body text, or use an admonition like this.
+## 11. Margin content
+
+The `{margin}` directive (from `sphinx-book-theme`) pushes a block into the
+right margin, aligned with the paragraph it follows. Use it for short asides,
+side figures, or callouts that shouldn't break the flow of the main text.
+
+```{important}
+Because margin blocks float out of the normal flow, they appear **beside the
+paragraph that immediately follows them**, not below a "Rendered:" label. The
+example below has a dedicated anchor paragraph so the margin content lines up
+correctly.
 ```
 
-## 11. Exercises and solutions
+Source:
+
+````markdown
+```{margin} An aside
+The {{ pyquist }} library is named after Harry Nyquist (1889–1976), whose
+sampling theorem underpins all of digital audio.
+```
+
+Rendered → look to the right of *this* paragraph. The margin block sits next
+to the paragraph that follows its source. Keep the anchor paragraph at least
+as tall as the margin content so the next section isn't displaced.
+````
+
+```{margin} An aside
+The {{ pyquist }} library is named after Harry Nyquist (1889–1976), whose
+sampling theorem underpins all of digital audio.
+```
+
+Rendered → look to the right of *this* paragraph. The margin block sits next
+to the paragraph that follows its source. Keep the anchor paragraph at least
+as tall as the margin content so the next section isn't displaced.
+
+You can also push a `{figure}` to the margin by adding `:class: margin` — handy
+for side illustrations that comment on the body text without interrupting it.
+
+## 12. Exercises and solutions
 
 The `sphinx-exercise` extension provides `{exercise}` and `{solution}`. Source:
 
@@ -346,10 +559,35 @@ and how do their amplitudes fall off?
 ```{exercise-end}
 ```
 
-## 12. Theorems, proofs, and definitions
+## 13. Theorems, proofs, and definitions
 
 The `sphinx-proof` extension provides `{prf:theorem}`, `{prf:proof}`,
 `{prf:definition}`, `{prf:lemma}`, `{prf:example}`, and `{prf:algorithm}`.
+
+Source:
+
+`````markdown
+```{prf:definition} Sample rate
+:label: def-sample-rate-md
+The **sample rate** is the number of samples stored per second of audio.
+```
+
+```{prf:theorem} Nyquist–Shannon sampling theorem
+:label: thm-nyquist-md
+A signal containing no frequencies above $f_\text{max}$ is fully determined by
+samples taken at a rate $f_s > 2\,f_\text{max}$.
+```
+
+```{prf:proof}
+A full proof is omitted in this template; see any signal-processing text.
+```
+
+```{prf:example}
+At $f_s = 44100$ Hz, frequencies up to $22050$ Hz can be represented.
+```
+`````
+
+Rendered:
 
 ```{prf:definition} Sample rate
 :label: def-sample-rate-md
@@ -370,11 +608,29 @@ A full proof is omitted in this template; see any signal-processing text.
 At $f_s = 44100$ Hz, frequencies up to $22050$ Hz can be represented.
 ```
 
-## 13. Panels: tabs, cards, dropdowns, buttons
+## 14. Panels: tabs, cards, dropdowns, buttons
 
 These come from the `sphinx-design` extension.
 
-**Tab set:**
+**Tab set.**
+
+Source:
+
+`````markdown
+````{tab-set}
+```{tab-item} macOS
+`brew install ...`, then `pip install ...`
+```
+```{tab-item} Linux
+`apt install ...`, then `pip install ...`
+```
+```{tab-item} Windows
+Use Command Prompt with `py -m pip install ...`
+```
+````
+`````
+
+Rendered:
 
 ````{tab-set}
 ```{tab-item} macOS
@@ -388,7 +644,22 @@ Use Command Prompt with `py -m pip install ...`
 ```
 ````
 
-**Card grid** (responsive: 1 column on phones, 2 on wide screens):
+**Card grid** (responsive: 1 column on phones, 2 on wide screens).
+
+Source:
+
+`````markdown
+````{grid} 1 1 2 2
+```{grid-item-card} Synthesis
+Generate sound from scratch.
+```
+```{grid-item-card} Analysis
+Measure and visualize sound.
+```
+````
+`````
+
+Rendered:
 
 ````{grid} 1 1 2 2
 ```{grid-item-card} Synthesis
@@ -399,13 +670,38 @@ Measure and visualize sound.
 ```
 ````
 
-**Dropdown:**
+**Dropdown.**
+
+Source:
+
+````markdown
+```{dropdown} Show the answer
+The answer stays hidden until the reader clicks.
+```
+````
+
+Rendered:
 
 ```{dropdown} Show the answer
 The answer stays hidden until the reader clicks.
 ```
 
-**Button and badges:**
+**Button and badges.**
+
+Source:
+
+````markdown
+```{button-link} https://pyquist.org
+:color: primary
+:expand:
+Open the Pyquist documentation
+```
+
+Inline badges: {bdg-primary}`primary` {bdg-secondary}`secondary`
+{bdg-success}`success` {bdg-danger}`danger`.
+````
+
+Rendered:
 
 ```{button-link} https://pyquist.org
 :color: primary
@@ -416,16 +712,24 @@ Open the Pyquist documentation
 Inline badges: {bdg-primary}`primary` {bdg-secondary}`secondary`
 {bdg-success}`success` {bdg-danger}`danger`.
 
-## 14. Substitutions
+## 15. Substitutions
 
 Substitutions are reusable snippets defined once in `_config.yml` and inserted
-with `{{ name }}`. This book defines, among others, `{{ course }}`:
+with `{{ name }}`. This book defines, among others, `{{ course }}`.
+
+Source:
+
+````markdown
+> The course is **{{ course }}**.
+````
+
+Rendered:
 
 > The course is **{{ course }}**.
 
 Edit `myst_substitutions` in `_config.yml` to add your own.
 
-## 15. Using this template
+## 16. Using this template
 
 To start a new prose-only chapter:
 
