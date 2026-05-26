@@ -1,15 +1,15 @@
 #######################################################################################
-# Jupyter Book configuration for "Introduction to Computer Music"
+# Jupyter Book configuration for "Computer Music Principles"
 # Course: 15-322 / 15-622, Carnegie Mellon University
 #
 # Docs: https://jupyterbook.org/customize/config.html
 #######################################################################################
 
 # Book metadata
-title: Introduction to Computer Music
-author: "TODO: Instructor Name"          # course instructor / book author
-email: "TODO: instructor@andrew.cmu.edu"
-copyright: "2026"
+title: Computer Music Principles
+author: "Chris Donahue"
+email: "chrisdonahue@cmu.edu"
+copyright: "2026 Chris Donahue. All rights reserved."
 logo: ""                                  # path to a logo image, e.g. content/images/logo.png
 exclude_patterns: [_build, "**.ipynb_checkpoints"]
 only_build_toc_files: true
@@ -22,8 +22,6 @@ only_build_toc_files: true
 execute:
   execute_notebooks: 'auto'
   timeout: 180
-  exclude_patterns:
-    - content/ch03-getting-started/HelloSound.md
 
 #######################################################################################
 # Parse and render settings
@@ -115,11 +113,13 @@ sphinx:
         load:
           - "[tex]/configMacros"
           - "[tex]/html"
+          - "[tex]/cancel"
       tex:
         packages:
           "+":
             - configMacros
             - html
+            - cancel
         macros:
           "blue": ["\\class{blue}{#1}", 1]
           "red": ["\\class{red}{#1}", 1]

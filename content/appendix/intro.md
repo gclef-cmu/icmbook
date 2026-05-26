@@ -8,5 +8,3 @@ for deeper coverage.
   signal-processing chapters.
 - **Python background** — the Python features and libraries assumed by the code
   examples and by Pyquist.
-- **References** — sources cited throughout the book.
-- **Errata** — known corrections and updates.

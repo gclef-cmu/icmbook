@@ -1,6 +1,6 @@
-# Introduction to Computer Music
+# Computer Music Principles
 
-Source for the **15-322 / 15-622 Introduction to Computer Music** textbook at
+Source for the **15-322 / 15-622 Computer Music Principles** textbook at
 Carnegie Mellon University, built with [Jupyter Book](https://jupyterbook.org).
 
 The book includes a reference section for **Pyquist**, the audio library used in
@@ -39,31 +39,19 @@ icmbook-demo/
 ├── environment.yml           Conda environment for building the book
 ├── epigrafica.sty            LaTeX font package for the PDF build
 └── content/                  Book, course, appendix, and reference content
-    ├── Template.ipynb        Feature-reference notebook
+    ├── about.md              Landing page (title, author, AI disclaimer, license)
+    ├── template.ipynb        Feature-reference notebook
     ├── bauhaus.mplstyle      Matplotlib style for notebook figures
     ├── errata.md             Post-publication corrections
-    ├── intro.md              Preface / landing page
     ├── references.bib        BibTeX bibliography
     ├── references.md         Rendered reference list
     ├── appendix/             Math and Python background
     │   ├── Math.md
     │   ├── Python.md
     │   └── intro.md
-    ├── ch01-introduction/    What is computer music, history, exercises
-    ├── ch02-digital-audio/   Sound, sampling, quantization, exercises
-    ├── ch03-getting-started/ Installation, HelloSound, exercises
-    ├── ch04-oscillators/     Oscillators, additive synthesis, exercises
-    ├── ch05-envelopes/       Amplitude, ADSR, exercises
-    ├── ch06-modulation/      Amplitude and frequency modulation, exercises
-    ├── ch07-subtractive/     Noise, spectra, filters, exercises
-    ├── ch08-wavetable/       Sampling, wavetables, exercises
-    ├── ch09-granular-physical/
-    │                         Granular synthesis, physical modeling, exercises
-    ├── ch10-midi/            MIDI basics, control signals, exercises
-    ├── ch11-scores/          Music representation, sequencing, exercises
-    ├── ch12-algorithmic/     Randomness, generative methods, exercises
-    ├── ch13-effects/         Delays, reverberation, exercises
-    ├── ch14-spectral/        STFT, spectral processing, exercises
+    ├── ch00/                 Computer music — numbered section files (00.md – 03.md)
+    ├── ch01/                 Sound and digital audio — numbered section files (00.md – 07.md)
+    ├── ch02/                 Synthesis and vectorized computation — numbered section files (00.md – 06.md)
     ├── course/               Course website pages
     │   ├── about.md
     │   ├── projects.md
@@ -86,15 +74,19 @@ icmbook-demo/
 ```
 
 The listing omits Git metadata, OS files, and local-only tooling settings such
-as `.claude/`. Every `chNN-*/` folder contains a chapter `intro.md`, one file
-per section, and an `Exercises.md` at the end.
+as `.claude/`, plus the local `pure-md/` reference folder. Each `chNN/` folder
+contains numbered section files (`01.md`, `02.md`, …) plus an `assets/` folder
+for figures and audio.
 
 ## Authoring notes
 
-- Each chapter folder has an `intro.md` (chapter landing page) plus one file per
-  section. Add or remove sections by editing both the folder and `_toc.yml`.
+- Each chapter folder has one file per section, numbered (`01.md`, `02.md`, …).
+  Section numbering is baked into each file's H1 (e.g. `# 1.3 From analog to
+  digital`); auto-numbering is off in `_toc.yml` so the sidebar matches the
+  page headings. Add or remove sections by editing both the folder and
+  `_toc.yml`.
 - Pages that need runnable code, audio, or plots should be Jupyter notebooks
-  (`.ipynb`) or MyST-Markdown notebooks. See `content/Template.ipynb` for a
+  (`.ipynb`) or MyST-Markdown notebooks. See `content/template.ipynb` for a
   live demo of every directive and feature available to authors.
 - Notebooks execute at build time (`execute_notebooks: 'auto'` in `_config.yml`);
   outputs — text, audio players, Matplotlib plots — are baked into the rendered

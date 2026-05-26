@@ -1,122 +1,60 @@
-# Table of contents for "Introduction to Computer Music"
+# Table of contents for "Computer Music Principles"
 # Docs: https://jupyterbook.org/customize/toc.html
 format: jb-book
-root: content/intro
+root: content/about
 
 parts:
   - chapters:
-      - file: content/Template
-  - caption: Foundations of Digital Audio
-    numbered: true
-    chapters:
-      - file: content/ch01-introduction/intro
+      - file: content/template
+  - chapters:
+      - file: content/ch00/index
         sections:
-          - file: content/ch01-introduction/WhatIsComputerMusic
-          - file: content/ch01-introduction/AShortHistory
-          - file: content/ch01-introduction/Exercises
-      - file: content/ch02-digital-audio/intro
+          - file: content/ch00/00
+          - file: content/ch00/01
+          - file: content/ch00/02
+          - file: content/ch00/03
+      - file: content/ch01/index
         sections:
-          - file: content/ch02-digital-audio/Sound
-          - file: content/ch02-digital-audio/Sampling
-          - file: content/ch02-digital-audio/Quantization
-          - file: content/ch02-digital-audio/Exercises
-      - file: content/ch03-getting-started/intro
+          - file: content/ch01/00
+          - file: content/ch01/01
+          - file: content/ch01/02
+          - file: content/ch01/03
+          - file: content/ch01/04
+          - file: content/ch01/05
+          - file: content/ch01/06
+      - file: content/ch02/index
         sections:
-          - file: content/ch03-getting-started/Installation
-          - file: content/ch03-getting-started/HelloSound
-          - file: content/ch03-getting-started/Exercises
+          - file: content/ch02/00
+          - file: content/ch02/01
+          - file: content/ch02/02
+          - file: content/ch02/03
+          - file: content/ch02/04
+          - file: content/ch02/05
+          - file: content/ch02/06
 
-  - caption: Sound Synthesis
-    numbered: true
-    chapters:
-      - file: content/ch04-oscillators/intro
+  - chapters:
+      - file: content/course/index
         sections:
-          - file: content/ch04-oscillators/Oscillators
-          - file: content/ch04-oscillators/AdditiveSynthesis
-          - file: content/ch04-oscillators/Exercises
-      - file: content/ch05-envelopes/intro
+          - file: content/course/website
+          - file: content/course/about
+          - file: content/course/schedule
+          - file: content/course/projects
+          - file: content/course/resources
+          - file: content/course/showcase
+      - file: content/reference/index
         sections:
-          - file: content/ch05-envelopes/Amplitude
-          - file: content/ch05-envelopes/ADSR
-          - file: content/ch05-envelopes/Exercises
-      - file: content/ch06-modulation/intro
-        sections:
-          - file: content/ch06-modulation/AmplitudeModulation
-          - file: content/ch06-modulation/FrequencyModulation
-          - file: content/ch06-modulation/Exercises
-      - file: content/ch07-subtractive/intro
-        sections:
-          - file: content/ch07-subtractive/NoiseAndSpectra
-          - file: content/ch07-subtractive/Filters
-          - file: content/ch07-subtractive/Exercises
-      - file: content/ch08-wavetable/intro
-        sections:
-          - file: content/ch08-wavetable/Sampling
-          - file: content/ch08-wavetable/Wavetables
-          - file: content/ch08-wavetable/Exercises
-      - file: content/ch09-granular-physical/intro
-        sections:
-          - file: content/ch09-granular-physical/GranularSynthesis
-          - file: content/ch09-granular-physical/PhysicalModeling
-          - file: content/ch09-granular-physical/Exercises
-
-  - caption: Composition and Control
-    numbered: true
-    chapters:
-      - file: content/ch10-midi/intro
-        sections:
-          - file: content/ch10-midi/MIDIBasics
-          - file: content/ch10-midi/ControlSignals
-          - file: content/ch10-midi/Exercises
-      - file: content/ch11-scores/intro
-        sections:
-          - file: content/ch11-scores/MusicRepresentation
-          - file: content/ch11-scores/Sequencing
-          - file: content/ch11-scores/Exercises
-      - file: content/ch12-algorithmic/intro
-        sections:
-          - file: content/ch12-algorithmic/Randomness
-          - file: content/ch12-algorithmic/GenerativeMethods
-          - file: content/ch12-algorithmic/Exercises
-
-  - caption: Effects and Spectral Processing
-    numbered: true
-    chapters:
-      - file: content/ch13-effects/intro
-        sections:
-          - file: content/ch13-effects/Delays
-          - file: content/ch13-effects/Reverberation
-          - file: content/ch13-effects/Exercises
-      - file: content/ch14-spectral/intro
-        sections:
-          - file: content/ch14-spectral/STFT
-          - file: content/ch14-spectral/SpectralProcessing
-          - file: content/ch14-spectral/Exercises
-
-  - caption: Course Information
-    numbered: false
-    chapters:
-      - file: content/course/website
-      - file: content/course/about
-      - file: content/course/schedule
-      - file: content/course/projects
-      - file: content/course/resources
-      - file: content/course/showcase
-
-  - caption: Reference Materials
-    numbered: false
-    chapters:
-      - file: content/pyquist/Overview
-        sections:
-          - file: content/pyquist/api/audio
-          - file: content/pyquist/api/score
-          - file: content/pyquist/api/plot
-          - file: content/pyquist/api/device
-          - file: content/pyquist/api/helper
-          - file: content/pyquist/api/web
-      - file: content/appendix/intro
-        sections:
-          - file: content/appendix/Math
-          - file: content/appendix/Python
+          - file: content/pyquist/Overview
+            sections:
+              - file: content/pyquist/api/audio
+              - file: content/pyquist/api/score
+              - file: content/pyquist/api/plot
+              - file: content/pyquist/api/device
+              - file: content/pyquist/api/helper
+              - file: content/pyquist/api/web
+          - file: content/appendix/intro
+            sections:
+              - file: content/appendix/Math
+              - file: content/appendix/Python
           - file: content/references
           - file: content/errata
+          - file: content/license

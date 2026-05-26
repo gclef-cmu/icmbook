@@ -16,6 +16,13 @@ sync-pyquist-readme:
 
 book: sync-pyquist-readme
 	jupyter-book build ./
+	@# Sphinx doesn't track files referenced by raw <img>/<audio> HTML tags,
+	@# so copy each chapter's assets folder into the build output ourselves.
+	@for d in content/ch*/assets; do \
+		dest="_build/html/$$(dirname $$d)"; \
+		mkdir -p "$$dest"; \
+		cp -R "$$d" "$$dest/"; \
+	done
 
 clean:
 	jupyter-book clean ./
