@@ -5,7 +5,8 @@ root: content/about
 
 parts:
   - chapters:
-      - file: content/template
+      - file: content/template-notebook
+      - file: content/template-md
   - chapters:
       - file: content/ch00/index
         sections:
