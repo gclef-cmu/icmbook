@@ -4,7 +4,7 @@ This page is a **living template** for **MyST Markdown** pages (`.md`). It
 demonstrates every feature available when authoring a prose-only chapter —
 formatting, math, admonitions, exercises, figures, cross-references, and
 tables — but excludes notebook-only features (executable code cells, `glue`,
-and cell tags). For those, see the {doc}`notebook template <template>`.
+and cell tags). For those, see the {doc}`notebook template <template-notebook>`.
 
 Use it two ways:
 
@@ -32,7 +32,7 @@ works inside a notebook.
 
 :::{important}
 If your page needs to *execute* {{ pyquist }} code, author it as a notebook
-instead. See the {doc}`notebook template <template>` for the full set of
+instead. See the {doc}`notebook template <template-notebook>` for the full set of
 notebook-only features.
 :::
 
@@ -240,7 +240,7 @@ A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 :::
 
 For audio *generated* at build time by executable Pyquist code, use a notebook
-page with `pq.play(audio)` — see the {doc}`notebook template <template>`.
+page with `pq.play(audio)` — see the {doc}`notebook template <template-notebook>`.
 
 ## 5. Mathematics
 
@@ -273,20 +273,20 @@ A **labeled, numbered** equation, referenced inline with `` {eq}`eq-euler-md` ``
 Source:
 
 ````markdown
-```{math}
+:::{math}
 :label: eq-euler-md
 e^{i\pi} + 1 = 0
-```
+:::
 
 …see equation {eq}`eq-euler-md`.
 ````
 
 Rendered:
 
-```{math}
+:::{math}
 :label: eq-euler-md
 e^{i\pi} + 1 = 0
-```
+:::
 
 …see equation {eq}`eq-euler-md`.
 
@@ -347,23 +347,23 @@ The `{figure}` directive adds a caption and a label you can cross-reference.
 Source:
 
 ````markdown
-```{figure} images/template-waveform.png
+:::{figure} images/template-waveform.png
 :name: fig-waveform-md
 :width: 80%
 
 A caption. Reference it with `{numref}` for an auto-numbered link.
-```
+:::
 ````
 
 renders as:
 
-```{figure} images/template-waveform.png
+:::{figure} images/template-waveform.png
 :name: fig-waveform-md
 :width: 80%
 :align: center
 
 A sine waveform — a static image stored in `content/images/`.
-```
+:::
 
 See {numref}`fig-waveform-md` for an auto-numbered link.
 
@@ -395,7 +395,7 @@ label).
 Source:
 
 ````markdown
-```{list-table} Synthesis methods
+:::{list-table} Synthesis methods
 :header-rows: 1
 :name: tbl-methods-md
 
@@ -405,12 +405,12 @@ Source:
   - Sum sinusoids
 * - Subtractive
   - Filter a harmonically rich source
-```
+:::
 ````
 
 Rendered:
 
-```{list-table} Synthesis methods
+:::{list-table} Synthesis methods
 :header-rows: 1
 :name: tbl-methods-md
 
@@ -420,33 +420,33 @@ Rendered:
   - Sum sinusoids
 * - Subtractive
   - Filter a harmonically rich source
-```
+:::
 
 The `{csv-table}` directive.
 
 Source:
 
 ````markdown
-```{csv-table} Common sample rates
+:::{csv-table} Common sample rates
 :header-rows: 1
 
 Use, Rate (Hz)
 Telephone, 8000
 CD audio, 44100
 Studio, 48000
-```
+:::
 ````
 
 Rendered:
 
-```{csv-table} Common sample rates
+:::{csv-table} Common sample rates
 :header-rows: 1
 
 Use, Rate (Hz)
 Telephone, 8000
 CD audio, 44100
 Studio, 48000
-```
+:::
 
 ## 9. Cross-references and citations
 
@@ -567,46 +567,46 @@ The `sphinx-proof` extension provides `{prf:theorem}`, `{prf:proof}`,
 Source:
 
 `````markdown
-```{prf:definition} Sample rate
+:::{prf:definition} Sample rate
 :label: def-sample-rate-md
 The **sample rate** is the number of samples stored per second of audio.
-```
+:::
 
-```{prf:theorem} Nyquist–Shannon sampling theorem
+:::{prf:theorem} Nyquist–Shannon sampling theorem
 :label: thm-nyquist-md
 A signal containing no frequencies above $f_\text{max}$ is fully determined by
 samples taken at a rate $f_s > 2\,f_\text{max}$.
-```
+:::
 
-```{prf:proof}
+:::{prf:proof}
 A full proof is omitted in this template; see any signal-processing text.
-```
+:::
 
-```{prf:example}
+:::{prf:example}
 At $f_s = 44100$ Hz, frequencies up to $22050$ Hz can be represented.
-```
+:::
 `````
 
 Rendered:
 
-```{prf:definition} Sample rate
+:::{prf:definition} Sample rate
 :label: def-sample-rate-md
 The **sample rate** is the number of samples stored per second of audio.
-```
+:::
 
-```{prf:theorem} Nyquist–Shannon sampling theorem
+:::{prf:theorem} Nyquist–Shannon sampling theorem
 :label: thm-nyquist-md
 A signal containing no frequencies above $f_\text{max}$ is fully determined by
 samples taken at a rate $f_s > 2\,f_\text{max}$.
-```
+:::
 
-```{prf:proof}
+:::{prf:proof}
 A full proof is omitted in this template; see any signal-processing text.
-```
+:::
 
-```{prf:example}
+:::{prf:example}
 At $f_s = 44100$ Hz, frequencies up to $22050$ Hz can be represented.
-```
+:::
 
 ## 14. Panels: tabs, cards, dropdowns, buttons
 
@@ -617,58 +617,58 @@ These come from the `sphinx-design` extension.
 Source:
 
 `````markdown
-````{tab-set}
-```{tab-item} macOS
+::::{tab-set}
+:::{tab-item} macOS
 `brew install ...`, then `pip install ...`
-```
-```{tab-item} Linux
+:::
+:::{tab-item} Linux
 `apt install ...`, then `pip install ...`
-```
-```{tab-item} Windows
+:::
+:::{tab-item} Windows
 Use Command Prompt with `py -m pip install ...`
-```
-````
+:::
+::::
 `````
 
 Rendered:
 
-````{tab-set}
-```{tab-item} macOS
+::::{tab-set}
+:::{tab-item} macOS
 `brew install ...`, then `pip install ...`
-```
-```{tab-item} Linux
+:::
+:::{tab-item} Linux
 `apt install ...`, then `pip install ...`
-```
-```{tab-item} Windows
+:::
+:::{tab-item} Windows
 Use Command Prompt with `py -m pip install ...`
-```
-````
+:::
+::::
 
 **Card grid** (responsive: 1 column on phones, 2 on wide screens).
 
 Source:
 
 `````markdown
-````{grid} 1 1 2 2
-```{grid-item-card} Synthesis
+::::{grid} 1 1 2 2
+:::{grid-item-card} Synthesis
 Generate sound from scratch.
-```
-```{grid-item-card} Analysis
+:::
+:::{grid-item-card} Analysis
 Measure and visualize sound.
-```
-````
+:::
+::::
 `````
 
 Rendered:
 
-````{grid} 1 1 2 2
-```{grid-item-card} Synthesis
+::::{grid} 1 1 2 2
+:::{grid-item-card} Synthesis
 Generate sound from scratch.
-```
-```{grid-item-card} Analysis
+:::
+:::{grid-item-card} Analysis
 Measure and visualize sound.
-```
-````
+:::
+::::
 
 **Dropdown.**
 
@@ -691,11 +691,11 @@ The answer stays hidden until the reader clicks.
 Source:
 
 ````markdown
-```{button-link} https://pyquist.org
+:::{button-link} https://pyquist.org
 :color: primary
 :expand:
 Open the Pyquist documentation
-```
+:::
 
 Inline badges: {bdg-primary}`primary` {bdg-secondary}`secondary`
 {bdg-success}`success` {bdg-danger}`danger`.
@@ -703,11 +703,11 @@ Inline badges: {bdg-primary}`primary` {bdg-secondary}`secondary`
 
 Rendered:
 
-```{button-link} https://pyquist.org
+:::{button-link} https://pyquist.org
 :color: primary
 :expand:
 Open the Pyquist documentation
-```
+:::
 
 Inline badges: {bdg-primary}`primary` {bdg-secondary}`secondary`
 {bdg-success}`success` {bdg-danger}`danger`.
@@ -746,5 +746,5 @@ reference, not course content.
 
 :::{seealso}
 For pages that need to execute {{ pyquist }} code at build time, start from
-the {doc}`notebook template <template>` instead.
+the {doc}`notebook template <template-notebook>` instead.
 :::
