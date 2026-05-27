@@ -1,8 +1,8 @@
 # Mathematical background
 
-```{note}
+:::{note}
 Placeholder. Fill in concise refreshers for the math used in the book.
-```
+:::
 
 ## Topics to cover
 

@@ -30,11 +30,11 @@ Markdown cells inside a notebook understand the **same MyST syntax** as a `.md`
 file, so a notebook is a strict superset: everything in this template also
 works inside a notebook.
 
-```{important}
+:::{important}
 If your page needs to *execute* {{ pyquist }} code, author it as a notebook
 instead. See the {doc}`notebook template <template>` for the full set of
 notebook-only features.
-```
+:::
 
 ## 2. Text formatting
 
@@ -142,78 +142,78 @@ Admonitions are colored callout boxes. Swap `note` for `tip`, `important`,
 Source:
 
 `````markdown
-```{note}
+:::{note}
 A **note** — neutral, supporting information.
-```
+:::
 
-```{tip}
+:::{tip}
 A **tip** — practical advice.
-```
+:::
 
-```{important}
+:::{important}
 **Important** — do not miss this.
-```
+:::
 
-```{warning}
+:::{warning}
 A **warning** — something that can go wrong.
-```
+:::
 
-```{seealso}
+:::{seealso}
 A **see-also** — a pointer to related material, e.g. the
 {doc}`Pyquist reference <pyquist/Overview>`.
-```
+:::
 
-```{admonition} Custom title
+:::{admonition} Custom title
 :class: hint
 The generic `{admonition}` directive takes a custom title and any color class.
-```
+:::
 `````
 
 Rendered:
 
-```{note}
+:::{note}
 A **note** — neutral, supporting information.
-```
+:::
 
-```{tip}
+:::{tip}
 A **tip** — practical advice.
-```
+:::
 
-```{important}
+:::{important}
 **Important** — do not miss this.
-```
+:::
 
-```{warning}
+:::{warning}
 A **warning** — something that can go wrong.
-```
+:::
 
-```{seealso}
+:::{seealso}
 A **see-also** — a pointer to related material, e.g. the
 {doc}`Pyquist reference <pyquist/Overview>`.
-```
+:::
 
-```{admonition} Custom title
+:::{admonition} Custom title
 :class: hint
 The generic `{admonition}` directive takes a custom title and any color class.
-```
+:::
 
 A **collapsible** admonition (`:class: dropdown`).
 
 Source:
 
 ````markdown
-```{admonition} Click to expand
+:::{admonition} Click to expand
 :class: dropdown note
 Hidden until the reader clicks.
-```
+:::
 ````
 
 Rendered:
 
-```{admonition} Click to expand
+:::{admonition} Click to expand
 :class: dropdown note
 Hidden until the reader clicks.
-```
+:::
 
 ### 4.1 Audio examples — the `listen` pattern
 
@@ -222,22 +222,22 @@ For short audio clips shipped alongside a chapter (a recorded sample, a pre-rend
 Source:
 
 ````markdown
-```{admonition} 🔊 Listen
+:::{admonition} 🔊 Listen
 :class: note listen
 <audio controls src="./assets/your-clip.wav"></audio>
 
 Caption text with `code`, $math$, and [links](https://example.com) — markdown works inside admonitions.
-```
+:::
 ````
 
 Rendered (using `./ch01/assets/audio-sine-440.wav`):
 
-```{admonition} 🔊 Listen
+:::{admonition} 🔊 Listen
 :class: note listen
 <audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
 
 A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
-```
+:::
 
 For audio *generated* at build time by executable Pyquist code, use a notebook
 page with `pq.play(audio)` — see the {doc}`notebook template <template>`.
@@ -336,10 +336,10 @@ def gain(audio, factor):
     return audio
 ```
 
-```{important}
+:::{important}
 In a `.md` file, code blocks are **always** display-only. To run code at build
 time, author the page as a notebook instead.
-```
+:::
 
 ## 7. Figures and images
 
@@ -486,30 +486,30 @@ The `{margin}` directive (from `sphinx-book-theme`) pushes a block into the
 right margin, aligned with the paragraph it follows. Use it for short asides,
 side figures, or callouts that shouldn't break the flow of the main text.
 
-```{important}
+:::{important}
 Because margin blocks float out of the normal flow, they appear **beside the
 paragraph that immediately follows them**, not below a "Rendered:" label. The
 example below has a dedicated anchor paragraph so the margin content lines up
 correctly.
-```
+:::
 
 Source:
 
 ````markdown
-```{margin} An aside
+:::{margin} An aside
 The {{ pyquist }} library is named after Harry Nyquist (1889–1976), whose
 sampling theorem underpins all of digital audio.
-```
+:::
 
 Rendered → look to the right of *this* paragraph. The margin block sits next
 to the paragraph that follows its source. Keep the anchor paragraph at least
 as tall as the margin content so the next section isn't displaced.
 ````
 
-```{margin} An aside
+:::{margin} An aside
 The {{ pyquist }} library is named after Harry Nyquist (1889–1976), whose
 sampling theorem underpins all of digital audio.
-```
+:::
 
 Rendered → look to the right of *this* paragraph. The margin block sits next
 to the paragraph that follows its source. Keep the anchor paragraph at least
@@ -523,41 +523,41 @@ for side illustrations that comment on the body text without interrupting it.
 The `sphinx-exercise` extension provides `{exercise}` and `{solution}`. Source:
 
 ````markdown
-```{exercise}
+:::{exercise}
 :label: ex-demo-md
 State the Nyquist frequency for a 48 kHz sample rate.
-```
+:::
 
-```{solution} ex-demo-md
+:::{solution} ex-demo-md
 :class: dropdown
 24 kHz — half the sample rate.
-```
+:::
 ````
 
 renders as:
 
-```{exercise}
+:::{exercise}
 :label: ex-demo-md
 State the Nyquist frequency for a 48 kHz sample rate.
-```
+:::
 
-```{solution} ex-demo-md
+:::{solution} ex-demo-md
 :class: dropdown
 24 kHz — half the sample rate.
-```
+:::
 
 A **gated** exercise (`{exercise-start}` … `{exercise-end}`) can wrap several
 blocks:
 
-```{exercise-start}
+:::{exercise-start}
 :label: ex-gated-md
-```
+:::
 
 Describe the spectrum of a 330 Hz sawtooth wave. Which harmonics are present,
 and how do their amplitudes fall off?
 
-```{exercise-end}
-```
+:::{exercise-end}
+:::
 
 ## 13. Theorems, proofs, and definitions
 
@@ -675,16 +675,16 @@ Measure and visualize sound.
 Source:
 
 ````markdown
-```{dropdown} Show the answer
+:::{dropdown} Show the answer
 The answer stays hidden until the reader clicks.
-```
+:::
 ````
 
 Rendered:
 
-```{dropdown} Show the answer
+:::{dropdown} Show the answer
 The answer stays hidden until the reader clicks.
-```
+:::
 
 **Button and badges.**
 
@@ -738,13 +738,13 @@ To start a new prose-only chapter:
 3. Register it in `_toc.yml`.
 4. Replace the content with your own.
 
-```{admonition} Before publishing
+:::{admonition} Before publishing
 :class: warning
 Remove this **Markdown Template** page from `_toc.yml` — it is an author
 reference, not course content.
-```
+:::
 
-```{seealso}
+:::{seealso}
 For pages that need to execute {{ pyquist }} code at build time, start from
 the {doc}`notebook template <template>` instead.
-```
+:::

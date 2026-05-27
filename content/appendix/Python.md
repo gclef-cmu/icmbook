@@ -1,8 +1,8 @@
 # Python background
 
-```{note}
+:::{note}
 Placeholder. Summarize the Python knowledge assumed by the code examples.
-```
+:::
 
 ## What you should know
 

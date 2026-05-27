@@ -1,9 +1,9 @@
 # Home
 
-```{note}
+:::{note}
 This course site is a working outline for **15-322 / 15-622 Introduction to
 Computer Music**. Replace the TODO items as course details are finalized.
-```
+:::
 
 ## Course at a glance
 
