@@ -32,6 +32,15 @@ parts:
           - file: content/ch02/04
           - file: content/ch02/05
           - file: content/ch02/06
+      - file: content/ch03/index
+        sections:
+          - file: content/ch03/00
+          - file: content/ch03/01
+          - file: content/ch03/02
+          - file: content/ch03/03
+          - file: content/ch03/04
+          - file: content/ch03/05
+          - file: content/ch03/06
 
   - chapters:
       - file: content/course/index
@@ -57,5 +66,6 @@ parts:
               - file: content/appendix/Math
               - file: content/appendix/Python
           - file: content/references
+          - file: content/glossary
           - file: content/errata
           - file: content/license

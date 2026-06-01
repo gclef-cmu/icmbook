@@ -399,6 +399,106 @@ html[data-theme="dark"] {
   font-weight: normal;
 }
 
+/* ======================================================================
+   GLOSSARY
+   The Glossary page is regrouped into A–Z sections by a build-time
+   transform (_ext/icm_glossary.py), mirroring Sphinx's back-of-book
+   `genindex`. These rules style the sticky alphabet jump bar, the big
+   letter headings, and the dictionary-style term / definition layout,
+   all in the book's Carnegie-red / Palatino house style.
+   ====================================================================== */
+
+/* ---- A–Z jump bar: sticks just below the top header while scrolling --- */
+.bd-article .glossary-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 1.25rem 0 2rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--icm-box-bg);
+  border: 1px solid var(--icm-box-border);
+  border-radius: 6px;
+  position: sticky;
+  top: 0.5rem;
+  z-index: 2;
+}
+
+/* Each letter is a square chip. Present letters are solid Carnegie-red
+   links; absent letters are greyed out and inert. */
+.bd-article .glossary-nav-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 4px;
+  font-family: var(--icm-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  user-select: none;
+}
+
+.bd-article a.glossary-nav-letter {
+  color: #fff !important;
+  background: var(--icm-accent);
+  transition: background 0.12s ease;
+}
+.bd-article a.glossary-nav-letter:hover {
+  background: var(--cmu-red-dark);
+}
+html[data-theme="dark"] .bd-article a.glossary-nav-letter {
+  color: #1a1d23 !important;
+}
+.bd-article .glossary-nav-letter.is-empty {
+  color: var(--pst-color-text-muted);
+  background: transparent;
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---- Big per-letter section headings --------------------------------- */
+.bd-article p.rubric.glossary-letter-heading {
+  font-family: var(--icm-serif);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--pst-color-primary);
+  border-bottom: 2px solid var(--icm-box-border);
+  margin: 1.9rem 0 0.6rem;
+  padding-bottom: 0.15rem;
+  scroll-margin-top: 3.5rem;   /* keep heading clear of the sticky bar on jump */
+}
+
+/* ---- Dictionary-style term / definition layout ----------------------- */
+.bd-article dl.glossary.glossary-letter-group {
+  margin-bottom: 0.5rem;
+}
+.bd-article dl.glossary > dt {
+  font-family: var(--icm-serif);
+  font-weight: 700;
+  font-size: 1.06rem;
+  color: var(--pst-color-text-base);
+  margin-top: 0.7rem;
+}
+/* Capitalize the headword's first letter (display only) so entries read as
+   dictionary headwords — "additive synthesis" -> "Additive synthesis" — while
+   the source term stays lowercase, keeping {vocab} prose and term ids intact. */
+.bd-article dl.glossary > dt::first-letter {
+  text-transform: uppercase;
+}
+.bd-article dl.glossary > dt .headerlink {
+  color: var(--pst-color-text-muted);
+  font-weight: normal;
+}
+.bd-article dl.glossary > dd {
+  margin: 0.1rem 0 0.4rem 1.4rem;
+}
+.bd-article dl.glossary > dd p {
+  text-align: left;
+  hyphens: manual;
+}
+
 /* ---- Misc utilities -------------------------------------------------- */
 .left {
   margin: 5px 2px 2px 0 !important;

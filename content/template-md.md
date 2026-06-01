@@ -50,6 +50,10 @@ abbreviation shows its meaning on hover.
 
 > A blockquote — use it for short asides or quotations.
 
+A horizontal rule follows:
+
+---
+
 Inline math such as $f = 440\,\text{Hz}$ flows inside running text.
 ````
 
@@ -215,7 +219,12 @@ Rendered:
 Hidden until the reader clicks.
 :::
 
-### 4.1 Audio examples — the `listen` pattern
+## 5. Audio
+
+MyST has no native audio directive, so the book defines two conventions for it:
+a single-clip `listen` callout, and a multimodal grid of audio/image pairs.
+
+### 5.1 Audio examples — the `listen` pattern
 
 For short audio clips shipped alongside a chapter (a recorded sample, a pre-rendered WAV), wrap an `<audio>` tag in a custom `{admonition}` with `:class: note listen`. The book ships dedicated CSS for the `listen` class — it swaps the theme's default info glyph for the 🔊 emoji you put in the title, reclaims the icon's reserved left padding, and balances the vertical spacing around the audio player.
 
@@ -224,13 +233,13 @@ Source:
 ````markdown
 :::{admonition} 🔊 Listen
 :class: note listen
-<audio controls src="./assets/your-clip.wav"></audio>
+<audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
 
-Caption text with `code`, $math$, and [links](https://example.com) — markdown works inside admonitions.
+A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 :::
 ````
 
-Rendered (using `./ch01/assets/audio-sine-440.wav`):
+Rendered:
 
 :::{admonition} 🔊 Listen
 :class: note listen
@@ -242,7 +251,49 @@ A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 For audio *generated* at build time by executable Pyquist code, use a notebook
 page with `pq.play(audio)` — see the {doc}`notebook template <template-notebook>`.
 
-## 5. Mathematics
+### 5.2 Audio + image pairs — the multimodal grid
+
+To present a series of audio/image pairs under a single shared caption — say, to
+compare several sounds against their waveforms — wrap raw `<audio>`/`<img>` pairs
+in a `{grid}` (the same `sphinx-design` directive shown in §15) and follow it
+with one caption. There is no native audio directive, so the players and images
+are written as plain HTML, which MyST passes straight through.
+
+Source:
+
+````markdown
+::::{grid} 1 1 2 2
+:::{grid-item}
+<audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
+<img src="./ch01/assets/fig-sine-amplitude.png" alt="A clean sine waveform" width="100%">
+:::
+:::{grid-item}
+<audio controls src="./ch01/assets/audio-clipped-sine.wav"></audio>
+<img src="./ch01/assets/fig-clipping.png" alt="A clipped sine waveform" width="100%">
+:::
+::::
+
+*A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
+compare its waveform.*
+````
+
+Rendered:
+
+::::{grid} 1 1 2 2
+:::{grid-item}
+<audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
+<img src="./ch01/assets/fig-sine-amplitude.png" alt="A clean sine waveform" width="100%">
+:::
+:::{grid-item}
+<audio controls src="./ch01/assets/audio-clipped-sine.wav"></audio>
+<img src="./ch01/assets/fig-clipping.png" alt="A clipped sine waveform" width="100%">
+:::
+::::
+
+*A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
+compare its waveform.*
+
+## 6. Mathematics
 
 **Inline and display math.**
 
@@ -315,7 +366,7 @@ $$
 Colored terms, using the macros defined in `_config.yml`:
 `$\blue{a} + \red{b} = \green{c}$` → $\blue{a} + \red{b} = \green{c}$.
 
-## 6. Code blocks (not executed)
+## 7. Code blocks (not executed)
 
 A plain fenced block is shown with syntax highlighting but **not run**:
 
@@ -341,7 +392,7 @@ In a `.md` file, code blocks are **always** display-only. To run code at build
 time, author the page as a notebook instead.
 :::
 
-## 7. Figures and images
+## 8. Figures and images
 
 The `{figure}` directive adds a caption and a label you can cross-reference.
 Source:
@@ -350,9 +401,12 @@ Source:
 :::{figure} images/template-waveform.png
 :name: fig-waveform-md
 :width: 80%
+:align: center
 
-A caption. Reference it with `{numref}` for an auto-numbered link.
+A sine waveform — a static image stored in `content/images/`.
 :::
+
+See {numref}`fig-waveform-md` for an auto-numbered link.
 ````
 
 renders as:
@@ -367,7 +421,7 @@ A sine waveform — a static image stored in `content/images/`.
 
 See {numref}`fig-waveform-md` for an auto-numbered link.
 
-## 8. Tables
+## 9. Tables
 
 A plain Markdown table.
 
@@ -448,7 +502,7 @@ CD audio, 44100
 Studio, 48000
 :::
 
-## 9. Cross-references and citations
+## 10. Cross-references and citations
 
 | Target | Role | Live example |
 | ------ | ---- | ------------ |
@@ -462,7 +516,7 @@ Studio, 48000
 `` {cite}`dannenberg1997machine` `` → {cite}`dannenberg1997machine`. Every
 citation is collected automatically on the {doc}`References <references>` page.
 
-## 10. Footnotes
+## 11. Footnotes
 
 Footnotes attach a small reference that collects at the foot of the page.
 
@@ -480,7 +534,7 @@ Footnotes attach a small reference[^demo] that collects at the foot of the page.
 
 [^demo]: This is the footnote text. Footnotes suit asides and source notes.
 
-## 11. Margin content
+## 12. Margin content
 
 The `{margin}` directive (from `sphinx-book-theme`) pushes a block into the
 right margin, aligned with the paragraph it follows. Use it for short asides,
@@ -518,7 +572,7 @@ as tall as the margin content so the next section isn't displaced.
 You can also push a `{figure}` to the margin by adding `:class: margin` — handy
 for side illustrations that comment on the body text without interrupting it.
 
-## 12. Exercises and solutions
+## 13. Exercises and solutions
 
 The `sphinx-exercise` extension provides `{exercise}` and `{solution}`. Source:
 
@@ -559,7 +613,7 @@ and how do their amplitudes fall off?
 :::{exercise-end}
 :::
 
-## 13. Theorems, proofs, and definitions
+## 14. Theorems, proofs, and definitions
 
 The `sphinx-proof` extension provides `{prf:theorem}`, `{prf:proof}`,
 `{prf:definition}`, `{prf:lemma}`, `{prf:example}`, and `{prf:algorithm}`.
@@ -608,7 +662,7 @@ A full proof is omitted in this template; see any signal-processing text.
 At $f_s = 44100$ Hz, frequencies up to $22050$ Hz can be represented.
 :::
 
-## 14. Panels: tabs, cards, dropdowns, buttons
+## 15. Panels: tabs, cards, dropdowns, buttons
 
 These come from the `sphinx-design` extension.
 
@@ -712,7 +766,7 @@ Open the Pyquist documentation
 Inline badges: {bdg-primary}`primary` {bdg-secondary}`secondary`
 {bdg-success}`success` {bdg-danger}`danger`.
 
-## 15. Substitutions
+## 16. Substitutions
 
 Substitutions are reusable snippets defined once in `_config.yml` and inserted
 with `{{ name }}`. This book defines, among others, `{{ course }}`.
@@ -729,7 +783,7 @@ Rendered:
 
 Edit `myst_substitutions` in `_config.yml` to add your own.
 
-## 16. Using this template
+## 17. Using this template
 
 To start a new prose-only chapter:
 
@@ -748,3 +802,36 @@ reference, not course content.
 For pages that need to execute {{ pyquist }} code at build time, start from
 the {doc}`notebook template <template-notebook>` instead.
 :::
+
+## 18. Custom roles: vocabulary and units
+
+Two book-specific inline roles for the book's house style.
+
+Use `{vocab}` when introducing a term for the first time. It italicizes the term
+and links it to its definition in the {doc}`Glossary <glossary>`.
+
+Source:
+
+````markdown
+A signal is {vocab}`periodic` if it repeats.
+````
+
+Rendered:
+
+A signal is {vocab}`periodic` if it repeats.
+
+Use `{unit}` to typeset units. One argument renders a single unit; two render a
+fraction (numerator over denominator). Separate the two with a comma or a slash
+— `` {unit}`cycles,second` `` and `` {unit}`cycles/second` `` are equivalent.
+
+Source:
+
+````markdown
+The fundamental period is measured in {unit}`seconds/cycle`, frequency in
+{unit}`cycles,second`, and an angle in {unit}`radians`.
+````
+
+Rendered:
+
+The fundamental period is measured in {unit}`seconds/cycle`, frequency in
+{unit}`cycles,second`, and an angle in {unit}`radians`.

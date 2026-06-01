@@ -1,1 +1,1 @@
-# 0. Computer Music
+# 0. Motivating Computer Music

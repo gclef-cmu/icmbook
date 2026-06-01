@@ -5,9 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
-  # Nightly rebuild — picks up upstream Pyquist changes automatically.
-  schedule:
-    - cron: "22 8 * * *"   # 15-322 ;)
+  # Builds are deterministic: Pyquist is a pinned git submodule, so the book
+  # only changes when the repo does. Pull upstream Pyquist deliberately with
+  # `git submodule update --remote pyquist && git commit`, which triggers the
+  # `push` build above.
 
 permissions:
   contents: read
@@ -29,6 +30,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        # NOTE: do NOT set `submodules: true` here. This repo has two
+        # submodules — `pyquist/` (public) and `icm-text/` (a PRIVATE fork in a
+        # different repo). The default GITHUB_TOKEN can't read the private one,
+        # so `submodules: true` would fail. The build doesn't need icm-text
+        # anyway: its prose is already split into the committed content/ch*/
+        # files. We fetch only pyquist below.
+
+      # The build only needs the pyquist submodule (autodoc introspects it).
+      # Override its URL to HTTPS so the public repo clones without an SSH key,
+      # and init *only* pyquist — never the private icm-text fork.
+      - name: Fetch pyquist submodule (public, over HTTPS)
+        run: |
+          git config submodule.pyquist.url https://github.com/gclef-cmu/pyquist.git
+          git submodule update --init pyquist
 
       # Pyquist's `device` module imports `sounddevice`, which dlopens the
       # PortAudio C library at import time. autodoc imports every module it
@@ -49,16 +64,12 @@ jobs:
           channel-priority: strict
           conda-remove-defaults: "true"
 
-      # The autodoc-driven API pages under content/pyquist/api/ pull their
-      # content from the installed pyquist package, so every build needs the
-      # latest commit. The env file pins pyquist to its git URL; this step
-      # force-reinstalls from HEAD so a cached wheel can't shadow a new
-      # docstring or signature on a nightly run.
-      - name: Refresh Pyquist from latest source
+      # Confirm the autodoc-driven API pages will introspect the submodule
+      # checkout (environment.yml installs it editable as `-e ./pyquist`),
+      # not a stray copy from a wheel cache.
+      - name: Verify Pyquist resolves to the submodule
         run: |
-          pip install --upgrade --force-reinstall --no-deps \
-            git+https://github.com/gclef-cmu/pyquist.git
-          python -c "import pyquist, os; print('pyquist at', os.path.dirname(pyquist.__file__))"
+          python -c "import pyquist; print('pyquist at', pyquist.__path__[0])"
 
       - name: Build the book
         run: make book

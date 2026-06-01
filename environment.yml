@@ -25,5 +25,9 @@ dependencies:
   - pip:
       - sphinxcontrib-svg2pdfconverter
       # Pyquist: the course audio library. Needed to execute notebook pages
-      # (e.g. content/Template.ipynb) at build time.
-      - git+https://github.com/gclef-cmu/pyquist.git
+      # (e.g. content/Template.ipynb) at build time, and introspected by
+      # Sphinx autodoc to generate content/pyquist/api/*.md. Installed from
+      # the pinned `pyquist/` git submodule (see .gitmodules) rather than
+      # tracking upstream main. Run `git submodule update --init` after
+      # cloning, and `git submodule update --remote pyquist` to bump it.
+      - -e ./pyquist

@@ -67,6 +67,12 @@ sphinx:
     - sphinx.ext.autodoc
     - sphinx.ext.napoleon
     - sphinx.ext.viewcode
+  # Book-specific extensions:
+  #   icm_roles    — inline roles ({vocab}, {unit}); source in _ext/icm_roles.py
+  #   icm_glossary — groups the Glossary into an A–Z index; _ext/icm_glossary.py
+  local_extensions:
+    icm_roles: _ext/
+    icm_glossary: _ext/
   config:
     # Only auto-linkify strings that include an explicit URL scheme
     # (e.g. https://example.com). Without this, MyST's "fuzzy" linkify
