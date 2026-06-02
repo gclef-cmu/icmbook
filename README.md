@@ -86,7 +86,7 @@ fetches `icm-text/`.
 ```
 icm-text/    chapter prose (private submodule, source of truth)
 pyquist/     audio library (public submodule)
-tools/       split_pure_md.py / merge_pure_md.py
+tools/       split_chapters.py / merge_chapters.py
 content/     rendered book — chNN/, course/, appendix/, pyquist/, templates
 _config.yml  Jupyter Book config
 _toc.yml     table of contents

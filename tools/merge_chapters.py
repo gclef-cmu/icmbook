@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Combine content/ch{nn}/ section files back into {n}-{slug}/index.md chapters.
 
-This is the inverse of tools/split_pure_md.py. It re-assembles the hand-edited
+This is the inverse of tools/split_chapters.py. It re-assembles the hand-edited
 per-section files in content/ back into the chapter-level layout used by the
 icm-text repo, so the diff can be PR'd up to icm-text.
 
@@ -26,7 +26,7 @@ REPO = Path(__file__).resolve().parent.parent
 SOURCE = REPO / "icm-text"  # ground-truth prose, pinned git submodule
 CONTENT = REPO / "content"
 
-from split_pure_md import (  # noqa: E402
+from split_chapters import (  # noqa: E402
     FENCE_RE,
     HEADING_RE,
     split_chapter as split_one_chapter,
@@ -40,7 +40,7 @@ SECTION_FILE_RE = re.compile(r"^\d{2}\.md$")
 def promote_headings(text: str) -> str:
     """Promote markdown headings by one level (# -> ##, ## -> ###, ...).
 
-    Inverse of split_pure_md.demote_headings. Respects fenced code blocks so
+    Inverse of split_chapters.demote_headings. Respects fenced code blocks so
     `#`-comments inside ```python``` aren't touched. Headings already at
     level 6 are left alone (can't go deeper).
     """
@@ -166,7 +166,7 @@ def roundtrip_check(merged_root: Path, results: list[dict]) -> None:
         tmp_content = Path(tmp) / "content"
         tmp_content.mkdir()
         # Temporarily redirect the splitter's CONTENT and SOURCE globals.
-        import split_pure_md as sp
+        import split_chapters as sp
 
         orig_source, orig_content = sp.SOURCE, sp.CONTENT
         sp.SOURCE, sp.CONTENT = merged_root, tmp_content

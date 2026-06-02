@@ -166,9 +166,49 @@ class AudioRole(SphinxRole):
         return [button, *_label_nodes(label)], []
 
 
+class ClassContainerDirective(Directive):
+    """A ``<div>`` carrying a fixed CSS class, with a Markdown body.
+
+    Backs the audio-grid wrappers — ``:::{audio-figure}``, ``:::{audio-board}``,
+    ``:::{audio-list}`` — so they author with the same braced ``:::{name}`` fence
+    as every other directive instead of the brace-less ``:::name`` colon-fence
+    div. It reproduces exactly what MyST's ``colon_fence`` emitted for that
+    brace-less form: a ``container`` node flagged ``is_div`` (so the HTML writer
+    drops the generic ``container`` class) with the wrapper name appended to its
+    classes. The rendered DOM — and the ``_static/custom.css`` styling keyed on
+    it — is therefore unchanged. The body (one ``{audio}`` clip per paragraph,
+    then a shared caption paragraph) is parsed as Markdown so the inline
+    ``{audio}`` roles and images render normally.
+    """
+
+    has_content = True
+    css_class = ""  # set per registration (see ``setup``)
+
+    def run(self):
+        node = nodes.container(is_div=True)
+        node["classes"].append(self.css_class)
+        self.state.nested_parse(self.content, self.content_offset, node)
+        return [node]
+
+
+# The audio-grid wrappers, registered as directives so authors write
+# ``:::{audio-figure}`` (etc.) with the same braced fence as every other
+# directive. The split tool emits these names too (tools/split_chapters.py).
+_GRID_WRAPPERS = ("audio-figure", "audio-board", "audio-list")
+
+
 def setup(app: Sphinx) -> dict:
     app.add_directive("audio", AudioDirective)
     app.add_role("audio", AudioRole())
+    for css_class in _GRID_WRAPPERS:
+        app.add_directive(
+            css_class,
+            type(
+                f"{css_class.replace('-', '_')}_directive",
+                (ClassContainerDirective,),
+                {"css_class": css_class},
+            ),
+        )
     return {
         "version": "0.1",
         "parallel_read_safe": True,

@@ -11,18 +11,21 @@ all: book
 # icm-text/ is the pinned ground-truth prose submodule. Run this MANUALLY when
 # you want to pull the latest prose into content/ (bump the submodule first
 # with `git submodule update --remote icm-text` to advance the pin).
+# It also mirrors icm-text/refs.bib (the professor's ground-truth bibliography)
+# into content/references.bib, so citations resolve against the upstream entries.
 # WARNING: it wipes content/ch*/ entirely, dropping any local styling
-# overrides (figure refactors, admonition wrappers, margin notes). Use
-# `git diff content/` afterwards to review and re-apply your styling.
+# overrides (figure refactors, admonition wrappers, margin notes), and
+# overwrites content/references.bib. Use `git diff content/` afterwards to
+# review and re-apply your styling.
 split:
-	python3 tools/split_pure_md.py
+	python3 tools/split_chapters.py
 
 # Inverse of split: combines content/ch{nn}/ section files back into chapter-
 # level icm-text-merged/{n}-{slug}/index.md files matching the icm-text layout,
 # for preparing a PR up to icm-text. Includes a round-trip self-check that
 # fails if the rendered site would change.
 merge:
-	python3 tools/merge_pure_md.py
+	python3 tools/merge_chapters.py
 
 # Mirror the Pyquist README into content/pyquist/Overview.md from the
 # pinned `pyquist/` git submodule. Runs on every `make book` so the

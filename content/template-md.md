@@ -274,7 +274,7 @@ automatically: `audio-figure` if every clip has its own image, `audio-board` if
 the clips share a standalone image, else `audio-list`.) Source:
 
 ````markdown
-:::audio-figure
+:::{audio-figure}
 {audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
 
 {audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
@@ -285,7 +285,7 @@ A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
 
 Rendered:
 
-:::audio-figure
+:::{audio-figure}
 {audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
 
 {audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
@@ -296,7 +296,7 @@ A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
 A text-only list of examples uses `audio-list` instead:
 
 ````markdown
-:::audio-list
+:::{audio-list}
 {audio}`A clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>`
 
 {audio}`The same tone, hard-clipped <./ch01/assets/audio-clipped-sine.wav>`
@@ -307,7 +307,7 @@ Two tones to compare by ear.
 
 Rendered:
 
-:::audio-list
+:::{audio-list}
 {audio}`A clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>`
 
 {audio}`The same tone, hard-clipped <./ch01/assets/audio-clipped-sine.wav>`
@@ -406,14 +406,14 @@ audio = pq.Audio(samples, sample_rate=44100)
 
 The `{code-block}` directive adds line numbers and line emphasis:
 
-```{code-block} python
+:::{code-block} python
 :linenos:
 :emphasize-lines: 2
 
 def gain(audio, factor):
     audio.samples *= factor      # the emphasized line
     return audio
-```
+:::
 
 :::{important}
 In a `.md` file, code blocks are **always** display-only. To run code at build
@@ -869,17 +869,16 @@ Rendered:
 A signal is {vocab}`periodic` if it repeats.
 
 Use `{unit}` to typeset units. One argument renders a single unit; two render a
-fraction (numerator over denominator). Separate the two with a comma or a slash
-— `` {unit}`cycles,second` `` and `` {unit}`cycles/second` `` are equivalent.
+fraction (numerator over denominator), with the two separated by a comma.
 
 Source:
 
 ````markdown
-The fundamental period is measured in {unit}`seconds/cycle`, frequency in
+The fundamental period is measured in {unit}`seconds,cycle`, frequency in
 {unit}`cycles,second`, and an angle in {unit}`radians`.
 ````
 
 Rendered:
 
-The fundamental period is measured in {unit}`seconds/cycle`, frequency in
+The fundamental period is measured in {unit}`seconds,cycle`, frequency in
 {unit}`cycles,second`, and an angle in {unit}`radians`.
