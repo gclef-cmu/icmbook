@@ -512,6 +512,154 @@ p.caption {
 }
 
 /* ======================================================================
+   INLINE AUDIO ({audio} role) + AUDIO-FIGURE grids
+   `` {audio}`label <url>` `` renders a small round play/pause button
+   (icm_audio.py + audio-chip.js); the visible label is the surrounding text.
+   An `audio-figure` div (from an upstream `:::figure` that groups clips)
+   arranges items — optionally paired with waveform images — into a responsive
+   row whose last paragraph is the shared caption.
+   ====================================================================== */
+
+/* Round play/pause button. Sits inline, vertically centered on the text. */
+.audio-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9em;
+  height: 1.9em;
+  padding: 0;
+  margin: 0 0.15em;
+  flex: none;
+  border: 1px solid var(--cmu-red);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--cmu-red);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.audio-chip:hover {
+  background: var(--cmu-red);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(196, 18, 48, 0.3);
+}
+.audio-chip.is-playing {
+  background: var(--cmu-red);
+  color: #fff;
+}
+.audio-chip-icon {
+  width: 0.95em;
+  height: 0.95em;
+  fill: currentColor;
+}
+/* Nudge the play triangle to look optically centered in the circle. */
+.audio-chip .ac-play { transform: translateX(1px); }
+.audio-chip .ac-pause { display: none; }
+.audio-chip.is-playing .ac-play { display: none; }
+.audio-chip.is-playing .ac-pause { display: inline; }
+
+/* Three container variants (chosen by the split tool from the group's content):
+   `audio-figure` — each clip paired with its own waveform → centered row of
+   matched cards for a side-by-side comparison; `audio-list` — clips + text
+   labels → wider grid columns so each label sits on one line; `audio-board` —
+   several clips above ONE combined plot → buttons in a centered row, the plot
+   full-width below. In all three the last paragraph is the shared caption. */
+
+/* audio-figure: flexbox (not grid) so a 2-item figure centers cleanly instead
+   of leaving an empty grid column, while items never stretch full-width on wrap
+   (flex can grow toward filling a row but is capped by max-width). */
+.audio-figure {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.9rem 1.6rem;
+  margin: 1.5rem 0;
+}
+.audio-figure > p {
+  /* Small basis so three cards still fit one row (like the old 190px grid
+     track); grow fills the row, but max-width keeps a 2-card figure from
+     ballooning and stops a wrapped lone card from stretching full-width. */
+  flex: 1 1 190px;
+  max-width: 300px;
+  margin: 0;
+  text-align: center;
+  hyphens: none;
+}
+/* Per-item waveform: fills its card so items in a row line up at equal width. */
+.audio-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.35rem auto 0;
+}
+.audio-figure > p:last-child {
+  flex-basis: 100%;
+  max-width: none;
+}
+
+/* audio-list: responsive grid — wider columns so each text label fits one line. */
+.audio-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.9rem 1.4rem;
+  justify-items: center;
+  align-items: start;
+  margin: 1.5rem 0;
+}
+.audio-list > p {
+  margin: 0;
+  max-width: 100%;
+  text-align: center;
+  hyphens: none;
+}
+.audio-list > p:last-child {
+  grid-column: 1 / -1;
+}
+
+/* Shared caption styling for the grid/flex variants. */
+.audio-figure > p:last-child,
+.audio-list > p:last-child {
+  margin: 0.35rem 0 0;
+  font-size: 0.9em;
+  color: var(--cmu-iron);
+}
+
+/* `audio-board`: clip buttons flow in a centered row that wraps as needed (so
+   they never orphan); the shared plot and the caption each take a full row. */
+.audio-board {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.55rem 1.75rem;
+  margin: 1.5rem 0;
+}
+.audio-board > p {
+  flex: 0 1 auto;
+  margin: 0;
+  text-align: center;
+  hyphens: none;
+}
+/* The standalone plot (an image, no button) and the caption span the full row. */
+.audio-board > p:has(img),
+.audio-board > p:last-child {
+  flex-basis: 100%;
+}
+.audio-board img {
+  display: block;
+  width: auto;
+  max-width: min(100%, 540px);
+  height: auto;
+  margin: 0.5rem auto 0;
+}
+.audio-board > p:last-child {
+  margin-top: 0.35rem;
+  font-size: 0.9em;
+  color: var(--cmu-iron);
+}
+
+/* ======================================================================
    NAVIGATION
    Styling for the left sidebar (page nav), right sidebar (in-page TOC),
    prev/next bar between pages, and the page footer. They share a smaller

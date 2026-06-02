@@ -70,9 +70,13 @@ sphinx:
   # Book-specific extensions:
   #   icm_roles    — inline roles ({vocab}, {unit}); source in _ext/icm_roles.py
   #   icm_glossary — groups the Glossary into an A–Z index; _ext/icm_glossary.py
+  #   icm_audio    — the {audio} directive (captioned player); _ext/icm_audio.py
+  #   icm_figure   — {figure} that also takes a simple image+caption body
   local_extensions:
     icm_roles: _ext/
     icm_glossary: _ext/
+    icm_audio: _ext/
+    icm_figure: _ext/
   config:
     # Only auto-linkify strings that include an explicit URL scheme
     # (e.g. https://example.com). Without this, MyST's "fuzzy" linkify
@@ -109,6 +113,7 @@ sphinx:
         - sbt-sidebar-nav.html
     html_js_files:
       - course-nav.js
+      - audio-chip.js
     # Reusable text snippets — insert with {{ name }} in any page.
     myst_substitutions:
       course: "15-322 / 15-622 Introduction to Computer Music"

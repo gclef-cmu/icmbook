@@ -221,19 +221,19 @@ Hidden until the reader clicks.
 
 ## 5. Audio
 
-MyST has no native audio directive, so the book defines two conventions for it:
-a single-clip `listen` callout, and a multimodal grid of audio/image pairs.
+MyST has no native audio directive, so the book adds one: the custom `{audio}`
+directive for a single clip (defined in `_ext/icm_audio.py`), plus a multimodal
+grid convention for pairing audio with images.
 
-### 5.1 Audio examples — the `listen` pattern
+### 5.1 Audio clips — the `{audio}` directive
 
-For short audio clips shipped alongside a chapter (a recorded sample, a pre-rendered WAV), wrap an `<audio>` tag in a custom `{admonition}` with `:class: note listen`. The book ships dedicated CSS for the `listen` class — it swaps the theme's default info glyph for the 🔊 emoji you put in the title, reclaims the icon's reserved left padding, and balances the vertical spacing around the audio player.
+For short audio clips shipped alongside a chapter (a recorded sample, a pre-rendered WAV), use the `{audio}` directive. Its body is a Markdown link to the clip — the link text describes it — followed by an optional caption. The directive renders a 🔊 Listen callout with an `<audio>` player and applies the `listen` styling automatically; the link text becomes the player's `aria-label` and a download fallback for browsers without `<audio>` support. This is a book-specific directive — see `directives.md`, defined in `_ext/icm_audio.py`. Its body matches the upstream `icm-text` source verbatim; only the fence marker differs (`:::audio` there, `:::{audio}` here).
 
 Source:
 
 ````markdown
-:::{admonition} 🔊 Listen
-:class: note listen
-<audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
+:::{audio}
+[A 440 Hz sine tone](./ch01/assets/audio-sine-440.wav)
 
 A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 :::
@@ -241,9 +241,8 @@ A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 
 Rendered:
 
-:::{admonition} 🔊 Listen
-:class: note listen
-<audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
+:::{audio}
+[A 440 Hz sine tone](./ch01/assets/audio-sine-440.wav)
 
 A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 :::
@@ -251,47 +250,79 @@ A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 For audio *generated* at build time by executable Pyquist code, use a notebook
 page with `pq.play(audio)` — see the {doc}`notebook template <template-notebook>`.
 
-### 5.2 Audio + image pairs — the multimodal grid
+### 5.2 Inline audio and audio grids
 
-To present a series of audio/image pairs under a single shared caption — say, to
-compare several sounds against their waveforms — wrap raw `<audio>`/`<img>` pairs
-in a `{grid}` (the same `sphinx-design` directive shown in §15) and follow it
-with one caption. There is no native audio directive, so the players and images
-are written as plain HTML, which MyST passes straight through.
+For a clip *inline* — mid-sentence, or paired with a waveform image — use the
+`{audio}` **role** (the inline counterpart of the `{audio}` directive above):
+`` {audio}`label <url>` ``. It renders a small round **play/pause button**
+(wired by `_static/audio-chip.js`). The text inside the role is only the
+button's **accessible name** (`aria-label`/tooltip) — so always put a **visible
+label in the surrounding text** next to it, as in the examples below.
 
-Source:
+To compare several clips under one shared caption, group them: **one paragraph
+per item**, then a final paragraph as the **shared caption**. Three wrappers
+(styled in `_static/custom.css`):
+
+- `audio-figure` — each clip paired with its **own waveform image**; narrow grid
+  columns for a side-by-side comparison.
+- `audio-board` — several clips above **one combined plot** (the image is its own
+  paragraph); the buttons flow in a centered row, the plot spans full-width below.
+- `audio-list` — clips with **text labels** only; wider columns so each label
+  sits on one line.
+
+(For the upstream `:::figure` source the split tool picks the wrapper
+automatically: `audio-figure` if every clip has its own image, `audio-board` if
+the clips share a standalone image, else `audio-list`.) Source:
 
 ````markdown
-::::{grid} 1 1 2 2
-:::{grid-item}
-<audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
-<img src="./ch01/assets/fig-sine-amplitude.png" alt="A clean sine waveform" width="100%">
-:::
-:::{grid-item}
-<audio controls src="./ch01/assets/audio-clipped-sine.wav"></audio>
-<img src="./ch01/assets/fig-clipping.png" alt="A clipped sine waveform" width="100%">
-:::
-::::
+:::audio-figure
+Clean 440 Hz sine
+{audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
 
-*A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
-compare its waveform.*
+Clipped 440 Hz sine
+{audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
+
+A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then compare its waveform.
+:::
 ````
 
 Rendered:
 
-::::{grid} 1 1 2 2
-:::{grid-item}
-<audio controls src="./ch01/assets/audio-sine-440.wav"></audio>
-<img src="./ch01/assets/fig-sine-amplitude.png" alt="A clean sine waveform" width="100%">
-:::
-:::{grid-item}
-<audio controls src="./ch01/assets/audio-clipped-sine.wav"></audio>
-<img src="./ch01/assets/fig-clipping.png" alt="A clipped sine waveform" width="100%">
-:::
-::::
+:::audio-figure
+Clean 440 Hz sine
+{audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
 
-*A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
-compare its waveform.*
+Clipped 440 Hz sine
+{audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
+
+A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then compare its waveform.
+:::
+
+A text-only list of examples uses `audio-list` instead:
+
+````markdown
+:::audio-list
+{audio}`Clean tone <./ch01/assets/audio-sine-440.wav>` A clean 440 Hz sine.
+
+{audio}`Clipped tone <./ch01/assets/audio-clipped-sine.wav>` The same tone, hard-clipped.
+
+Two tones to compare by ear.
+:::
+````
+
+Rendered:
+
+:::audio-list
+{audio}`Clean tone <./ch01/assets/audio-sine-440.wav>` A clean 440 Hz sine.
+
+{audio}`Clipped tone <./ch01/assets/audio-clipped-sine.wav>` The same tone, hard-clipped.
+
+Two tones to compare by ear.
+:::
+
+In the upstream `icm-text` source these are authored as `:audio[label](url)`,
+`:figure![alt](path)`, and a `:::figure` wrapper; the split tool rewrites them to
+the role / image / `audio-figure` / `audio-list` forms shown here.
 
 ## 6. Mathematics
 
@@ -394,8 +425,28 @@ time, author the page as a notebook instead.
 
 ## 8. Figures and images
 
-The `{figure}` directive adds a caption and a label you can cross-reference.
-Source:
+For most figures you only need an image and a caption — write the image as the
+first line of a `{figure}` block (no options, no path argument). Source:
+
+````markdown
+:::{figure}
+![A sine waveform](images/template-waveform.png)
+
+A sine waveform — a static image stored in `content/images/`.
+:::
+````
+
+renders as:
+
+:::{figure}
+![A sine waveform](images/template-waveform.png)
+
+A sine waveform — a static image stored in `content/images/`.
+:::
+
+When you need to size, align, or **cross-reference** a figure, use the standard
+form instead: pass the path as the directive argument and add options. `:name:`
+makes it referenceable with `{numref}`. Source:
 
 ````markdown
 :::{figure} images/template-waveform.png
@@ -403,7 +454,7 @@ Source:
 :width: 80%
 :align: center
 
-A sine waveform — a static image stored in `content/images/`.
+A sine waveform, sized and named.
 :::
 
 See {numref}`fig-waveform-md` for an auto-numbered link.
@@ -416,7 +467,7 @@ renders as:
 :width: 80%
 :align: center
 
-A sine waveform — a static image stored in `content/images/`.
+A sine waveform, sized and named.
 :::
 
 See {numref}`fig-waveform-md` for an auto-numbered link.

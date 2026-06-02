@@ -36,6 +36,99 @@ CHAPTER_FOLDER_RE = re.compile(r"^(\d+)-(.+)$")
 FRONTMATTER_RE = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
+# Upstream remark-style block directives `:::name` / `:::name[arg]` → MyST
+# `:::{myst} arg`. Maps each upstream name to its MyST directive; the optional
+# `[arg]` becomes the directive's argument (e.g. the definition/example title).
+#   audio       — the book's {audio} directive (_ext/icm_audio.py)
+#   definition  — {prf:definition} (sphinx-proof)
+#   example     — {prf:example}    (sphinx-proof)
+#   aside       — {note}           (a skippable aside)
+#   tip         — {tip}
+#   exercise    — {exercise}       (sphinx-exercise)
+# `figure` is handled separately (SIMPLE_FIGURE_RE) since it carries an image.
+_BLOCK_DIRECTIVE_MAP = {
+    "audio": "audio",
+    "definition": "prf:definition",
+    "example": "prf:example",
+    "aside": "note",
+    "tip": "tip",
+    "exercise": "exercise",
+}
+BLOCK_DIRECTIVE_RE = re.compile(
+    r"^(\s*)(:{3,})(" + "|".join(_BLOCK_DIRECTIVE_MAP) + r")(?:\[([^\]]*)\])?\s*$"
+)
+# sphinx-proof auto-labels (definition-0, …) restart at 0 in each split section
+# file and collide across them. Give these titled directives a stable, unique
+# `:label:` (prefix + slugified title) so the build doesn't warn and they stay
+# cross-referenceable.
+_LABELED_DIRECTIVES = {"prf:definition": "def", "prf:example": "ex"}
+# Simple figure: a `:::figure` block whose next line is a single image — either
+# a plain Markdown image `![alt](path)` or the role form `:figure![alt](path)`.
+# We only brace the opener (`:::figure` → `:::{figure}`) and leave the image and
+# caption as-is; the custom {figure} directive (_ext/icm_figure.py) reads the
+# image from its first body line. The image-line lookahead means grid / audio
+# figures (whose next line is math or `:audio`, not an image) DON'T match and
+# stay brace-less — they depend on the still-deferred inline `:audio` pattern.
+SIMPLE_FIGURE_RE = re.compile(
+    r"^(?P<indent>[ \t]*)(?P<colons>:{3,})figure[ \t]*\n"
+    r"(?P=indent)(?::figure)?(?P<image>!\[[^\]]*\]\([^)\s]+\))[ \t]*\n",
+    re.MULTILINE,
+)
+# Upstream remark-style inline roles `:name[content]` → MyST `` {name}`content` ``.
+# Only the names listed here are translated (others are left untouched). Both
+# roles are defined in _ext/icm_roles.py:
+#   unit  — renders a unit fraction; works in prose only, not inside `$…$`/`$$…$$`
+#           math (a markdown role can't be parsed there).
+#   vocab — italicizes a term and links it to its Glossary entry; the term must
+#           be defined in content/glossary.md or the build warns.
+_INLINE_ROLE_NAMES = ("unit", "vocab")
+INLINE_ROLE_RE = re.compile(r":(" + "|".join(_INLINE_ROLE_NAMES) + r")\[([^\]]+)\]")
+# Inline audio `:audio[label](url)` → MyST role `` {audio}`label <url>` `` (the
+# compact play button from _ext/icm_audio.py). Distinct from the BLOCK
+# `:::audio` opener (no `[`), so the two never collide.
+AUDIO_INLINE_RE = re.compile(r":audio\[(?P<label>[^\]]*)\]\((?P<url>[^)\s]+)\)")
+# Inline figure image `:figure![alt](path)` → plain Markdown image `![alt](path)`
+# (an inline `<img>`); used inside audio-figure grids to pair a clip with its
+# waveform. Just strips the `:figure` role prefix.
+FIGURE_INLINE_RE = re.compile(r":figure(?P<image>!\[[^\]]*\]\([^)\s]+\))")
+# A whole `:::figure … :::` block left brace-less after SIMPLE_FIGURE_RE — i.e.
+# one that GROUPS clips (inline `:audio`/images/labels) rather than holding a
+# single image. We rename the wrapper so MyST's colon_fence renders it as a
+# styled div, and pick the class by content so each gets its ideal layout
+# (all defined in `_static/custom.css`):
+#   • per-item images — every clip paired with its OWN waveform (each `:audio`
+#     and image on the same line) → `audio-figure`: narrow columns, side-by-side
+#     comparison.
+#   • shared image — several clips above ONE combined plot (the image is on its
+#     own line, no `:audio`) → `audio-board`: clip buttons in a centered row,
+#     the plot full-width below.
+#   • no image — clips + text labels → `audio-list`: wider columns, one-line
+#     labels.
+CONTAINER_BLOCK_RE = re.compile(
+    r"^(?P<indent>[ \t]*)(?P<colons>:{3,})figure[ \t]*\n"
+    r"(?P<body>.*?)"
+    r"^(?P=indent)(?P=colons)[ \t]*$",
+    re.MULTILINE | re.DOTALL,
+)
+
+
+def _container_sub(m: re.Match) -> str:
+    body = m["body"]
+    if "![" not in body:
+        cls = "audio-list"
+    elif any("![" in ln and ":audio[" not in ln for ln in body.splitlines()):
+        cls = "audio-board"  # clips share one combined plot (a standalone image)
+    else:
+        cls = "audio-figure"  # each clip paired with its own waveform image
+    return f"{m['indent']}{m['colons']}{cls}\n{body}{m['indent']}{m['colons']}"
+
+
+def _simple_figure_sub(m: re.Match) -> str:
+    # Brace the opener and normalize the image to a plain Markdown image (drop
+    # any `:figure` role prefix, which MyST would otherwise misread as a
+    # directive option since it starts with `:`). Keep the image line's trailing
+    # newline so the blank line before the caption is preserved.
+    return f"{m['indent']}{m['colons']}{{figure}}\n{m['indent']}{m['image']}\n"
 
 
 def split_body(body: str):
@@ -119,6 +212,65 @@ def demote_headings(lines: list[str]) -> list[str]:
     return out
 
 
+def translate_directives(lines: list[str]) -> list[str]:
+    """Translate upstream remark-style directives to their MyST equivalents.
+
+    The icm-text source is authored in the professor's remark flavor; MyST
+    (Jupyter Book) needs slightly different markers. This is the one seam
+    between the two renderers, so the source stays authored upstream-style and
+    renders correctly here. Currently handled:
+
+    - Block: ``:::name`` / ``:::name[arg]`` → ``:::{myst} arg`` for the names in
+      ``_BLOCK_DIRECTIVE_MAP`` (audio, definition, example, aside, tip,
+      exercise). A brace-less ``:::name`` would otherwise fall through MyST's
+      ``colon_fence`` to a generic ``<div class="name">``.
+    - Inline: ``:unit[a,b]`` → ``{unit}`a,b` `` and ``:vocab[term]`` →
+      ``{vocab}`term` `` (the roles in ``_ext/icm_roles.py``). See
+      ``_INLINE_ROLE_NAMES`` for the full list.
+
+    Simple ``:::figure`` blocks are handled before this pass by
+    ``SIMPLE_FIGURE_RE``; ``figure`` is intentionally absent from the block map.
+
+    Fence-aware: lines inside ``` ``` ``` / ``~~~`` code blocks are left
+    untouched, so syntax examples that *show* the upstream form survive verbatim.
+    """
+    out: list[str] = []
+    fence: str | None = None
+    for line in lines:
+        if fence is None:
+            fm = FENCE_RE.match(line)
+            if fm:
+                fence = fm.group(1)
+                out.append(line)
+                continue
+            bm = BLOCK_DIRECTIVE_RE.match(line.rstrip("\n"))
+            if bm:
+                eol = "\n" if line.endswith("\n") else ""
+                indent, colons, myst = bm.group(1), bm.group(2), _BLOCK_DIRECTIVE_MAP[bm.group(3)]
+                title = bm.group(4)
+                arg = f" {title}" if title else ""
+                out.append(f"{indent}{colons}{{{myst}}}{arg}{eol}")
+                if title and myst in _LABELED_DIRECTIVES:
+                    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+                    out.append(f"{indent}:label: {_LABELED_DIRECTIVES[myst]}-{slug}{eol}")
+                continue
+            # Inline translations (order-independent; distinct prefixes).
+            new = AUDIO_INLINE_RE.sub(r"{audio}`\g<label> <\g<url>>`", line)
+            new = FIGURE_INLINE_RE.sub(r"\g<image>", new)
+            new = INLINE_ROLE_RE.sub(r"{\1}`\2`", new)
+            out.append(new)
+        else:
+            out.append(line)
+            stripped = line.strip()
+            if (
+                stripped
+                and set(stripped) == {fence[0]}
+                and len(stripped) >= len(fence)
+            ):
+                fence = None
+    return out
+
+
 def split_chapter(folder: Path) -> dict | None:
     m = CHAPTER_FOLDER_RE.match(folder.name)
     if not m:
@@ -131,6 +283,9 @@ def split_chapter(folder: Path) -> dict | None:
 
     raw = src.read_text()
     body = FRONTMATTER_RE.sub("", raw, count=1)
+    body = SIMPLE_FIGURE_RE.sub(_simple_figure_sub, body)
+    body = CONTAINER_BLOCK_RE.sub(_container_sub, body)
+    body = "".join(translate_directives(body.splitlines(keepends=True)))
     intro_lines, sections = split_body(body)
 
     # Pull the chapter title from the first `# ` in the intro block.
