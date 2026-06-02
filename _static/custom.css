@@ -191,14 +191,14 @@ html[data-theme="light"] {
   --ad-note-bg:   #eaf0f6;  --ad-note-title:   #dde7f0;  --ad-note-spine:   #6a8aab;
   --ad-tip-bg:    #ecf3e6;  --ad-tip-title:    #dde9d3;  --ad-tip-spine:    #6f9a5e;
   --ad-imp-bg:    #f6e8ea;  --ad-imp-title:    #efd6da;  --ad-imp-spine:    #c41230;
-  --ad-warn-bg:   #f7ecd9;  --ad-warn-title:   #f0dfbe;  --ad-warn-spine:   #c08a2a;
+  --ad-warn-bg:   #fbe8e2;  --ad-warn-title:   #f4d3c9;  --ad-warn-spine:   #d6402a;
   --ad-see-bg:    #efeaf3;  --ad-see-title:    #e3dbeb;  --ad-see-spine:    #8773a3;
 }
 html[data-theme="dark"] {
   --ad-note-bg:   #1d2733;  --ad-note-title:   #243140;  --ad-note-spine:   #7ea0c0;
   --ad-tip-bg:    #1f2a1d;  --ad-tip-title:    #283627;  --ad-tip-spine:    #86b075;
   --ad-imp-bg:    #2b1d20;  --ad-imp-title:    #38242a;  --ad-imp-spine:    #e8546a;
-  --ad-warn-bg:   #2b2418;  --ad-warn-title:   #382d1e;  --ad-warn-spine:   #d6a14a;
+  --ad-warn-bg:   #2d1c16;  --ad-warn-title:   #3c2820;  --ad-warn-spine:   #ef6a4d;
   --ad-see-bg:    #241e2b;  --ad-see-title:    #2e2538;  --ad-see-spine:    #a895c0;
 }
 
@@ -244,27 +244,8 @@ html[data-theme="dark"] {
   color: var(--ad-spine) !important;
 }
 
-/* Audio "Listen" callouts carry a 🔊 emoji in their title; suppress the
-   theme's auto-injected info glyph so we don't render two icons. */
-.admonition.listen > .admonition-title::after {
-  content: none !important;
-}
-
-/* The theme reserves ~32px of left padding on every admonition title to
-   make room for its auto-injected icon. Since we suppressed that icon
-   above, reclaim the space so the 🔊 emoji sits flush with the body
-   content's left edge instead of floating in dead whitespace. */
-.admonition.listen > .admonition-title {
-  padding-left: 1rem;
-}
-
-/* Give the audio player balanced breathing room above and below. The
-   theme's default sets `margin-top: 0.4em` on the first child after the
-   title (~6px), but the default <p> bottom margin is ~18px, making the
-   audio sit top-heavy. Match the top to the bottom for visual symmetry. */
-.admonition.listen > .admonition-title + * {
-  margin-top: 1rem;
-}
+/* (The old `.admonition.listen` "🔊 Listen" callout styling was removed when
+   the {audio} directive switched to the `audio-block` card — see below.) */
 
 /* ---- Code cells: subtle iron-gray spine, theme keeps the background -- */
 div.cell div.cell_input {
@@ -511,6 +492,15 @@ p.caption {
   text-align: left;
 }
 
+/* Suppress the auto-generated "Fig. N" counter Sphinx prepends to every
+   figure caption (numfig). Captions in this book stand on their own, so the
+   running number adds noise without information — only the caption text
+   remains. Same treatment as the proof/exercise titles above. (The trailing
+   space sits inside this span, so hiding it leaves no gap before the text.) */
+figcaption .caption-number {
+  display: none;
+}
+
 /* ======================================================================
    INLINE AUDIO ({audio} role) + AUDIO-FIGURE grids
    `` {audio}`label <url>` `` renders a small round play/pause button
@@ -520,34 +510,57 @@ p.caption {
    row whose last paragraph is the shared caption.
    ====================================================================== */
 
-/* Round play/pause button. Sits inline, vertically centered on the text. */
+/* Round play/pause button. Its circular outline is the SVG progress ring (not
+   a CSS border): a faint track + a red arc that audio-chip.js fills as the clip
+   plays, so you can see how much is left. Sits inline, centered on the text. */
 .audio-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 1.9em;
   height: 1.9em;
   padding: 0;
-  margin: 0 0.15em;
+  margin: 0 0.4em 0 0.1em;
   flex: none;
-  border: 1px solid var(--cmu-red);
+  border: none;
   border-radius: 50%;
   background: #fff;
   color: var(--cmu-red);
   cursor: pointer;
   vertical-align: middle;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 .audio-chip:hover {
-  background: var(--cmu-red);
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(196, 18, 48, 0.3);
+  background: #fdecef; /* faint red tint — keeps the ring visible */
+  box-shadow: 0 1px 4px rgba(196, 18, 48, 0.28);
 }
-.audio-chip.is-playing {
-  background: var(--cmu-red);
-  color: #fff;
+
+/* The progress ring fills the button; rotate so the arc starts at 12 o'clock. */
+.audio-chip-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+  pointer-events: none;
 }
+.acr-track,
+.acr-fill {
+  fill: none;
+  stroke-width: 2.4;
+}
+.acr-track { stroke: rgba(196, 18, 48, 0.22); }
+.acr-fill {
+  stroke: var(--cmu-red);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100; /* empty; audio-chip.js advances it per frame (rAF) */
+}
+
 .audio-chip-icon {
+  position: relative; /* above the ring */
   width: 0.95em;
   height: 0.95em;
   fill: currentColor;
@@ -557,6 +570,44 @@ p.caption {
 .audio-chip .ac-pause { display: none; }
 .audio-chip.is-playing .ac-play { display: none; }
 .audio-chip.is-playing .ac-pause { display: inline; }
+
+/* ----------------------------------------------------------------------
+   BLOCK AUDIO ({audio} directive) — a clean card that echoes the inline
+   play button: a larger round play/pause control beside the caption, with
+   a subtle tinted panel + red accent. (Replaces the old "🔊 Listen"
+   admonition with the native <audio controls> widget.)
+   ---------------------------------------------------------------------- */
+.audio-block {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1.3rem 0;
+  /* `!important` beats the theme's `.container` rule (docutils tags this div
+     `container`), which would otherwise zero the horizontal padding and jam
+     the button against the red accent. */
+  padding: 0.6rem 0.95rem !important;
+  background: var(--icm-box-bg);
+  border-left: 3px solid var(--cmu-red);
+  border-radius: 5px;
+}
+/* The larger play button for blocks. Reset the inline chip's side margins so
+   the spacing to the caption is exactly the flex `gap`, nothing more. */
+.audio-chip-lg {
+  width: 2.3em;
+  height: 2.3em;
+  margin: 0;
+}
+.audio-chip-lg .audio-chip-icon {
+  width: 1.05em;
+  height: 1.05em;
+}
+/* Caption sits beside the button; trim its outer margins so it centers nicely. */
+.audio-block-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.audio-block-body > :first-child { margin-top: 0; }
+.audio-block-body > :last-child { margin-bottom: 0; }
 
 /* Three container variants (chosen by the split tool from the group's content):
    `audio-figure` — each clip paired with its own waveform → centered row of

@@ -227,7 +227,7 @@ grid convention for pairing audio with images.
 
 ### 5.1 Audio clips — the `{audio}` directive
 
-For short audio clips shipped alongside a chapter (a recorded sample, a pre-rendered WAV), use the `{audio}` directive. Its body is a Markdown link to the clip — the link text describes it — followed by an optional caption. The directive renders a 🔊 Listen callout with an `<audio>` player and applies the `listen` styling automatically; the link text becomes the player's `aria-label` and a download fallback for browsers without `<audio>` support. This is a book-specific directive — see `directives.md`, defined in `_ext/icm_audio.py`. Its body matches the upstream `icm-text` source verbatim; only the fence marker differs (`:::audio` there, `:::{audio}` here).
+For short audio clips shipped alongside a chapter (a recorded sample, a pre-rendered WAV), use the `{audio}` directive. Its body is a Markdown link to the clip — the link text describes it — followed by an optional caption. The directive renders a clean **`audio-block` card**: a large round play/pause button (the same control as the inline `{audio}` role) beside the caption, on a subtle tinted panel. The link text becomes the button's `aria-label`/tooltip. This is a book-specific directive — see `directives.md`, defined in `_ext/icm_audio.py` (behavior wired by `_static/audio-chip.js`). Its body matches the upstream `icm-text` source verbatim; only the fence marker differs (`:::audio` there, `:::{audio}` here).
 
 Source:
 
@@ -255,9 +255,8 @@ page with `pq.play(audio)` — see the {doc}`notebook template <template-noteboo
 For a clip *inline* — mid-sentence, or paired with a waveform image — use the
 `{audio}` **role** (the inline counterpart of the `{audio}` directive above):
 `` {audio}`label <url>` ``. It renders a small round **play/pause button**
-(wired by `_static/audio-chip.js`). The text inside the role is only the
-button's **accessible name** (`aria-label`/tooltip) — so always put a **visible
-label in the surrounding text** next to it, as in the examples below.
+(wired by `_static/audio-chip.js`) **followed by the label** — so the clip is
+self-contained, no separate text needed. `$…$` in the label renders as math.
 
 To compare several clips under one shared caption, group them: **one paragraph
 per item**, then a final paragraph as the **shared caption**. Three wrappers
@@ -276,10 +275,8 @@ the clips share a standalone image, else `audio-list`.) Source:
 
 ````markdown
 :::audio-figure
-Clean 440 Hz sine
 {audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
 
-Clipped 440 Hz sine
 {audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
 
 A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then compare its waveform.
@@ -289,10 +286,8 @@ A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
 Rendered:
 
 :::audio-figure
-Clean 440 Hz sine
 {audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
 
-Clipped 440 Hz sine
 {audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
 
 A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then compare its waveform.
@@ -302,9 +297,9 @@ A text-only list of examples uses `audio-list` instead:
 
 ````markdown
 :::audio-list
-{audio}`Clean tone <./ch01/assets/audio-sine-440.wav>` A clean 440 Hz sine.
+{audio}`A clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>`
 
-{audio}`Clipped tone <./ch01/assets/audio-clipped-sine.wav>` The same tone, hard-clipped.
+{audio}`The same tone, hard-clipped <./ch01/assets/audio-clipped-sine.wav>`
 
 Two tones to compare by ear.
 :::
@@ -313,16 +308,18 @@ Two tones to compare by ear.
 Rendered:
 
 :::audio-list
-{audio}`Clean tone <./ch01/assets/audio-sine-440.wav>` A clean 440 Hz sine.
+{audio}`A clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>`
 
-{audio}`Clipped tone <./ch01/assets/audio-clipped-sine.wav>` The same tone, hard-clipped.
+{audio}`The same tone, hard-clipped <./ch01/assets/audio-clipped-sine.wav>`
 
 Two tones to compare by ear.
 :::
 
 In the upstream `icm-text` source these are authored as `:audio[label](url)`,
-`:figure![alt](path)`, and a `:::figure` wrapper; the split tool rewrites them to
-the role / image / `audio-figure` / `audio-list` forms shown here.
+`:figure![alt](path)`, and a `:::figure` wrapper; the split tool folds each
+clip's `[label]` into the `{audio}` role (dropping any descriptive text beside
+it) and picks the `audio-figure` / `audio-board` / `audio-list` wrapper shown
+here.
 
 ## 6. Mathematics
 

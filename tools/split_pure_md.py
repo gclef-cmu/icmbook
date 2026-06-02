@@ -83,9 +83,31 @@ SIMPLE_FIGURE_RE = re.compile(
 #           be defined in content/glossary.md or the build warns.
 _INLINE_ROLE_NAMES = ("unit", "vocab")
 INLINE_ROLE_RE = re.compile(r":(" + "|".join(_INLINE_ROLE_NAMES) + r")\[([^\]]+)\]")
-# Inline audio `:audio[label](url)` → MyST role `` {audio}`label <url>` `` (the
-# compact play button from _ext/icm_audio.py). Distinct from the BLOCK
-# `:::audio` opener (no `[`), so the two never collide.
+# The {audio} role now renders its OWN label (after the button), so each clip's
+# descriptive label — a formula line above an audio-figure item, or the trailing
+# text on an audio-list/board item — is FOLDED into the role and the now-
+# redundant bracket label is dropped. Run after CONTAINER_BLOCK_RE (which still
+# needs the raw `:audio[`/`![` to classify) and before the inline pass.
+# We keep the concise BRACKET label (`:audio[label]`) — the "label" — and drop
+# the redundant descriptive text beside it (a formula line above, or trailing
+# text), since the role now renders the bracket label itself.
+#   audio-figure item: `<formula line>⏎:audio[label](url) :figure![alt](img)`
+#       → `{audio}`label <url>` ![alt](img)`  (formula line dropped)
+AUDIO_FIGURE_ITEM_RE = re.compile(
+    r"^(?P<indent>[ \t]*)(?![ \t]*(?::audio|:figure|!\[|:::|\{|>|#))"
+    r"\S[^\n]*?[ \t]*\n"
+    r"(?P=indent):audio\[(?P<label>[^\]]*)\]\((?P<url>[^)\s]+)\)[ \t]+"
+    r":figure!\[(?P<alt>[^\]]*)\]\((?P<img>[^)\s]+)\)[ \t]*$",
+    re.MULTILINE,
+)
+#   audio-list / audio-board item: `:audio[label](url) <trailing text>`
+#       → `{audio}`label <url>``  (trailing text dropped)
+AUDIO_TRAILING_RE = re.compile(
+    r":audio\[(?P<label>[^\]]*)\]\((?P<url>[^)\s]+)\)[ \t]+(?!:figure\b)\S[^\n]*?[ \t]*$",
+    re.MULTILINE,
+)
+# Any remaining bare `:audio[label](url)` (no descriptive label) → role with the
+# bracket label. Distinct from the BLOCK `:::audio` opener (no `[`).
 AUDIO_INLINE_RE = re.compile(r":audio\[(?P<label>[^\]]*)\]\((?P<url>[^)\s]+)\)")
 # Inline figure image `:figure![alt](path)` → plain Markdown image `![alt](path)`
 # (an inline `<img>`); used inside audio-figure grids to pair a clip with its
@@ -121,6 +143,17 @@ def _container_sub(m: re.Match) -> str:
     else:
         cls = "audio-figure"  # each clip paired with its own waveform image
     return f"{m['indent']}{m['colons']}{cls}\n{body}{m['indent']}{m['colons']}"
+
+
+def _audio_figure_item_sub(m: re.Match) -> str:
+    # Fold the label line into the role (dropping the bracket label); keep the
+    # image. The role renders the label after the button.
+    return f"{m['indent']}{{audio}}`{m['label']} <{m['url']}>` ![{m['alt']}]({m['img']})"
+
+
+def _audio_trailing_sub(m: re.Match) -> str:
+    # Fold the trailing text into the role as its label (dropping the bracket).
+    return f"{{audio}}`{m['label']} <{m['url']}>`"
 
 
 def _simple_figure_sub(m: re.Match) -> str:
@@ -285,6 +318,8 @@ def split_chapter(folder: Path) -> dict | None:
     body = FRONTMATTER_RE.sub("", raw, count=1)
     body = SIMPLE_FIGURE_RE.sub(_simple_figure_sub, body)
     body = CONTAINER_BLOCK_RE.sub(_container_sub, body)
+    body = AUDIO_FIGURE_ITEM_RE.sub(_audio_figure_item_sub, body)
+    body = AUDIO_TRAILING_RE.sub(_audio_trailing_sub, body)
     body = "".join(translate_directives(body.splitlines(keepends=True)))
     intro_lines, sections = split_body(body)
 

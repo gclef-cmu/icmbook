@@ -40,14 +40,16 @@ from sphinx.util.docutils import SphinxRole
 _LINK_RE = re.compile(r"^\s*\[(?P<text>.+?)\]\(\s*(?P<href>\S+?)\s*\)\s*$")
 # Role content for the inline {audio}: ``label <url>`` (Sphinx link convention),
 # or just ``url`` if no angle-bracketed target is given.
-_ROLE_RE = re.compile(r"^(?P<label>.*?)\s*<(?P<url>[^>]+)>\s*$")
+_ROLE_RE = re.compile(r"^(?P<label>.*?)\s*<(?P<url>[^>\s]+)>\s*$")
 
 
 class AudioDirective(Directive):
-    """``:::{audio}`` — a captioned audio player.
+    """``:::{audio}`` — a captioned audio clip.
 
     Body: a Markdown link to the clip on the first non-blank line, then an
-    optional caption. See the module docstring for the full contract.
+    optional caption. Renders a clean ``audio-block`` card — a large round
+    play/pause button (the same control as the inline ``{audio}`` role) beside
+    the caption — instead of the old "🔊 Listen" admonition.
     """
 
     has_content = True
@@ -71,27 +73,26 @@ class AudioDirective(Directive):
             ]
         label, src = match.group("text").strip(), match.group("href").strip()
 
-        admonition = nodes.admonition()
-        admonition["classes"] = ["note", "listen"]
-        admonition += nodes.title("", "🔊 Listen")
+        block = nodes.container()
+        block["classes"] = ["audio-block"]
+        # The big play/pause button — same chip control as the inline role, so
+        # _static/audio-chip.js wires it and the styling stays consistent.
+        block += nodes.raw("", _chip_button(src, label, "audio-chip-lg"), format="html")
 
-        player = (
-            f'<audio controls src="{escape(src, quote=True)}" '
-            f'aria-label="{escape(label, quote=True)}">'
-            f'<a href="{escape(src, quote=True)}">{escape(label)}</a>'
-            f"</audio>"
-        )
-        admonition += nodes.raw("", player, format="html")
-
-        # Everything after the link line is the caption; parse it as Markdown
-        # so math, emphasis, and links inside it render normally.
+        # The caption (everything after the link line) sits beside the button,
+        # parsed as Markdown so math, emphasis, and links render normally.
+        body = nodes.container()
+        body["classes"] = ["audio-block-body"]
         caption = content[link_index + 1 :]
         if any(line.strip() for line in caption):
             self.state.nested_parse(
-                caption, self.content_offset + link_index + 1, admonition
+                caption, self.content_offset + link_index + 1, body
             )
+        else:
+            body += nodes.inline("", label)  # fall back to the link text
+        block += body
 
-        return [admonition]
+        return [block]
 
     def _error(self, message: str):
         error = self.state_machine.reporter.error(
@@ -102,32 +103,55 @@ class AudioDirective(Directive):
         return error
 
 
-# A small round play/pause button. The play triangle and pause bars are both
-# present; CSS shows one or the other based on the `is-playing` class that
-# _static/audio-chip.js toggles. Filled at render time with src + label.
-_CHIP_HTML = (
-    '<button type="button" class="audio-chip" data-audio-src="{src}"'
-    ' aria-label="Play {label}" title="{label}">'
-    '<svg class="audio-chip-icon" viewBox="0 0 24 24" aria-hidden="true">'
-    '<path class="ac-play" d="M8 5v14l11-7z"></path>'
-    '<g class="ac-pause"><rect x="7" y="5" width="3.5" height="14"></rect>'
-    '<rect x="13.5" y="5" width="3.5" height="14"></rect></g>'
-    "</svg></button>"
-)
+# A round play/pause button. The play triangle and pause bars are both present;
+# CSS shows one based on the `is-playing` class that _static/audio-chip.js
+# toggles. Shared by the inline {audio} role and the block {audio} directive
+# (the block passes ``audio-chip-lg`` for a larger button).
+def _chip_button(src: str, label: str, extra_class: str = "") -> str:
+    cls = "audio-chip" + (f" {extra_class}" if extra_class else "")
+    label = escape(label, quote=True)
+    return (
+        f'<button type="button" class="{cls}" '
+        f'data-audio-src="{escape(src, quote=True)}" '
+        f'aria-label="Play {label}" title="{label}">'
+        # Progress ring (the button's circular outline). r=15.9155 → circumference
+        # 100, so audio-chip.js sets `stroke-dashoffset = 100 − percent`.
+        '<svg class="audio-chip-ring" viewBox="0 0 36 36" aria-hidden="true">'
+        '<circle class="acr-track" cx="18" cy="18" r="15.9155"></circle>'
+        '<circle class="acr-fill" cx="18" cy="18" r="15.9155"></circle>'
+        "</svg>"
+        '<svg class="audio-chip-icon" viewBox="0 0 24 24" aria-hidden="true">'
+        '<path class="ac-play" d="M8 5v14l11-7z"></path>'
+        '<g class="ac-pause"><rect x="7" y="5" width="3.5" height="14"></rect>'
+        '<rect x="13.5" y="5" width="3.5" height="14"></rect></g>'
+        "</svg></button>"
+    )
+
+
+def _label_nodes(label: str) -> list:
+    """Render the visible label, turning ``$…$`` segments into inline math."""
+    out: list = []
+    for i, seg in enumerate(re.split(r"\$([^$]+)\$", label)):
+        if i % 2:  # the bit between a pair of `$` → inline math
+            out.append(nodes.math(text=seg))
+        elif seg:
+            out.append(nodes.Text(seg))
+    return out
 
 
 class AudioRole(SphinxRole):
-    """``{audio}`label <url>``` — a compact *inline* play button.
+    """``{audio}`label <url>``` — a compact *inline* play button + label.
 
     The block ``{audio}`` directive above is a full "🔊 Listen" callout; this
     inline counterpart drops a small round play/pause button mid-flow or inside
-    an ``audio-figure`` grid (e.g. next to a waveform image). The descriptive
-    label becomes the button's ``aria-label``/tooltip — the visible label comes
-    from the surrounding text. Behavior is wired by ``_static/audio-chip.js``,
-    styling by ``_static/custom.css``.
+    an ``audio-figure``/``audio-list``/``audio-board`` group, followed by the
+    **visible label** (``$…$`` in the label renders as math). So the button
+    always comes first and the label is self-contained — no separate text is
+    needed next to it. Behavior is wired by ``_static/audio-chip.js``, styling
+    by ``_static/custom.css``.
 
-    Upstream authors it as ``:audio[label](url)``; the split tool rewrites that
-    to the MyST role form ``{audio}`label <url>```.
+    Upstream authors it as ``:audio[label](url)`` (+ a descriptive label line or
+    trailing text); the split tool folds that into ``{audio}`label <url>```.
     """
 
     def run(self):
@@ -136,10 +160,10 @@ class AudioRole(SphinxRole):
             label, url = match.group("label").strip(), match.group("url").strip()
         else:
             label, url = "", self.text.strip()
-        html = _CHIP_HTML.format(
-            src=escape(url, quote=True), label=escape(label, quote=True)
-        )
-        return [nodes.raw("", html, format="html")], []
+        # The aria/tooltip name is the plain label (drop `$` math delimiters).
+        aria = re.sub(r"\$([^$]+)\$", r"\1", label).strip() or "audio clip"
+        button = nodes.raw("", _chip_button(url, aria), format="html")
+        return [button, *_label_nodes(label)], []
 
 
 def setup(app: Sphinx) -> dict:
