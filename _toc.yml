@@ -41,6 +41,15 @@ parts:
           - file: content/ch03/04
           - file: content/ch03/05
           - file: content/ch03/06
+      - file: content/ch04/index
+        sections:
+          - file: content/ch04/00
+          - file: content/ch04/01
+          - file: content/ch04/02
+          - file: content/ch04/03
+          - file: content/ch04/04
+          - file: content/ch04/05
+          - file: content/ch04/06
 
   - chapters:
       - file: content/course/index
