@@ -504,6 +504,12 @@ html[data-theme="dark"] .bd-article a.glossary-nav-letter {
   hyphens: manual;
 }
 
+/* Captions step down from body size so they read as captions rather than a
+   continuation of the page text (same 0.9em as the audio captions below). */
+.bd-article figure figcaption {
+  font-size: 0.9em;
+}
+
 /* Suppress the auto-generated "Fig. N" counter Sphinx prepends to every
    figure caption (numfig). Captions in this book stand on their own, so the
    running number adds noise without information — only the caption text

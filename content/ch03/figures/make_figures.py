@@ -13,10 +13,6 @@ ASSETS = Path(__file__).resolve().parent.parent / "assets"
 ASSETS.mkdir(exist_ok=True)
 
 plt.rcParams.update({
-    # Serif text so figure labels match the book's Palatino body type.
-    "font.family": "serif",
-    "font.serif": ["Palatino", "Georgia", "DejaVu Serif"],
-    "mathtext.fontset": "dejavuserif",
     "font.size": 14,
     "axes.labelsize": 16,
     "xtick.labelsize": 13,
