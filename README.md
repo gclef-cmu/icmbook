@@ -27,6 +27,9 @@ make pdf       # PDF build (needs a LaTeX toolchain)
 make clean     # remove build outputs
 ```
 
+Every `make` target assumes the `icmbook` env is active — it provides
+`jupyter-book` and the `python` that `make serve` uses.
+
 `make book` reads the **committed** `content/`, so it doesn't need `icm-text/`.
 You only need that (private) submodule to run `make split` / `make merge`.
 
@@ -65,7 +68,10 @@ Everything the book shows about Pyquist is generated from the pinned `pyquist/`
 submodule — there are no hand-written API docs:
 
 - `content/pyquist/Overview.md` mirrors `pyquist/README.md` (refreshed each build).
-- `content/pyquist/api/*.md` are autodoc shells that introspect the installed module.
+- `content/pyquist/api/*.md` are autodoc shells that introspect the **installed**
+  module — the editable install (`-e ./pyquist`) that `conda env create` performs,
+  not the `pyquist/` folder itself. If the import fails at build time, these pages
+  silently render empty (see Troubleshooting).
 
 Bump the pinned version and push to update:
 
@@ -73,6 +79,26 @@ Bump the pinned version and push to update:
 git submodule update --remote pyquist
 git add pyquist && git commit -m "Bump pyquist" && git push
 ```
+
+## Troubleshooting
+
+- **`make: jupyter-book: No such file or directory`** — the `icmbook` conda env
+  isn't active. Run `conda activate icmbook` (create it first if needed; see
+  Build).
+
+- **Pyquist API pages build, but show no classes or functions** — autodoc
+  imports `pyquist` from the environment, and a failed import doesn't fail the
+  build. The editable install records an **absolute path**, so it goes stale if
+  the repo is moved or re-cloned. Check it, then re-point and rebuild:
+
+  ```sh
+  python -c "import pyquist; print(pyquist.__file__)"
+  # healthy: a path inside this repo's pyquist/pyquist/
+  # stale:   None, an ImportError, or a path elsewhere
+
+  pip install -e ./pyquist
+  make clean && make book   # clean first — Sphinx caches the empty pages
+  ```
 
 ## Deploy
 
