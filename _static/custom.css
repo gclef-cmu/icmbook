@@ -74,10 +74,11 @@ html[data-theme="dark"] {
   font-family: var(--icm-serif);
 }
 
-/* Margin / sidenote content. sphinx-book-theme sets its own sans-serif
-   font-family on `aside.margin` and `.sidebar`, which would otherwise
+/* Margin / sidenote / caption content. sphinx-book-theme sets its own
+   sans-serif font-family on `aside.margin` and `.sidebar`, and the pydata
+   theme sets its sans heading font on `figure figcaption`; both would
    override the inherited textbook serif. Force the serif back so margin
-   asides match the body. */
+   asides and figure captions match the body. */
 .bd-article aside.margin,
 .bd-article aside.margin p,
 .bd-article aside.margin li,
@@ -88,7 +89,8 @@ html[data-theme="dark"] {
 .bd-article .sidebar,
 .bd-article .sidebar p,
 .bd-article .sidebar li,
-.bd-article .sidebar-title {
+.bd-article .sidebar-title,
+.bd-article figure figcaption {
   font-family: var(--icm-serif);
 }
 
@@ -486,10 +488,20 @@ html[data-theme="dark"] .bd-article a.glossary-nav-letter {
   float: left !important;
 }
 
-figcaption,
-.caption-text,
-p.caption {
+/* Figure captions and margin notes: ragged-right, never justified. The body
+   justify rule above (`.bd-article p`) outranks both the theme's caption
+   alignment and any bare-element selector here, so these need the
+   `.bd-article` prefix to win. Captions are often a few words and margin
+   columns are narrow — justified, they stretch into gappy lines. */
+.bd-article figcaption p,
+.bd-article aside.margin p,
+.bd-article aside.margin li,
+.bd-article .margin p,
+.bd-article .margin li,
+.bd-article .sidebar p,
+.bd-article .sidebar li {
   text-align: left;
+  hyphens: manual;
 }
 
 /* Suppress the auto-generated "Fig. N" counter Sphinx prepends to every

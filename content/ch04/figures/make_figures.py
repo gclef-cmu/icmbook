@@ -34,6 +34,10 @@ PEAK_DBFS = -6.0
 
 plt.rcParams.update(
     {
+        # Serif text so figure labels match the book's Palatino body type.
+        "font.family": "serif",
+        "font.serif": ["Palatino", "Georgia", "DejaVu Serif"],
+        "mathtext.fontset": "dejavuserif",
         "font.size": 14,
         "axes.labelsize": 16,
         "xtick.labelsize": 13,
