@@ -52,14 +52,6 @@ parts:
           - file: content/ch04/06
 
   - chapters:
-      - file: content/course/index
-        sections:
-          - file: content/course/website
-          - file: content/course/about
-          - file: content/course/schedule
-          - file: content/course/projects
-          - file: content/course/resources
-          - file: content/course/showcase
       - file: content/reference/index
         sections:
           - file: content/pyquist/Overview
