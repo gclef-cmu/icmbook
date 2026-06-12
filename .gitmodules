@@ -3,5 +3,5 @@
 	url = git@github.com:gclef-cmu/pyquist.git
 [submodule "icm-text"]
 	path = icm-text
-	url = git@github.com:jiaweil6/icm-text.git
-	branch = david-content-edits
+	url = git@github.com:chrisdonahue/icm-text.git
+	branch = main

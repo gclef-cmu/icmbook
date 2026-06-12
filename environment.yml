@@ -24,6 +24,13 @@ dependencies:
   - sphinx-proof
   - pip:
       - sphinxcontrib-svg2pdfconverter
+      # Live code: TeachBooks fork of sphinx-thebe (same dist name/version as
+      # upstream, so it replaces the copy jupyter-book depends on). Vendors a
+      # thebe-lite bundle for in-browser Pyodide execution — no Binder. Pinned
+      # to a commit because the fork publishes no tags. If the env already has
+      # upstream sphinx-thebe 0.3.1, pip considers it satisfied: force with
+      #   pip install --force-reinstall --no-deps "sphinx-thebe @ git+...@<pin>"
+      - sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0
       # Pyquist: the course audio library. Needed to execute notebook pages
       # (e.g. content/Template.ipynb) at build time, and introspected by
       # Sphinx autodoc to generate content/pyquist/api/*.md. Installed from

@@ -52,6 +52,11 @@ repository:
   path_to_book: ""
   branch: main
 
+# NOTE: do not add a top-level `launch_buttons:` section here. Because we set
+# sphinx.config.html_theme_options explicitly below, that dict REPLACES the
+# theme options Jupyter Book computes (including any launch_buttons), so the
+# Live Code button must be configured inside html_theme_options directly.
+
 #######################################################################################
 # Advanced and power-user settings
 sphinx:
@@ -86,7 +91,11 @@ sphinx:
 
     # Copy the standalone 404 page to the site root. GitHub Pages serves
     # /404.html for any unknown URL.
-    html_extra_path: ["404.html"]
+    # vendor/ holds the live-code runtime (make vendor-thebe): the thebe
+    # bundles must NOT live in _static (Jupyter Book auto-registers all
+    # _static *.js as page scripts, eagerly executing worker-only chunks),
+    # and service-worker.js must sit at the site root for root scope.
+    html_extra_path: ["404.html", "vendor"]
 
     # ---- Autodoc / Napoleon -----------------------------------------------
     autodoc_member_order: "bysource"   # follow source order, not alphabetical
@@ -105,6 +114,16 @@ sphinx:
       # Show the Preface (root page) as the first item in the left sidebar.
       home_page_in_toc: true
       default_mode: light
+      # Live code (Phase 1): in-browser execution via thebe-lite + Pyodide.
+      # Uses the TeachBooks fork of sphinx-thebe (pinned in environment.yml),
+      # which vendors the thebe-lite bundle so the site self-hosts everything
+      # except Pyodide itself (CDN, pinned via _static/thebe-pyodide-pin.js).
+      # The button only renders on notebook pages (currently the template
+      # notebook); .md chapter pages have no executable cells.
+      repository_url: https://github.com/jiaweil6/icmbook
+      repository_branch: main
+      launch_buttons:
+        thebe: true
     html_sidebars:
       "**":
         - navbar-logo.html
@@ -112,8 +131,27 @@ sphinx:
         - search-field.html
         - sbt-sidebar-nav.html
     html_js_files:
+      # require.js first: the TeachBooks live-code setup expects it.
+      - https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js
       - course-nav.js
       - audio-chip.js
+      # Phase 2: button-free live code. Editors mount silently at page load
+      # (thebe core bundle from vendor/, idle-time), so notebook cells are
+      # editable immediately; the kernel stack (thebe-lite server, Pyodide
+      # from the CDN, wheels) loads only on the first Run, and the Pyodide/
+      # kernel version pins live inside this file. Prose pages exit
+      # immediately. Also restyles cell outputs (audio -> book chip cards).
+      # live-cells.css pairs with it (auto-included from _static).
+      - live-cells.js
+    thebe_config:
+      use_thebe_lite: true
+      # The TeachBooks extension copies book SOURCE files into _build/html so
+      # the kernel can read them. We publish none of them: the kernel only
+      # needs the wheels in _static/wheels (built by `make wheels`), and this
+      # keeps icm-text/, pyquist/, content sources, etc. off the public site.
+      # The dot patterns matter — `**` alone does NOT match dotfiles, which
+      # would otherwise publish .git/ onto the site.
+      exclude_patterns: ["**", ".*", ".*/**"]
     # Reusable text snippets — insert with {{ name }} in any page.
     myst_substitutions:
       course: "15-322 / 15-622 Introduction to Computer Music"

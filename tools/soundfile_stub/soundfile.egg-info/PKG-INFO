@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: soundfile
+Version: 0.12.1.post900
+Summary: Browser (Pyodide/WASM) WAV-only stand-in for soundfile, for pyquist live-code pages.
+Requires-Python: >=3.10

@@ -1,0 +1,283 @@
+/* live-cells.css — styling for the button-free live-code layer.
+ *
+ * Goal: the page looks IDENTICAL whether or not the editors have mounted
+ * (they mount silently at page load — see live-cells.js). The only visible
+ * additions are the per-cell Run chip and, once a student runs something,
+ * the floating status badge. The CodeMirror editor adopts the exact metrics
+ * of the theme's static <pre> (measured from the built site); live output
+ * areas are relocated into real .cell_output containers so the output
+ * design system in custom.css styles live results exactly like baked ones.
+ * This file only adds what is live-specific: chip, status pill, editor
+ * parity, JupyterLab-output normalization, error cards, fresh-run motion. */
+
+/* --- per-cell Run chip --- */
+
+.cell .cell_input {
+  position: relative;
+}
+
+.live-run-chip {
+  position: absolute;
+  top: 0.35em;
+  right: 0.35em;
+  z-index: 2;
+  padding: 0.1em 0.6em;
+  font-size: 0.72rem;
+  font-family: var(--pst-font-family-base, sans-serif);
+  color: #5a5a5a;
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  border-radius: 999px;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.live-run-chip:hover {
+  opacity: 1;
+  color: #c41230;
+  border-color: #c41230;
+}
+
+.live-run-chip.live-busy {
+  opacity: 1;
+  color: #c41230;
+  border-color: #c41230;
+  animation: live-pulse 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes live-pulse {
+  50% { opacity: 0.45; }
+}
+
+/* The copy button overlaps our chip's corner; keep it clear of the chip. */
+.cell .cell_input .copybtn {
+  right: 4.5em;
+}
+
+/* --- floating status pill / connected badge --- */
+
+.live-status {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  max-width: 24rem;
+  padding: 0.5em 0.9em;
+  font-size: 0.8rem;
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-variant-numeric: tabular-nums;
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  border-left: 3px solid #9a9a9a;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.live-status-busy { border-left-color: #c8a200; }
+.live-status-error { border-left-color: #c41230; }
+
+/* Persistent low-key badge once the kernel is up. */
+.live-status-connected {
+  border-left-color: #2e8b57;
+  color: #2e6b47;
+  font-size: 0.74rem;
+  padding: 0.35em 0.7em;
+  opacity: 0.92;
+}
+
+/* --- editors: match the static look exactly ---------------------------
+ * Values measured from the built page (sphinx-book-theme, light mode):
+ *   .cell_input pre  -> bg #f3f4f5, radius 4px, padding 16px,
+ *                       menlo/consolas 13px, line-height 16.25px, #222832
+ */
+
+/* Thebe's own button bars are unused — our chips are the run path and
+ * page reload is the reset. */
+body.live-active .thebe-controls {
+  display: none !important;
+}
+
+/* The editor replaces the <pre> inside .cell_input and must wear its
+ * exact clothes. thebe 0.9.3 mounts CodeMirror 5 (.CodeMirror, stable
+ * cm-* token classes). Heights auto: thebe's stylesheet fixes a height. */
+body.live-active .thebe-cell,
+body.live-active .thebe-cell .CodeMirror {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+body.live-active .thebe-cell {
+  margin: 0;
+}
+
+/* thebe wraps the editor and (former) output area with 8px margins —
+ * that's exactly +16px per cell versus the static page. The live output
+ * area is relocated out (relocateLiveOutputs), leaving .thebe-output as
+ * an empty husk. */
+body.live-active .thebe-cell .thebe-input,
+body.live-active .thebe-cell .thebe-output {
+  margin: 0;
+}
+
+body.live-active .thebe-cell .CodeMirror {
+  background: #f3f4f5;
+  border: 0;
+  border-radius: 4px;
+  font-family: menlo, consolas, "DejaVu Sans Mono", monospace;
+  font-size: 13px;
+  line-height: 16.25px;
+  color: #222832;
+}
+
+body.live-active .thebe-cell .CodeMirror-lines {
+  padding: 16px;
+}
+
+/* CM5 hides native scrollbars with a -50px margin / +50px padding pair on
+ * .CodeMirror-scroll; inside the theme's flex-styled hide-input <details>
+ * that accounting breaks and the editor gains 50px of phantom height.
+ * Editors here auto-size, so drop the trick entirely and behave like the
+ * static <pre>: grow with content, never scroll vertically, and scroll
+ * horizontally only when a line actually overflows. !important required —
+ * CM's stock sheet sets `overflow: scroll !important`, which otherwise
+ * leaves every editor a live scroll area (visible tracks on systems that
+ * always show scrollbars). CM's own scrollbar widgets are then redundant. */
+body.live-active .thebe-cell .CodeMirror-scroll {
+  margin-bottom: 0;
+  margin-right: 0;
+  padding-bottom: 0;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+body.live-active .thebe-cell .CodeMirror-vscrollbar,
+body.live-active .thebe-cell .CodeMirror-hscrollbar,
+body.live-active .thebe-cell .CodeMirror-scrollbar-filler {
+  display: none !important;
+}
+
+/* CM's "heightForcer" — a classless absolute div, hardcoded 50px, placed
+ * just past the document so the scroll area stays grabbable in stock CM.
+ * With the margin trick gone it's 50px of phantom scroll under every cell
+ * (mouse-wheel jiggle, scrollbar tracks on always-show systems). It is the
+ * only classless direct child of the scroll element. */
+body.live-active .thebe-cell .CodeMirror-scroll > div:not([class]) {
+  display: none !important;
+}
+
+body.live-active .thebe-cell .CodeMirror pre.CodeMirror-line,
+body.live-active .thebe-cell .CodeMirror pre.CodeMirror-line-like {
+  padding: 0;
+}
+
+/* Syntax colors: CodeMirror's python tokens mapped to the exact pygments
+ * palette measured from the built page, so edited code keeps the book's
+ * colors. !important required: the TeachBooks code.css sets its own
+ * palette with !important under html[data-theme="light"]. */
+body.live-active .CodeMirror .cm-keyword { color: rgb(103, 48, 197) !important; }
+body.live-active .CodeMirror .cm-atom { color: rgb(103, 48, 197) !important; }
+body.live-active .CodeMirror .cm-builtin { color: rgb(127, 71, 7) !important; }
+body.live-active .CodeMirror .cm-number { color: rgb(127, 71, 7) !important; }
+body.live-active .CodeMirror .cm-string { color: rgb(0, 98, 47) !important; }
+body.live-active .CodeMirror .cm-string-2 { color: rgb(0, 98, 47) !important; }
+body.live-active .CodeMirror .cm-operator { color: rgb(0, 98, 47) !important; }
+body.live-active .CodeMirror .cm-comment { color: rgb(81, 81, 81) !important; }
+body.live-active .CodeMirror .cm-def { color: rgb(0, 91, 130) !important; }
+body.live-active .CodeMirror .cm-variable,
+body.live-active .CodeMirror .cm-property { color: rgb(8, 8, 8) !important; }
+
+/* The book's pygments theme is uniformly regular weight; CodeMirror bolds
+ * keywords by default. */
+body.live-active .CodeMirror span[class*="cm-"] {
+  font-weight: 400 !important;
+  font-style: normal !important;
+}
+
+/* --- live outputs -------------------------------------------------------
+ * The relocated container carries .cell_output, so the response-rail design
+ * in custom.css applies as-is; below only neutralizes JupyterLab's own
+ * chrome (prompt column, paddings, fonts) inside the live output area, and
+ * keeps the empty container invisible until the cell actually produces
+ * something. */
+
+body.live-active .cell_output.live-output:has(.jp-OutputArea:empty) {
+  display: none;
+}
+
+body.live-active .live-output .jp-OutputArea,
+body.live-active .live-output .jp-OutputArea-output {
+  background: transparent;
+}
+
+body.live-active .live-output .jp-OutputPrompt {
+  display: none;
+}
+
+body.live-active .live-output .jp-OutputArea-output {
+  padding: 0;
+}
+
+body.live-active .live-output .jp-RenderedHTMLCommon {
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Python errors: a red-spined card (and the rail's OUTPUT tag flips to a
+ * red ERROR), ordinary stderr (tqdm progress, warnings) a gold one. Colors
+ * echo the book's accents. thebe's rendermime emits tracebacks under the
+ * stderr mime type, so live-cells.js tags them .live-error after each run
+ * to tell the two apart. */
+body.live-active .live-output [data-mime-type="application/vnd.jupyter.error"],
+body.live-active .live-output .live-error {
+  display: block;
+  padding: 0.55rem 0.8rem;
+  background: rgba(196, 18, 48, 0.045);
+  border-left: 3px solid var(--cmu-red, #c41230);
+  border-radius: 4px;
+}
+
+body.live-active .live-output [data-mime-type="application/vnd.jupyter.stderr"]:not(.live-error) {
+  display: block;
+  padding: 0.45rem 0.7rem;
+  background: rgba(176, 126, 0, 0.07);
+  border-left: 3px solid var(--icm-accent-2, #b07e00);
+  border-radius: 4px;
+}
+
+div.cell div.cell_output:has([data-mime-type="application/vnd.jupyter.error"])::before,
+div.cell div.cell_output:has(.live-error)::before {
+  content: "error";
+  color: var(--cmu-red, #c41230);
+}
+
+/* Traceback / ANSI colors, mapped to the book's math-highlight palette
+ * (the --m-* variables already carry light- and dark-mode values). */
+.live-output .ansi-red-fg, .live-output .ansi-red-intense-fg { color: var(--m-red, #dc2830); }
+.live-output .ansi-green-fg, .live-output .ansi-green-intense-fg { color: var(--m-green, #007d4d); }
+.live-output .ansi-yellow-fg, .live-output .ansi-yellow-intense-fg { color: var(--m-yellow, #b89b00); }
+.live-output .ansi-blue-fg, .live-output .ansi-blue-intense-fg { color: var(--m-blue, #0271ae); }
+.live-output .ansi-cyan-fg, .live-output .ansi-cyan-intense-fg { color: var(--m-cyan, #007d80); }
+.live-output .ansi-magenta-fg, .live-output .ansi-magenta-intense-fg { color: var(--m-magenta, #c20caa); }
+.live-output .ansi-bold { font-weight: 600; }
+
+/* Fresh results announce themselves gently: each new output block fades/
+ * rises in, and the cell's rail pulses Carnegie red before settling back. */
+.live-output .jp-OutputArea-child {
+  animation: live-out-in 0.25s ease-out backwards;
+}
+
+@keyframes live-out-in {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+.cell_output.live-fresh {
+  animation: live-rail-pulse 1.4s ease-out;
+}
+
+@keyframes live-rail-pulse {
+  0%, 55% { border-left-color: var(--cmu-red, #c41230); }
+}

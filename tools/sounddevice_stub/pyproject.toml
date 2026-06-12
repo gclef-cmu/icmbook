@@ -1,0 +1,17 @@
+# Browser-only stand-in for the real `sounddevice` package. Built into
+# _static/wheels/ by `make wheels` and installed in the Pyodide kernel
+# BEFORE pyquist, so micropip sees pyquist's `sounddevice` dependency as
+# already satisfied and never pulls the real PortAudio-based package
+# (which cannot work in WebAssembly). Never published to PyPI.
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sounddevice"
+version = "0.5.1.post900"
+description = "Browser (Pyodide/WASM) stub for sounddevice. pq.play() uses the inline notebook player; hardware audio I/O is unavailable in the browser."
+requires-python = ">=3.10"
+
+[tool.setuptools]
+py-modules = ["sounddevice"]

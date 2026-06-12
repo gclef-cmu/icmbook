@@ -1,0 +1,6 @@
+pyproject.toml
+sounddevice.py
+sounddevice.egg-info/PKG-INFO
+sounddevice.egg-info/SOURCES.txt
+sounddevice.egg-info/dependency_links.txt
+sounddevice.egg-info/top_level.txt
