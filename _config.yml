@@ -48,7 +48,7 @@ html:
   use_multitoc_numbering: true
 
 repository:
-  url: "https://github.com/jiaweil6/icmbook"
+  url: "https://github.com/gclef-cmu/icmbook"
   path_to_book: ""
   branch: main
 
@@ -114,13 +114,14 @@ sphinx:
       # Show the Preface (root page) as the first item in the left sidebar.
       home_page_in_toc: true
       default_mode: light
-      # Live code (Phase 1): in-browser execution via thebe-lite + Pyodide.
-      # Uses the TeachBooks fork of sphinx-thebe (pinned in environment.yml),
-      # which vendors the thebe-lite bundle so the site self-hosts everything
-      # except Pyodide itself (CDN, pinned via _static/thebe-pyodide-pin.js).
-      # The button only renders on notebook pages (currently the template
-      # notebook); .md chapter pages have no executable cells.
-      repository_url: https://github.com/jiaweil6/icmbook
+      # Live code: in-browser execution via thebe + Pyodide. launch_buttons
+      # makes the TeachBooks sphinx-thebe fork (pinned in environment.yml —
+      # see README "Live code" and its fork-trap warning) emit its thebe
+      # config tag on notebook pages. The visible Live Code button itself is
+      # removed at runtime by _static/live-cells.js, which mounts editors at
+      # page load, loads the self-hosted bundles from vendor/thebe-dist, and
+      # pins the Pyodide version.
+      repository_url: https://github.com/gclef-cmu/icmbook
       repository_branch: main
       launch_buttons:
         thebe: true

@@ -45,11 +45,14 @@ sync-pyquist-readme:
 
 # Fetch the pinned thebe runtime bundles the live-code layer loads (see
 # _static/live-cells.js). Self-hosted because the kernel web worker must be
-# same-origin — a CDN copy is blocked by the browser. pyodide_kernel 0.4.7
-# inside thebe-lite 0.5.0 is required: the TeachBooks extension's vendored
-# bundle ships kernel 0.2.0, which hangs on `await` under Pyodide 0.28
-# (and pyquist needs 0.28 for numpy>=2 + soundfile). Downloaded once and
-# cached (gitignored); `rm -rf _static/thebe-dist` to force a re-fetch.
+# same-origin — a CDN copy is blocked by the browser. thebe-lite 0.5.0 /
+# thebe 0.9.3 are the newest released; they embed pyodide_kernel 0.4.7,
+# which caps the runtime at Pyodide 0.27.x (it crashes on >= 0.28 — the
+# pyodideUrl pin lives in _static/live-cells.js, and tools/soundfile_stub
+# fills 0.27's missing soundfile; upgrade recipe in README "Live code").
+# The TeachBooks extension's own vendored bundle is NOT used: it ships
+# kernel 0.2.0, which hangs on `await`. Downloaded once and cached
+# (gitignored); `rm -rf vendor/thebe-dist` to force a re-fetch.
 # IMPORTANT: lives under vendor/ (html_extra_path), NOT _static/ — Jupyter
 # Book auto-registers every .js under _static as a page script, which would
 # eagerly execute the bundle's worker-only webpack chunks on page load

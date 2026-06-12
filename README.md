@@ -30,6 +30,11 @@ make clean     # remove build outputs
 Every `make` target assumes the `icmbook` env is active — it provides
 `jupyter-book` and the `python` that `make serve` uses.
 
+After **creating or recreating** the env, force-install the TeachBooks
+sphinx-thebe fork (same name/version as upstream, so the env solver silently
+keeps upstream — see **The fork trap** under Live code). `make book` checks
+this and prints the exact command if it's missing.
+
 `make book` reads the **committed** `content/`, so it doesn't need `icm-text/`.
 You only need that (private) submodule to run `make split` / `make merge`.
 
