@@ -152,6 +152,15 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
 
 - Routine builds need nothing: wheels track the pyquist pin automatically;
   vendor bundles are cached (first build fetches them from npm).
+- **The fork trap**: the TeachBooks fork shares upstream's dist name *and*
+  version, so a fresh `conda env create` silently keeps upstream sphinx-thebe
+  (conda's jupyter-book pulls it in; pip skips the git pin as satisfied) —
+  this shipped a broken deploy once (live code crashed on a JS-literal config
+  tag). Guards now: `make book` refuses to build with upstream
+  (`check-thebe-fork`, prints the fix), the deploy workflow force-installs
+  the fork, and `live-cells.js` parses either tag format as a last resort.
+  After recreating a local env, run the `pip install --force-reinstall
+  --no-deps "sphinx-thebe @ git+…"` command from `environment.yml`.
 - **Smoke test** after touching any of this: `make serve`, open
   `http://localhost:8000/content/template-notebook.html` (must be `http://` —
   the worker won't start from `file://`). Check: cells are editable
@@ -186,6 +195,12 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   pip install -e ./pyquist
   make clean && make book   # clean first — Sphinx caches the empty pages
   ```
+
+- **Live code crashes with `Expected property name or '}' in JSON`** — that
+  site was built with **upstream** sphinx-thebe instead of the TeachBooks
+  fork (see "The fork trap" under Live code). Force-install the fork and
+  rebuild/redeploy; current `live-cells.js` also tolerates the upstream tag,
+  so a redeploy fixes it even before the env is corrected.
 
 - **Live code: cells never become editable, or Run hangs at "Starting
   Python"** — open the browser console and look for `[live-cells]` lines,

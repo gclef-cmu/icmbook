@@ -1,4 +1,4 @@
-.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels
+.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
@@ -90,7 +90,23 @@ wheels:
 		ws.sort(key=lambda w: 0 if w.startswith(('sounddevice', 'soundfile')) else 1); \
 		open('_static/wheels/manifest.json', 'w').write(json.dumps(ws))"
 
-book: sync-pyquist-readme wheels vendor-thebe
+# The live-code page glue must come from the TeachBooks sphinx-thebe FORK,
+# but upstream ships the same dist name AND version (0.3.1). A fresh
+# `conda env create` therefore silently keeps upstream (conda's jupyter-book
+# pulls it in; pip then treats the git pin in environment.yml as already
+# satisfied) — the build still succeeds and the deployed pages crash
+# live-cells.js in the browser. Detect the fork by a file only it ships and
+# fail loudly with the fix instead. (.github/workflows/deploy-book.yml
+# force-installs the fork for the same reason.)
+check-thebe-fork:
+	@python3 -c "import pathlib, sphinx_thebe; \
+		raise SystemExit(0 if (pathlib.Path(sphinx_thebe.__file__).parent \
+		/ '_static' / 'sphinx-thebe-lite.js').exists() else 1)" || { \
+		echo "ERROR: upstream sphinx-thebe is installed; the book needs the TeachBooks fork:"; \
+		echo "  pip install --force-reinstall --no-deps 'sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0'"; \
+		exit 1; }
+
+book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe
 	jupyter-book build ./
 	@# Sphinx doesn't track files referenced by raw <img>/<audio> HTML tags,
 	@# so copy each chapter's assets folder into the build output ourselves.

@@ -64,6 +64,19 @@ jobs:
           channel-priority: strict
           conda-remove-defaults: "true"
 
+      # conda's jupyter-book already installed UPSTREAM sphinx-thebe, and the
+      # TeachBooks fork reuses the same dist name AND version (0.3.1), so the
+      # pip section of environment.yml is silently skipped as "already
+      # satisfied". Built that way, pages carry upstream's page glue and the
+      # live-code layer crashes in the browser (JS-literal config tag instead
+      # of JSON — this broke the first live-code deploy). Force the fork in;
+      # `make book` independently refuses to build with upstream
+      # (check-thebe-fork), which would fail this job loudly instead.
+      - name: Force-install TeachBooks sphinx-thebe fork
+        run: |
+          pip install --force-reinstall --no-deps \
+            "sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0"
+
       # Confirm the autodoc-driven API pages will introspect the submodule
       # checkout (environment.yml installs it editable as `-e ./pyquist`),
       # not a stray copy from a wheel cache.

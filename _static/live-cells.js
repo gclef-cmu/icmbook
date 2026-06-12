@@ -29,12 +29,28 @@
 // _static/audio-chip.js), so code-produced audio looks native to the book
 // instead of the browser's default widget.
 //
-// Reuses globals from the TeachBooks sphinx-thebe-lite.js where behavior
-// matches (loadScriptAsync, thebelab). Its initThebe()/modifyDOMForThebe()
-// are NOT used: they are coupled to the launch button and delete baked
-// outputs on activation.
+// Deliberately self-contained: no globals from the sphinx-thebe page glue
+// are required (its initThebe()/modifyDOMForThebe() are coupled to the
+// launch button and delete baked outputs), and the config tag is parsed
+// leniently — so the layer still works on a page built with UPSTREAM
+// sphinx-thebe instead of the TeachBooks fork (see readThebeConfig).
 (function () {
   "use strict";
+
+  // Same contract as the fork's loadScriptAsync, owned here so the layer
+  // doesn't depend on which sphinx-thebe build emitted the page.
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = function () {
+        reject(new Error("failed to load " + src));
+      };
+      document.head.appendChild(s);
+    });
+  }
 
   var SEL_CELL = typeof thebe_selector !== "undefined" ? thebe_selector : ".thebe,.cell";
   var SEL_INPUT = typeof thebe_selector_input !== "undefined" ? thebe_selector_input : "pre";
@@ -193,10 +209,45 @@
     return mountPromise;
   }
 
-  async function mountEditors() {
+  // The text/x-thebe-config tag. The TeachBooks fork emits strict JSON, but
+  // a build that silently got UPSTREAM sphinx-thebe (same dist name AND
+  // version — see check-thebe-fork in the Makefile) emits a JS object
+  // literal with unquoted keys, which JSON.parse rejects. That exact mixup
+  // took down the first deploy, so parse leniently and then force every
+  // setting our self-hosted runtime needs: the result is byte-identical on
+  // fork-built pages and repairs upstream-built ones (which would otherwise
+  // point thebe at BINDER with a dark editor theme and no rootPath).
+  function readThebeConfig() {
     var tag = document.querySelector('script[type="text/x-thebe-config"]');
-    if (!tag) throw new Error("no thebe config on this page");
-    var config = JSON.parse(tag.text);
+    var config = {};
+    if (tag) {
+      try {
+        config = JSON.parse(tag.text);
+      } catch (e) {
+        try {
+          config = new Function("return (" + tag.text + ");")() || {};
+        } catch (e2) {
+          console.warn("[live-cells] unparseable thebe config tag:", e2);
+        }
+      }
+    }
+    config.useJupyterLite = true;
+    config.useBinder = false;
+    config.requestKernel = true;
+    config.kernelOptions = Object.assign({}, config.kernelOptions, { path: "/" });
+    if (!config.rootPath) {
+      // The fork writes the docs root (e.g. ".."); derive it from our own
+      // script tag otherwise. Root-level pages get "." ("" would resolve
+      // subsequent "/thebe-dist/…" paths to the DOMAIN root).
+      var me = document.querySelector('script[src*="live-cells.js"]');
+      var prefix = me ? me.getAttribute("src").replace(/_static\/live-cells\.js.*$/, "") : "";
+      config.rootPath = prefix ? prefix.replace(/\/$/, "") : ".";
+    }
+    return config;
+  }
+
+  async function mountEditors() {
+    var config = readThebeConfig();
     // Our chips are the single execution path (they own run-above
     // semantics), so suppress thebe's own buttons. Restart keys in both
     // spellings: the extension's config tag uses "mountRestartallButton",
@@ -206,9 +257,12 @@
     config.mountRestartButton = false;
     config.mountRestartallButton = false;
     config.mountRestartAllButton = false;
-    // Static code blocks have no gutters; keep the editors identical.
+    // Static code blocks have no gutters and the book is a light theme;
+    // keep the editors identical (upstream-built pages say theme "abcdef").
     config.codeMirrorConfig = Object.assign({}, config.codeMirrorConfig, {
       lineNumbers: false,
+      theme: "default",
+      mode: "python",
     });
     thebeConfig = config;
 
@@ -230,7 +284,7 @@
       },
     };
 
-    await loadScriptAsync(config.rootPath + "/thebe-dist/core/index.js");
+    await loadScript(config.rootPath + "/thebe-dist/core/index.js");
 
     prepareCells();
     // Gates the editor-parity styling in live-cells.css.
@@ -375,7 +429,7 @@
   async function startKernel() {
     await ensureMounted();
     status("Starting Python — first visit downloads ~25 MB");
-    await loadScriptAsync(thebeConfig.rootPath + "/thebe-dist/lite/thebe-lite.min.js");
+    await loadScript(thebeConfig.rootPath + "/thebe-dist/lite/thebe-lite.min.js");
 
     // Pin the kernel's runtime stack. Pyodide 0.27.7 is the sweet spot:
     // pyquist needs numpy>=2.0 (so >= 0.27), and the pyodide_kernel 0.4.7

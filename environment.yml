@@ -27,10 +27,17 @@ dependencies:
       # Live code: TeachBooks fork of sphinx-thebe (same dist name/version as
       # upstream, so it replaces the copy jupyter-book depends on). Vendors a
       # thebe-lite bundle for in-browser Pyodide execution — no Binder. Pinned
-      # to a commit because the fork publishes no tags. If the env already has
-      # upstream sphinx-thebe 0.3.1, pip considers it satisfied: force with
+      # to a commit because the fork publishes no tags. CAUTION: because conda
+      # installs upstream sphinx-thebe 0.3.1 first (jupyter-book dependency),
+      # pip treats this line as already satisfied and SKIPS it — this took
+      # down a deploy once. After creating/updating the env, force it:
       #   pip install --force-reinstall --no-deps "sphinx-thebe @ git+...@<pin>"
+      # `make book` refuses to build with upstream (check-thebe-fork), and CI
+      # runs the force-install explicitly (.github/workflows/deploy-book.yml).
       - sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0
+      # Needed by the fork's copy_over_files (not declared in its metadata,
+      # which mirrors upstream's).
+      - wcmatch
       # Pyquist: the course audio library. Needed to execute notebook pages
       # (e.g. content/Template.ipynb) at build time, and introspected by
       # Sphinx autodoc to generate content/pyquist/api/*.md. Installed from
