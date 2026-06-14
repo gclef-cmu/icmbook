@@ -171,8 +171,19 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   the worker won't start from `file://`). Check: cells are editable
   immediately with no layout shift; ▶ Run on the `pq.play(tone)` cell boots
   the kernel (badge: "● Python connected") and replaces the baked output with
-  a working audio card; the hidden-input cell errors with a red ERROR card
-  (its old-API code is a known content issue, useful as the error fixture).
+  a working audio card.
+- **Unsupported operations must fail clearly, not silently.** §4 of the
+  template notebook ("Browser limits") is the deliberate test surface — five
+  `skip-execution` cells that each Run into a clear error in the browser:
+  reading an MP3 and writing a non-WAV file raise `LibsndfileError` ("…WAV
+  only…"); `pq.record`, `pq.play(..., force_sounddevice=True)`, and
+  `sd.query_devices` raise `PortAudioError` ("…needs a sound card…"). The
+  messages live in the browser stubs (`tools/soundfile_stub/`,
+  `tools/sounddevice_stub/`), **not** pyquist — no pyquist change is needed to
+  keep them clear. If you add a pyquist call that touches the filesystem or a
+  device, add a matching §4 cell and confirm the message reads well. (These
+  cells are `skip-execution` so the build neither runs them — which would fail
+  CI or bake a misleading success — nor leaves them un-runnable live.)
 - The editors are **CodeMirror 5**; their look (and scroll behavior) is
   pixel-matched against the built static page in `live-cells.css` — if the
   theme or pygments style changes, re-measure. Output styling lives in
@@ -200,6 +211,15 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   pip install -e ./pyquist
   make clean && make book   # clean first — Sphinx caches the empty pages
   ```
+
+- **Notebook build fails with `module 'pyquist' has no attribute 'Audio'`**
+  (or baked outputs vanish) — a notebook executed with its CWD set to a
+  directory that contains a `pyquist/` subdir (the repo root, or `content/`
+  with its `content/pyquist/` docs), so `import pyquist` resolved to that
+  empty namespace directory instead of the editable install (setuptools'
+  editable finder sits after `PathFinder` on `sys.meta_path`, so CWD wins).
+  Fixed by `execute: run_in_temp: true` in `_config.yml` (notebooks run in a
+  temp dir with no sibling `pyquist/`); leave it on.
 
 - **Live code crashes with `Expected property name or '}' in JSON`** — that
   site was built with **upstream** sphinx-thebe instead of the TeachBooks

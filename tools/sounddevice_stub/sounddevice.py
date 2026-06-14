@@ -11,7 +11,7 @@ sound card raises a clear error instead of crashing at import time.
 device-defaults file — and the browser filesystem starts empty.
 """
 
-__version__ = "0.5.1.post900"
+__version__ = "0.5.1.post901"
 
 
 class PortAudioError(RuntimeError):
@@ -33,11 +33,16 @@ default = _Default()
 
 
 def _unavailable(name):
+    # Capability-first message: pyquist.record() calls query_devices() before
+    # rec(), so leading with the function name would blame the wrong call.
     raise PortAudioError(
-        f"sounddevice.{name}() is not available when running in the browser. "
-        "Audio playback here uses the inline player that pq.play() shows "
-        "under the cell. Recording and device selection require running "
-        "Python on your own computer."
+        "Live audio devices aren't available in the browser: sounddevice "
+        "drives a real sound card (PortAudio), which the WebAssembly sandbox "
+        "can't reach. In this book pq.play() still works — it shows an inline "
+        "player under the cell. Recording (pq.record), device playback "
+        "(pq.play(..., force_sounddevice=True)), and device queries only run "
+        "when you execute Python on your own computer. "
+        f"(triggered by sounddevice.{name}())"
     )
 
 

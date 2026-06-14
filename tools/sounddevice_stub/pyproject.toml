@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sounddevice"
-version = "0.5.1.post900"
+version = "0.5.1.post901"
 description = "Browser (Pyodide/WASM) stub for sounddevice. pq.play() uses the inline notebook player; hardware audio I/O is unavailable in the browser."
 requires-python = ">=3.10"
 

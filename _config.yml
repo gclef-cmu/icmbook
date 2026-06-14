@@ -22,6 +22,16 @@ only_build_toc_files: true
 execute:
   execute_notebooks: 'auto'
   timeout: 180
+  # Run each notebook in a temp dir, not its source folder. The repo has two
+  # sibling directories named `pyquist` — the `pyquist/` submodule and the
+  # `content/pyquist/` docs — either of which, when it's the execution CWD,
+  # shadows the editable-installed `pyquist` package as an empty namespace
+  # package (setuptools' editable finder is appended after PathFinder on
+  # sys.meta_path, so CWD wins) and breaks `import pyquist` at build time.
+  # A temp CWD has no such sibling, so the install resolves. The notebooks
+  # read no files by relative path (test audio comes from the package's
+  # absolute TEST_DATA_DIR), so temp execution is safe.
+  run_in_temp: true
 
 #######################################################################################
 # Parse and render settings

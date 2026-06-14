@@ -1,6 +1,0 @@
-pyproject.toml
-soundfile.py
-soundfile.egg-info/PKG-INFO
-soundfile.egg-info/SOURCES.txt
-soundfile.egg-info/dependency_links.txt
-soundfile.egg-info/top_level.txt

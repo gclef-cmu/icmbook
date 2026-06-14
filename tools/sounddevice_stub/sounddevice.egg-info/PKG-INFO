@@ -1,5 +1,0 @@
-Metadata-Version: 2.4
-Name: sounddevice
-Version: 0.5.1.post900
-Summary: Browser (Pyodide/WASM) stub for sounddevice. pq.play() uses the inline notebook player; hardware audio I/O is unavailable in the browser.
-Requires-Python: >=3.10

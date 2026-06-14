@@ -16,7 +16,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "soundfile"
-version = "0.12.1.post900"
+version = "0.12.1.post901"
 description = "Browser (Pyodide/WASM) WAV-only stand-in for soundfile, for pyquist live-code pages."
 requires-python = ">=3.10"
 
