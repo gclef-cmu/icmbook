@@ -1,13 +1,29 @@
 # Table of contents for "Computer Music Principles"
 # Docs: https://jupyterbook.org/customize/toc.html
 format: jb-book
-root: content/about
+root: content/index
 
 parts:
-  - chapters:
+  - caption: Course Information
+    chapters:
+      - file: content/course/home
+      - file: content/course/about
+      - file: content/course/schedule
+      - file: content/course/projects/index
+        sections:
+          - file: content/course/projects/1
+          - file: content/course/projects/2
+      - file: content/course/resources/index
+        sections:
+          - file: content/course/resources/1-software
+          - file: content/course/resources/2-textbooks
+          - file: content/course/resources/3-jupyter
+      - file: content/course/showcase
+  - caption: Textbook
+    chapters:
+      - file: content/about
       - file: content/template-notebook
       - file: content/template-md
-  - chapters:
       - file: content/ch00/index
         sections:
           - file: content/ch00/00
@@ -50,8 +66,6 @@ parts:
           - file: content/ch04/04
           - file: content/ch04/05
           - file: content/ch04/06
-
-  - chapters:
       - file: content/reference/index
         sections:
           - file: content/pyquist/Overview

@@ -12,10 +12,12 @@ all: book
 # you want to pull the latest prose into content/ (bump the submodule first
 # with `git submodule update --remote icm-text` to advance the pin).
 # It also mirrors icm-text/refs.bib (the professor's ground-truth bibliography)
-# into content/references.bib, so citations resolve against the upstream entries.
-# WARNING: it wipes content/ch*/ entirely, dropping any local styling
-# overrides (figure refactors, admonition wrappers, margin notes), and
-# overwrites content/references.bib. Use `git diff content/` afterwards to
+# into content/references.bib, so citations resolve against the upstream entries,
+# and mirrors the icm-f26/ course-website submodule verbatim into content/course/
+# (copied, not split), regenerating the "Course Information" part of _toc.yml.
+# WARNING: it wipes content/ch*/ and content/course/ entirely, dropping any
+# local styling overrides (figure refactors, admonition wrappers, margin notes),
+# and overwrites content/references.bib. Use `git diff content/` afterwards to
 # review and re-apply your styling.
 split:
 	python3 tools/split_chapters.py

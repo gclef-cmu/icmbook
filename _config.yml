@@ -124,8 +124,11 @@ sphinx:
     napoleon_use_rtype: true
     html_theme_options:
       use_download_button: false
-      # Show the Preface (root page) as the first item in the left sidebar.
-      home_page_in_toc: true
+      # Keep the root landing page (content/index) out of the left sidebar:
+      # it's reachable by opening the site and via the logo/title link, so a
+      # sidebar entry for it would be redundant. The first sidebar item is then
+      # the "Course Information" caption group.
+      home_page_in_toc: false
       default_mode: light
       # Live code: in-browser execution via thebe + Pyodide. launch_buttons
       # makes the TeachBooks sphinx-thebe fork (pinned in environment.yml —

@@ -10,3 +10,6 @@
 	path = icm-text
 	url = git@github.com:chrisdonahue/icm-text.git
 	branch = main
+[submodule "icm-f26"]
+	path = icm-f26
+	url = git@github.com:gclef-cmu/icm-f26.git

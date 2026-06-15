@@ -16,12 +16,19 @@ the source of truth. For each chapter folder:
     `./assets/...` links in the source still resolve in the generated tree.
   - Regenerates the chapter parts block of _toc.yml in place.
 
+It then mirrors the icm-f26/ course-website submodule into content/course/. The
+course pages are copied verbatim (preserving the directory layout, so a folder
+like projects/ or resources/ becomes a nested section with its index.md as the
+parent), and the "Course Information" part of _toc.yml is regenerated to list
+them in COURSE_ORDER.
+
 Finally, mirrors the ground-truth bibliography icm-text/refs.bib into
 content/references.bib (the file _config.yml's `bibtex_bibfiles` points at), so
 citations resolve against the same entries the professor maintains upstream.
 
-The icm-text source is authored directly in MyST, so this tool performs no
-syntax translation — it only restructures (split, demote headings, copy, TOC).
+Both the icm-text and icm-f26 sources are authored directly in MyST, so this
+tool performs no syntax translation — it only restructures (split, demote
+headings, copy, TOC).
 
 Run via `make split`. WARNING: this wipes content/ch*/ and regenerates it from
 icm-text/, dropping any local styling overrides — review `git diff content/`
@@ -41,6 +48,16 @@ CONTENT = REPO / "content"
 TOC = REPO / "_toc.yml"
 REFS_SRC = SOURCE / "refs.bib"  # ground-truth bibliography
 REFS_DEST = CONTENT / "references.bib"  # what _config.yml's bibtex_bibfiles points at
+
+COURSE_SOURCE = REPO / "icm-f26"  # ground-truth course website, pinned git submodule
+COURSE_DEST = CONTENT / "course"
+# The repo's README is a placeholder for contributors, not a course page.
+COURSE_SKIP_FILES = {"README.md"}
+COURSE_CAPTION = "- caption: Course Information"
+# Preferred sidebar order for the course pages/sections (matches the course
+# website nav). Entries are file stems or subdirectory names; anything not
+# listed sorts naturally after these.
+COURSE_ORDER = ("home", "about", "schedule", "projects", "resources", "showcase")
 
 CHAPTER_FOLDER_RE = re.compile(r"^(\d+)-(.+)$")
 FRONTMATTER_RE = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
@@ -196,44 +213,153 @@ def split_chapter(folder: Path) -> dict | None:
 
 
 def regenerate_toc(results: list[dict]) -> None:
-    """Replace the chapter parts block in _toc.yml with one generated from results.
+    """Rewrite the chapter file-entries (content/ch*/) of _toc.yml in place.
 
-    The "chapter parts block" is the first top-level `  - chapters:` entry whose
-    body references `content/ch`. Other parts (templates, course, reference) are
-    left untouched.
+    The chapters live inside the "Textbook" part's `chapters:` list, between the
+    template entries above and the reference entry below. This replaces only the
+    contiguous run of `- file: content/chNN/index` entries (with their nested
+    `sections:`), preserving the surrounding scaffold — the part captions, the
+    template entries, and the reference subtree — which is hand-maintained here.
+    The run is bounded by the first sibling `- file:` that is not a chapter (e.g.
+    content/reference/index) or by a dedent to the enclosing part.
     """
     text = TOC.read_text()
     lines = text.splitlines()
-    parts_starts = [i for i, l in enumerate(lines) if l.rstrip() == "  - chapters:"]
-    chapter_start = chapter_end = None
-    for idx, start in enumerate(parts_starts):
-        end = parts_starts[idx + 1] if idx + 1 < len(parts_starts) else len(lines)
-        if any("content/ch" in lines[j] for j in range(start, end)):
-            chapter_start, chapter_end = start, end
+
+    def indent(line: str) -> int:
+        return len(line) - len(line.lstrip())
+
+    starts = [
+        i for i, l in enumerate(lines)
+        if l.lstrip().startswith("- file: content/ch") and l.rstrip().endswith("/index")
+    ]
+    if not starts:
+        sys.exit("could not locate chapter entries (content/ch*/index) in _toc.yml")
+    start = starts[0]
+    base = indent(lines[start])
+
+    end = len(lines)
+    for j in range(start + 1, len(lines)):
+        l = lines[j]
+        if not l.strip():
+            continue  # blank lines inside the run are dropped
+        ind = indent(l)
+        is_sibling_file = ind == base and l.lstrip().startswith("- file:")
+        if ind < base or (is_sibling_file and not l.lstrip().startswith("- file: content/ch")):
+            end = j
             break
-    if chapter_start is None:
-        sys.exit("could not locate chapter parts block in _toc.yml")
 
-    new_block = ["  - chapters:"]
+    pad = " " * base
+    new_block: list[str] = []
     for r in sorted(results, key=lambda r: r["chapter_num"]):
-        new_block.append(f"      - file: {r['index']}")
+        new_block.append(f"{pad}- file: {r['index']}")
         if r["sections"]:
-            new_block.append("        sections:")
+            new_block.append(f"{pad}  sections:")
             for s in r["sections"]:
-                new_block.append(f"          - file: {s}")
-    # Preserve the blank line between this part and the next one.
-    new_block.append("")
+                new_block.append(f"{pad}    - file: {s}")
 
-    new_lines = lines[:chapter_start] + new_block + lines[chapter_end:]
-    # Drop accidental double blank lines and trailing blanks.
-    cleaned: list[str] = []
-    for line in new_lines:
-        if line == "" and cleaned and cleaned[-1] == "":
+    new_lines = lines[:start] + new_block + lines[end:]
+    TOC.write_text("\n".join(new_lines) + "\n")
+
+
+def natural_key(name: str):
+    """Sort key so 1.md, 2.md, ... order numerically and names order lexically."""
+    stem = Path(name).stem
+    return (0, int(stem), "") if stem.isdigit() else (1, 0, stem.lower())
+
+
+def _toc_ref(path: Path) -> str:
+    """content/course/projects/1.md -> 'content/course/projects/1' (TOC file ref)."""
+    return "content/" + path.relative_to(CONTENT).with_suffix("").as_posix()
+
+
+def course_order_key(path: Path):
+    """Sort course pages/subdirs by COURSE_ORDER, then naturally for the rest."""
+    rank = COURSE_ORDER.index(path.stem) if path.stem in COURSE_ORDER else len(COURSE_ORDER)
+    return (rank, natural_key(path.name))
+
+
+def regenerate_course_toc() -> None:
+    """Replace the "Course Information" part of _toc.yml from content/course/.
+
+    Emits a single captioned jb-book part (a caption attaches to exactly one
+    `chapters:` list). Top-level pages and subdirectories are interleaved in
+    COURSE_ORDER (so e.g. projects/ sits between schedule and resources): a page
+    becomes a flat `file:` entry; a subdirectory's index.md becomes a `file:`
+    with its remaining pages nested under `sections:` (a subdir without an
+    index.md is listed flat). The part spans from the Course Information caption
+    to the next `- caption:`; other parts are untouched.
+    """
+    entries = sorted(
+        (p for p in COURSE_DEST.iterdir() if p.is_dir() or p.suffix == ".md"),
+        key=course_order_key,
+    )
+
+    body = ["  - caption: Course Information", "    chapters:"]
+    for p in entries:
+        if not p.is_dir():
+            body.append(f"      - file: {_toc_ref(p)}")
             continue
-        cleaned.append(line)
-    while cleaned and cleaned[-1] == "":
-        cleaned.pop()
-    TOC.write_text("\n".join(cleaned) + "\n")
+        mds = sorted(p.glob("*.md"), key=lambda q: natural_key(q.name))
+        index = next((q for q in mds if q.stem == "index"), None)
+        sections = [q for q in mds if q.stem != "index"]
+        if index is not None:
+            body.append(f"      - file: {_toc_ref(index)}")
+            if sections:
+                body.append("        sections:")
+                body += [f"          - file: {_toc_ref(s)}" for s in sections]
+        else:
+            body += [f"      - file: {_toc_ref(s)}" for s in sections]
+
+    lines = TOC.read_text().splitlines()
+    try:
+        cap_idx = next(i for i, l in enumerate(lines) if l.strip() == COURSE_CAPTION)
+    except StopIteration:
+        sys.exit(f'could not locate "{COURSE_CAPTION}" in _toc.yml')
+    end = next(
+        (j for j in range(cap_idx + 1, len(lines))
+         if lines[j].lstrip().startswith("- caption:")),
+        len(lines),
+    )
+    new_lines = lines[:cap_idx] + body + lines[end:]
+    TOC.write_text("\n".join(new_lines) + "\n")
+
+
+def mirror_course() -> None:
+    """Mirror the icm-f26/ course-website submodule verbatim into content/course/.
+
+    icm-f26 authors course pages in the same MyST flavour as the textbook, so —
+    unlike the chapters — nothing is split or demoted: every file is copied with
+    its directory layout preserved, skipping the README placeholder and any
+    dotfiles/dirs (e.g. .git). Wipes content/course/ first, then regenerates the
+    Course Information part of _toc.yml.
+    """
+    if not COURSE_SOURCE.exists() or not any(COURSE_SOURCE.iterdir()):
+        print(
+            f"  skip course: no {COURSE_SOURCE.relative_to(REPO)}/ "
+            "(run: git submodule update --init icm-f26)",
+            file=sys.stderr,
+        )
+        return
+    if COURSE_DEST.exists():
+        shutil.rmtree(COURSE_DEST)
+    COURSE_DEST.mkdir(parents=True)
+
+    copied = 0
+    for src in sorted(COURSE_SOURCE.rglob("*")):
+        rel = src.relative_to(COURSE_SOURCE)
+        if any(part.startswith(".") for part in rel.parts):
+            continue  # skip .git and any other dotfiles/dirs
+        if src.is_dir() or rel.name in COURSE_SKIP_FILES:
+            continue
+        dest = COURSE_DEST / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+        copied += 1
+
+    print(f"  course  {copied} file(s)  <- icm-f26/")
+    regenerate_course_toc()
+    print(f"  updated {TOC.relative_to(REPO)} (Course Information)")
 
 
 def sync_references() -> None:
@@ -282,6 +408,7 @@ def main() -> int:
         sys.exit("no chapters found in icm-text/")
     regenerate_toc(results)
     print(f"  updated {TOC.relative_to(REPO)}")
+    mirror_course()
     sync_references()
     return 0
 

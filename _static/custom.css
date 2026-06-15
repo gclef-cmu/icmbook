@@ -856,12 +856,32 @@ footer.bd-footer-content {
   }
 }
 
-/* ---- Left sidebar: entry styling ------------------------------------- */
-/* Top-level entries (chapter wrappers, Course Information, Reference
-   Materials) render in bold so they read as section headers, distinct
-   from their nested section links. */
-.bd-sidebar-primary .toctree-l1 > a.reference {
+/* ---- Left sidebar: part captions (section headers) ------------------- */
+/* Each _toc.yml part `caption:` renders as <p class="caption"> preceding its
+   <ul>. Style them as prominent editorial section headers — bold, uppercase,
+   letter-spaced — so the nav reads as captioned groups with the chapter links
+   sitting quietly beneath, matching the book's reference sidebar design. */
+.bd-sidebar-primary nav.bd-links p.caption {
+  margin: 1.75rem 0 0.55rem;
+  font-family: var(--icm-serif);
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 0.72rem;
+  color: var(--pst-color-text-base);
+}
+/* The first caption follows the home-link entry; trim its top gap a little. */
+.bd-sidebar-primary nav.bd-links p.caption:first-of-type {
+  margin-top: 1.1rem;
+}
+
+/* ---- Left sidebar: entry styling ------------------------------------- */
+/* Top-level entries (chapters, course pages, reference) sit beneath their
+   caption in a medium weight — the uppercase captions now carry the section
+   hierarchy, so the links read as a calm, evenly weighted list rather than a
+   stack of bold headers. */
+.bd-sidebar-primary .toctree-l1 > a.reference {
+  font-weight: 500;
 }
 
 /* Breathing room between top-level entries. We use `margin-bottom` on
