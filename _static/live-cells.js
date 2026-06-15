@@ -504,6 +504,24 @@
     manifest.forEach(function (name) {
       lines.push('await micropip.install("' + new URL(name, base).href + '")');
     });
+    // Optional features pulled from PyPI, but only when a code cell on THIS
+    // page actually uses them — so prose/plotting pages don't pay for heavy
+    // extras (e.g. anywidget, which browseraudio's recorder pulls in). Keyed
+    // on strings that appear in the page's code.
+    var pageCode = Array.prototype.map
+      .call(document.querySelectorAll(".cell_input"), function (e) {
+        return e.textContent;
+      })
+      .join("\n");
+    var pypiFeatures = [
+      // pq.record_widget() / browseraudio: in-browser microphone recording.
+      { pkg: "browseraudio", when: ["browseraudio", "record_widget"] },
+    ];
+    pypiFeatures.forEach(function (f) {
+      if (f.when.some(function (s) { return pageCode.indexOf(s) !== -1; })) {
+        lines.push('await micropip.install("' + f.pkg + '")');
+      }
+    });
     // Browser-kernel shims: a no-op myst_nb.glue (build-time-only library)
     // and the RcParams patch the TeachBooks extension applies for matplotlib.
     lines.push(

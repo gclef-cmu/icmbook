@@ -1,6 +1,11 @@
 [submodule "pyquist"]
 	path = pyquist
 	url = git@github.com:gclef-cmu/pyquist.git
+	# Temporary: track the in-browser recording branch so the deploy builds
+	# pyquist with pq.record_widget(). Revert to the pinned main commit once
+	# the browser-recording PR is merged. CI fetches this with
+	# `git submodule update --init --remote pyquist` (see deploy-book.yml).
+	branch = browser-recording
 [submodule "icm-text"]
 	path = icm-text
 	url = git@github.com:chrisdonahue/icm-text.git

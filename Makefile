@@ -85,9 +85,11 @@ wheels:
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/soundfile_stub
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./pyquist
 	@# Install-order manifest consumed by _static/live-cells.js: the stubs
-	@# (sounddevice always; soundfile until the kernel stack reaches
-	@# Pyodide 0.28) must install before pyquist so micropip treats those
-	@# dependencies as satisfied and never fetches the real packages.
+	@# (sounddevice always; soundfile until the kernel stack reaches Pyodide
+	@# 0.28) must install before pyquist so micropip treats those dependencies
+	@# as satisfied and never fetches the real packages. (browseraudio — for
+	@# pq.record_widget() — is installed lazily from PyPI by live-cells.js on
+	@# pages that record, so it is NOT built here.)
 	python3 -c "import glob, json, os; \
 		ws = sorted(os.path.basename(p) for p in glob.glob('_static/wheels/*.whl')); \
 		ws.sort(key=lambda w: 0 if w.startswith(('sounddevice', 'soundfile')) else 1); \

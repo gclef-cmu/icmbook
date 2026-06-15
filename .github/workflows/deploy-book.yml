@@ -43,7 +43,11 @@ jobs:
       - name: Fetch pyquist submodule (public, over HTTPS)
         run: |
           git config submodule.pyquist.url https://github.com/gclef-cmu/pyquist.git
-          git submodule update --init pyquist
+          # --remote follows the branch in .gitmodules (currently
+          # browser-recording, so the build gets pq.record_widget()). That
+          # branch must be pushed to gclef-cmu/pyquist. Revert to a plain
+          # `--init` pin once it's merged to main.
+          git submodule update --init --remote pyquist
 
       # Pyquist's `device` module imports `sounddevice`, which dlopens the
       # PortAudio C library at import time. autodoc imports every module it

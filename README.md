@@ -172,7 +172,25 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   immediately with no layout shift; ▶ Run on the `pq.play(tone)` cell boots
   the kernel (badge: "● Python connected") and replaces the baked output with
   a working audio card.
-- **Unsupported operations must fail clearly, not silently.** §4 of the
+- **Microphone recording (§4 of the template, "Record your own audio").**
+  `pq.record_widget()` captures from the mic in the browser, via the
+  [browseraudio](https://pypi.org/project/browseraudio/) package (a small
+  anywidget Web Audio bridge). The native `pq.record()` is untouched and still
+  needs a sound card (so it's a §5 "browser limit"); `record_widget()` is the
+  additive browser-friendly companion (a separate pyquist function — no change
+  to pyquist's existing interface). `live-cells.js` installs browseraudio
+  **lazily from PyPI** — only on pages whose code mentions `record_widget` or
+  `browseraudio` — so prose/plotting pages don't pull anywidget. Usage is two
+  cells (display the recorder + click Record, then `rec.to_pyquist()` in the
+  next cell); a single-cell `await` can't work because the kernel doesn't
+  process the widget reply mid-execution.
+  **Deploy dependency:** `record_widget()` ships in the pyquist
+  `browser-recording` branch, which the deploy fetches via
+  `git submodule update --init --remote pyquist` (`.gitmodules` pins
+  `branch = browser-recording`). That branch must be pushed to
+  gclef-cmu/pyquist; revert `.gitmodules`/`deploy-book.yml` to a plain pinned
+  `--init` once it merges to `main`.
+- **Unsupported operations must fail clearly, not silently.** §5 of the
   template notebook ("Browser limits") is the deliberate test surface — five
   `skip-execution` cells that each Run into a clear error in the browser:
   reading an MP3 and writing a non-WAV file raise `LibsndfileError` ("…WAV
@@ -181,7 +199,7 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   messages live in the browser stubs (`tools/soundfile_stub/`,
   `tools/sounddevice_stub/`), **not** pyquist — no pyquist change is needed to
   keep them clear. If you add a pyquist call that touches the filesystem or a
-  device, add a matching §4 cell and confirm the message reads well. (These
+  device, add a matching §5 cell and confirm the message reads well. (These
   cells are `skip-execution` so the build neither runs them — which would fail
   CI or bake a misleading success — nor leaves them un-runnable live.)
 - The editors are **CodeMirror 5**; their look (and scroll behavior) is
