@@ -928,13 +928,22 @@ footer.bd-footer-content {
   font-weight: 500;
 }
 
-/* Breathing room between top-level entries. We use `margin-bottom` on
-   every l1 instead of `margin-top` + `:first-child` reset because
-   Jupyter Book emits one <ul> per "part" in `_toc.yml` — a `:first-child`
-   selector would silently drop the margin on whichever chapter happens
-   to be first in its part, producing uneven gaps in the sidebar. */
+/* Tighten the vertical rhythm of the nav links. The theme pads each link
+   0.25rem top+bottom; trimming it (plus the small inter-entry margin below)
+   pulls the entries closer together so a captioned group reads as one balanced
+   block instead of a loosely spaced list. Applies to nested section links too. */
+.bd-sidebar-primary nav.bd-links li > a {
+  padding-top: 0.14rem;
+  padding-bottom: 0.14rem;
+}
+
+/* A hair of separation between top-level entries on top of the trimmed link
+   padding. We use `margin-bottom` on every l1 instead of `margin-top` +
+   `:first-child` reset because Jupyter Book emits one <ul> per "part" in
+   `_toc.yml` — a `:first-child` selector would silently drop the margin on
+   whichever chapter is first in its part, producing uneven gaps. */
 .bd-sidebar-primary .toctree-l1 {
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.08rem;
 }
 
 /* Sub-section links shrink so visual hierarchy matches semantic depth.
@@ -960,13 +969,17 @@ nav.bd-links li.current:not(.toctree-l1) > a {
   box-shadow: none !important;
 }
 
-/* Sidebar entries whose titles are inline code (e.g. `pyquist`) render
-   as a <code> wrapper, which carries its own color from --pst-color-inline-code
-   and stops the link's active-state red from showing through. Force the
-   code element to follow whatever color its parent link has. */
+/* Sidebar entries whose titles are inline code (e.g. `pyquist`) render as a
+   <code> wrapper. Keep the code chip (box + color), but the theme gives it a
+   larger code metric than the plain-text siblings, so it sits oversized. Pin
+   the size/weight to the link's so it's a code chip at the SAME scale as the
+   rest of the nav, and let its color follow the link (so the active-state red
+   shows through). */
 nav.bd-links a code,
 nav.bd-links a code .pre {
   color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 /* ---- Right sidebar (in-page "Contents"): nested headings smaller ----- */
