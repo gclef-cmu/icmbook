@@ -178,13 +178,18 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   anywidget Web Audio bridge). The flag is purely additive: with the default
   `browser=False`, `record()` is the unchanged native PortAudio path (which in
   the browser hits the sounddevice stub and is a §5 "browser limit"); with
-  `browser=True` it delegates to browseraudio and — because browser capture is
-  interactive — returns a `browseraudio.Recorder` rather than an `Audio`.
-  `live-cells.js` installs browseraudio **lazily from PyPI** — only on pages
-  whose code mentions `browser=True` or `browseraudio` — so prose/plotting
-  pages don't pull anywidget. Usage is two cells (display the recorder + click
-  Record, then `rec.to_pyquist()` in the next cell); a single-cell `await`
-  can't work because the kernel doesn't process the widget reply mid-execution.
+  `browser=True` it delegates to browseraudio and **still returns an `Audio`**
+  (so `record()`'s `-> Audio` contract holds): it shows a Record button and
+  returns an `Audio` immediately that is filled in place when the user clicks
+  Record (a kernel-idle widget-comm message). `live-cells.js` installs
+  browseraudio **lazily from PyPI** — only on pages whose code mentions
+  `browser=True` or `browseraudio` — so prose/plotting pages don't pull
+  anywidget. Usage is two cells: `clip = pq.record(3, browser=True)` + click
+  Record, then read `clip` (now filled) in the next cell. The capture is
+  interactive, so the `Audio` is empty until the click — a blocking
+  `record()` that returns the finished audio in one call is impossible here
+  (verified: `await` and `run_sync` both hang, since the worker kernel can't
+  process the recording while a cell is blocked waiting for it).
   **Deploy dependency:** the `browser=` flag ships in the pyquist
   `browser-recording` branch, which the deploy fetches via
   `git submodule update --init --remote pyquist` (`.gitmodules` pins
