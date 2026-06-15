@@ -173,18 +173,19 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   the kernel (badge: "● Python connected") and replaces the baked output with
   a working audio card.
 - **Microphone recording (§4 of the template, "Record your own audio").**
-  `pq.record_widget()` captures from the mic in the browser, via the
-  [browseraudio](https://pypi.org/project/browseraudio/) package (a small
-  anywidget Web Audio bridge). The native `pq.record()` is untouched and still
-  needs a sound card (so it's a §5 "browser limit"); `record_widget()` is the
-  additive browser-friendly companion (a separate pyquist function — no change
-  to pyquist's existing interface). `live-cells.js` installs browseraudio
-  **lazily from PyPI** — only on pages whose code mentions `record_widget` or
-  `browseraudio` — so prose/plotting pages don't pull anywidget. Usage is two
-  cells (display the recorder + click Record, then `rec.to_pyquist()` in the
-  next cell); a single-cell `await` can't work because the kernel doesn't
-  process the widget reply mid-execution.
-  **Deploy dependency:** `record_widget()` ships in the pyquist
+  `pq.record(duration, browser=True)` captures from the mic in the browser via
+  the [browseraudio](https://pypi.org/project/browseraudio/) package (a small
+  anywidget Web Audio bridge). The flag is purely additive: with the default
+  `browser=False`, `record()` is the unchanged native PortAudio path (which in
+  the browser hits the sounddevice stub and is a §5 "browser limit"); with
+  `browser=True` it delegates to browseraudio and — because browser capture is
+  interactive — returns a `browseraudio.Recorder` rather than an `Audio`.
+  `live-cells.js` installs browseraudio **lazily from PyPI** — only on pages
+  whose code mentions `browser=True` or `browseraudio` — so prose/plotting
+  pages don't pull anywidget. Usage is two cells (display the recorder + click
+  Record, then `rec.to_pyquist()` in the next cell); a single-cell `await`
+  can't work because the kernel doesn't process the widget reply mid-execution.
+  **Deploy dependency:** the `browser=` flag ships in the pyquist
   `browser-recording` branch, which the deploy fetches via
   `git submodule update --init --remote pyquist` (`.gitmodules` pins
   `branch = browser-recording`). That branch must be pushed to

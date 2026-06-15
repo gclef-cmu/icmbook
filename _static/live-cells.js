@@ -514,8 +514,8 @@
       })
       .join("\n");
     var pypiFeatures = [
-      // pq.record_widget() / browseraudio: in-browser microphone recording.
-      { pkg: "browseraudio", when: ["browseraudio", "record_widget"] },
+      // pq.record(..., browser=True) / browseraudio: in-browser mic recording.
+      { pkg: "browseraudio", when: ["browseraudio", "browser=True"] },
     ];
     pypiFeatures.forEach(function (f) {
       if (f.when.some(function (s) { return pageCode.indexOf(s) !== -1; })) {
