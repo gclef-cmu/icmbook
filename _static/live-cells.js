@@ -85,6 +85,7 @@
     if (rocket) rocket.remove();
     cells.forEach(addChip);
     beautifyOutputs(document); // baked audio outputs -> book audio chips
+    watchDynamicAudio(); // catch the recorder's player (added on click) too
     // Editors normally exist before a student can reach them; this covers a
     // click in the brief window before the idle mount finishes (the static
     // pre is gone once the editor mounts, so these listeners die with it).
@@ -680,52 +681,87 @@
       name.className = "audio-output-name";
       name.textContent = "Audio output";
       body.appendChild(name);
-      var meta = wavMeta(src);
-      if (meta) {
-        var line = document.createElement("span");
-        line.className = "audio-output-meta";
-        line.textContent = meta;
-        body.appendChild(line);
-      }
       card.appendChild(chip);
       card.appendChild(body);
       audio.replaceWith(card);
+      setAudioMeta(body, src); // "1.00 s · 44.1 kHz · mono"
       if (window.icmWireAudioChip) window.icmWireAudioChip(chip);
     });
   }
 
-  // Caption from a canonical 44-byte RIFF/WAV header in a data URI (what
-  // IPython.display.Audio writes). Any surprise -> no caption, never an error.
-  function wavMeta(src) {
-    try {
-      var prefix = "data:audio/wav;base64,";
-      if (src.indexOf(prefix) !== 0) return null;
-      var head = atob(src.substr(prefix.length, 96));
-      if (head.slice(0, 4) !== "RIFF" || head.slice(8, 12) !== "WAVE") return null;
-      var u16 = function (i) {
-        return head.charCodeAt(i) | (head.charCodeAt(i + 1) << 8);
-      };
-      var u32 = function (i) {
-        return u16(i) + u16(i + 2) * 65536;
-      };
-      var channels = u16(22);
-      var rate = u32(24);
-      var bytesPerSecond = u32(28);
-      var dataBytes =
-        head.slice(36, 40) === "data"
-          ? u32(40)
-          : Math.floor(((src.length - prefix.length) * 3) / 4) - 44;
-      if (!bytesPerSecond || !rate || !channels) return null;
-      var dur = dataBytes / bytesPerSecond;
-      var durTxt =
-        dur >= 60
-          ? Math.floor(dur / 60) + ":" + String(Math.round(dur % 60)).padStart(2, "0") + " min"
-          : dur.toFixed(2) + " s";
-      var rateTxt = (rate % 1000 === 0 ? rate / 1000 : (rate / 1000).toFixed(1)) + " kHz";
-      var chTxt = channels === 1 ? "mono" : channels === 2 ? "stereo" : channels + " channels";
-      return durTxt + " · " + rateTxt + " · " + chTxt;
-    } catch (e) {
-      return null;
+  // The recorder's inline player is added to the DOM when the student clicks
+  // Record — after the cell finished running, so freshenOutput never sees it.
+  // Watch for any <audio> appearing in an output and give it the chip card too,
+  // so recorded and played audio look identical.
+  function watchDynamicAudio() {
+    new MutationObserver(function (records) {
+      for (var i = 0; i < records.length; i++) {
+        var nodes = records[i].addedNodes;
+        for (var j = 0; j < nodes.length; j++) {
+          var n = nodes[j];
+          if (n.nodeType !== 1) continue;
+          if (n.tagName === "AUDIO" || (n.querySelector && n.querySelector("audio"))) {
+            beautifyOutputs(document);
+            return;
+          }
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Append a "1.00 s · 44.1 kHz · mono" caption parsed from the WAV header.
+  // pq.play uses a data: URI (parsed synchronously); the recorder's preview
+  // uses a blob: URL (fetched, so the caption fills in a moment later).
+  function setAudioMeta(body, src) {
+    function append(text) {
+      if (!text) return;
+      var line = document.createElement("span");
+      line.className = "audio-output-meta";
+      line.textContent = text;
+      body.appendChild(line);
     }
+    var dataPrefix = "data:audio/wav;base64,";
+    if (src.indexOf(dataPrefix) === 0) {
+      try {
+        var head = atob(src.substr(dataPrefix.length, 96));
+        var bytes = new Uint8Array(head.length);
+        for (var i = 0; i < head.length; i++) bytes[i] = head.charCodeAt(i);
+        append(captionFromWavBytes(bytes));
+      } catch (e) {
+        /* no caption */
+      }
+    } else if (src.indexOf("blob:") === 0) {
+      fetch(src)
+        .then(function (r) { return r.arrayBuffer(); })
+        .then(function (buf) { append(captionFromWavBytes(new Uint8Array(buf))); })
+        .catch(function () {});
+    }
+  }
+
+  // Parse a canonical 44-byte RIFF/WAV PCM header into the caption string.
+  // Any surprise -> null (no caption), never an error.
+  function captionFromWavBytes(bytes) {
+    if (bytes.length < 44) return null;
+    var str = function (i, n) {
+      var r = "";
+      for (var k = 0; k < n; k++) r += String.fromCharCode(bytes[i + k]);
+      return r;
+    };
+    if (str(0, 4) !== "RIFF" || str(8, 4) !== "WAVE") return null;
+    var u16 = function (i) { return bytes[i] | (bytes[i + 1] << 8); };
+    var u32 = function (i) { return u16(i) + u16(i + 2) * 65536; };
+    var channels = u16(22);
+    var rate = u32(24);
+    var bytesPerSecond = u32(28);
+    var dataBytes = str(36, 4) === "data" ? u32(40) : bytes.length - 44;
+    if (!bytesPerSecond || !rate || !channels) return null;
+    var dur = dataBytes / bytesPerSecond;
+    var durTxt =
+      dur >= 60
+        ? Math.floor(dur / 60) + ":" + String(Math.round(dur % 60)).padStart(2, "0") + " min"
+        : dur.toFixed(2) + " s";
+    var rateTxt = (rate % 1000 === 0 ? rate / 1000 : (rate / 1000).toFixed(1)) + " kHz";
+    var chTxt = channels === 1 ? "mono" : channels === 2 ? "stereo" : channels + " channels";
+    return durTxt + " · " + rateTxt + " · " + chTxt;
   }
 })();
