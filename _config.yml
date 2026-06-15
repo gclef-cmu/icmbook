@@ -87,11 +87,14 @@ sphinx:
   #   icm_glossary — groups the Glossary into an A–Z index; _ext/icm_glossary.py
   #   icm_audio    — the {audio} directive (captioned player); _ext/icm_audio.py
   #   icm_figure   — {figure} that also takes a simple image+caption body
+  #   icm_pyquist  — the {pyquist} role: inline-code links into the Pyquist API
+  #                  reference (content/pyquist/api/); _ext/icm_pyquist.py
   local_extensions:
     icm_roles: _ext/
     icm_glossary: _ext/
     icm_audio: _ext/
     icm_figure: _ext/
+    icm_pyquist: _ext/
   config:
     # Only auto-linkify strings that include an explicit URL scheme
     # (e.g. https://example.com). Without this, MyST's "fuzzy" linkify
