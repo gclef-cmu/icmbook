@@ -693,6 +693,35 @@ figcaption .caption-number {
 .audio-block-body > :first-child { margin-top: 0; }
 .audio-block-body > :last-child { margin-bottom: 0; }
 
+/* Download control on the trailing edge of an audio card (the {audio} directive
+   and code-cell audio outputs both append one). A muted round icon link that
+   warms to the red accent on hover, echoing the play chip without competing
+   with it. The flex `gap` on .audio-block sets its spacing from the caption. */
+.audio-download {
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9em;
+  height: 1.9em;
+  margin-left: 0.15em; /* gap from an inline {audio} label; harmless in the flex card */
+  border-radius: 50%;
+  color: var(--icm-accent-3);
+  text-decoration: none;
+  vertical-align: middle; /* align with text when used inline (the {audio} role) */
+  transition: background 0.15s, color 0.15s;
+}
+.audio-download:hover {
+  color: var(--cmu-red);
+  background: #fdecef;
+}
+.audio-download-icon {
+  width: 1.05em;
+  height: 1.05em;
+  fill: currentColor;
+}
+
 /* Audio produced BY code cells (pq.play): live-cells.js swaps the browser's
    default <audio> widget for this compact cousin of the audio-block card —
    same chip, same red spine, but sized to its content like a small player,

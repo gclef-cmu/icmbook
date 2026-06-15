@@ -657,6 +657,12 @@
     '<rect x="13.5" y="5" width="3.5" height="14"></rect></g>' +
     "</svg>";
 
+  // Download icon for the audio-output card, matching the {audio} directive's
+  // control (_ext/icm_audio.py) so authored and code-produced audio look alike.
+  var DOWNLOAD_MARKUP =
+    '<svg class="audio-download-icon" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5z"></path></svg>';
+
   function beautifyOutputs(root) {
     root.querySelectorAll(".cell_output audio").forEach(function (audio) {
       var src = audio.getAttribute("src");
@@ -683,6 +689,16 @@
       body.appendChild(name);
       card.appendChild(chip);
       card.appendChild(body);
+      // Trailing download control — saves the produced clip (a data:/blob: URL,
+      // both of which honor the `download` attribute).
+      var dl = document.createElement("a");
+      dl.className = "audio-download";
+      dl.href = src;
+      dl.setAttribute("download", "audio-output.wav");
+      dl.setAttribute("aria-label", "Download audio output");
+      dl.title = "Download audio output";
+      dl.innerHTML = DOWNLOAD_MARKUP;
+      card.appendChild(dl);
       audio.replaceWith(card);
       setAudioMeta(body, src); // "1.00 s · 44.1 kHz · mono"
       if (window.icmWireAudioChip) window.icmWireAudioChip(chip);

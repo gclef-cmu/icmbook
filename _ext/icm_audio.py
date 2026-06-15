@@ -49,7 +49,8 @@ class AudioDirective(Directive):
     Body: a Markdown link to the clip on the first non-blank line, then an
     optional caption. Renders a clean ``audio-block`` card — a large round
     play/pause button (the same control as the inline ``{audio}`` role) beside
-    the caption — instead of the old "🔊 Listen" admonition.
+    the caption, with a download icon on the trailing edge — instead of the old
+    "🔊 Listen" admonition.
     """
 
     has_content = True
@@ -91,6 +92,10 @@ class AudioDirective(Directive):
         else:
             body += nodes.inline("", label)  # fall back to the link text
         block += body
+        # Trailing download control — saves the clip file (the same href the
+        # play button streams). Sits on the card's right edge; styled by
+        # `.audio-download` in _static/custom.css.
+        block += nodes.raw("", _download_link(src, label), format="html")
 
         return [block]
 
@@ -125,6 +130,20 @@ def _chip_button(src: str, label: str, extra_class: str = "") -> str:
         '<g class="ac-pause"><rect x="7" y="5" width="3.5" height="14"></rect>'
         '<rect x="13.5" y="5" width="3.5" height="14"></rect></g>'
         "</svg></button>"
+    )
+
+
+# A download icon link for an audio card. `href` + `download` saves the clip
+# (works for file URLs as well as the data:/blob: sources code cells produce).
+# Shares the `.audio-download` styling with live-cells.js's code-output cards.
+def _download_link(src: str, label: str) -> str:
+    name = escape(label or "audio clip", quote=True)
+    return (
+        f'<a class="audio-download" href="{escape(src, quote=True)}" download '
+        f'aria-label="Download {name}" title="Download {name}">'
+        '<svg class="audio-download-icon" viewBox="0 0 24 24" aria-hidden="true">'
+        '<path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5z"></path>'
+        "</svg></a>"
     )
 
 
@@ -163,7 +182,10 @@ class AudioRole(SphinxRole):
         # The aria/tooltip name is the plain label (drop `$` math delimiters).
         aria = re.sub(r"\$([^$]+)\$", r"\1", label).strip() or "audio clip"
         button = nodes.raw("", _chip_button(url, aria), format="html")
-        return [button, *_label_nodes(label)], []
+        # A trailing download icon, so inline clips (incl. those in the
+        # audio-figure/list/board grids) can be saved like the block cards.
+        download = nodes.raw("", _download_link(url, aria), format="html")
+        return [button, *_label_nodes(label), download], []
 
 
 class ClassContainerDirective(Directive):
