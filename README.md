@@ -173,35 +173,36 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
   the kernel (badge: "● Python connected") and replaces the baked output with
   a working audio card.
 - **Microphone recording (§4 of the template, "Record your own audio").**
-  `pq.record(duration, browser=True)` captures from the mic in the browser via
-  the [browseraudio](https://pypi.org/project/browseraudio/) package (a small
-  anywidget Web Audio bridge). The flag is purely additive: with the default
-  `browser=False`, `record()` is the unchanged native PortAudio path (which in
-  the browser hits the sounddevice stub and is a §5 "browser limit"); with
-  `browser=True` it delegates to browseraudio and **still returns an `Audio`**
-  (so `record()`'s `-> Audio` contract holds): it shows a Record button and
-  returns an `Audio` immediately that is filled in place when the user clicks
-  Record (a kernel-idle widget-comm message). `live-cells.js` installs
-  browseraudio **lazily from PyPI** — only on pages whose code mentions
-  `browser=True` or `browseraudio` — so prose/plotting pages don't pull
-  anywidget. Usage is two cells: `clip = pq.record(3, browser=True)` + click
-  Record, then read `clip` (now filled) in the next cell. The capture is
-  interactive, so the `Audio` is empty until the click — a blocking
-  `record()` that returns the finished audio in one call is impossible here
-  (verified: `await` and `run_sync` both hang, since the worker kernel can't
-  process the recording while a cell is blocked waiting for it).
-  **Deploy dependency:** the `browser=` flag ships in the pyquist
+  `pq.record(duration)` captures from the mic in the browser via the
+  [browseraudio](https://pypi.org/project/browseraudio/) package (a small
+  anywidget Web Audio bridge). `record()` **auto-detects the runtime** (via
+  `device._in_browser()`, which checks `sys.platform == "emscripten"`): in the
+  browser it delegates to browseraudio, and everywhere else it is the native
+  PortAudio path — no flag. Either way it **returns an `Audio`** (so
+  `record()`'s `-> Audio` contract holds): in the browser it shows a Record
+  button and returns an `Audio` immediately that is filled in place when the
+  user clicks Record (a kernel-idle widget-comm message). `live-cells.js`
+  installs browseraudio **lazily from PyPI** — only on pages whose code
+  mentions `pq.record` or `browseraudio` — so prose/plotting pages don't pull
+  anywidget. Usage is two cells: `clip = pq.record(3)` + click Record, then
+  read `clip` (now filled) in the next cell. The capture is interactive, so the
+  `Audio` is empty until the click — a blocking `record()` that returns the
+  finished audio in one call is impossible here (verified: `await` and
+  `run_sync` both hang, since the worker kernel can't process the recording
+  while a cell is blocked waiting for it).
+  **Deploy dependency:** in-browser recording ships in the pyquist
   `browser-recording` branch, which the deploy fetches via
   `git submodule update --init --remote pyquist` (`.gitmodules` pins
   `branch = browser-recording`). That branch must be pushed to
   gclef-cmu/pyquist; revert `.gitmodules`/`deploy-book.yml` to a plain pinned
   `--init` once it merges to `main`.
 - **Unsupported operations must fail clearly, not silently.** §5 of the
-  template notebook ("Browser limits") is the deliberate test surface — five
+  template notebook ("Browser limits") is the deliberate test surface — four
   `skip-execution` cells that each Run into a clear error in the browser:
   reading an MP3 and writing a non-WAV file raise `LibsndfileError` ("…WAV
-  only…"); `pq.record`, `pq.play(..., force_sounddevice=True)`, and
-  `sd.query_devices` raise `PortAudioError` ("…needs a sound card…"). The
+  only…"); `pq.play(..., force_sounddevice=True)` and `sd.query_devices` raise
+  `PortAudioError` ("…needs a sound card…"). (`pq.record` is no longer here —
+  it auto-detects the browser and records via the Web Audio API; see §4.) The
   messages live in the browser stubs (`tools/soundfile_stub/`,
   `tools/sounddevice_stub/`), **not** pyquist — no pyquist change is needed to
   keep them clear. If you add a pyquist call that touches the filesystem or a

@@ -114,6 +114,21 @@ html[data-theme="dark"] {
   padding-bottom: 0.2rem;
 }
 
+/* A heading whose text is inline code — e.g. the Pyquist Overview's
+   ``# `pyquist` `` title (mirrored verbatim from the upstream README) — should
+   read at heading size. The theme otherwise applies its small body-code metric,
+   shrinking the title. Keep the monospace family and code color (it IS a
+   package name), just match the heading's size and weight. */
+.bd-article h1 code,
+.bd-article h2 code,
+.bd-article h3 code,
+.bd-article h4 code,
+.bd-article h5 code,
+.bd-article h6 code {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
 /* ---- A slim Carnegie Red rule under the top header ------------------- */
 .bd-header {
   border-bottom: 3px solid var(--cmu-red);
