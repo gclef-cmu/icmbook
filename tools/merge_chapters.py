@@ -22,6 +22,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import nbformat
+
 REPO = Path(__file__).resolve().parent.parent
 SOURCE = REPO / "icm-text"  # ground-truth prose, pinned git submodule
 CONTENT = REPO / "content"
@@ -34,7 +36,49 @@ from split_chapters import (  # noqa: E402
 
 INDEX_TITLE_RE = re.compile(r"^#\s+(\d+)\.\s+(.+)$")
 SECTION_TITLE_RE = re.compile(r"^#\s+\d+\.\d+\s+(.+)$")
-SECTION_FILE_RE = re.compile(r"^\d{2}\.md$")
+# Sections are NN.md, or NN.ipynb when they inline a script with `{interactive}`.
+SECTION_FILE_RE = re.compile(r"^\d{2}\.(md|ipynb)$")
+
+
+def reconstruct_interactive_md(path: Path) -> str:
+    """Rebuild the ``NN.md``-equivalent section text from an interactive notebook.
+
+    The inverse of ``split_chapters.build_interactive_notebook``: walk the cells
+    in order, emitting each Markdown cell's source and rebuilding each
+    ``{interactive}`` directive from the path stashed in its code cells'
+    metadata, then join with blank lines. A script is decoupled into a *run* of
+    same-path code cells (imports, each function, execution), so the directive is
+    emitted once per run — collapsing that run back into the single line the
+    author wrote. This reproduces the exact string the splitter parsed (for one
+    *or several* inlined scripts), keeping ``split(merge(content))`` byte-identical
+    so the round-trip check covers notebook sections too.
+    """
+    nb = nbformat.read(str(path), as_version=4)
+    parts: list[str] = []
+    last_path = None  # path of the previous code cell, to collapse a script's run
+    seen_directive = False
+    for c in nb.cells:
+        if c.cell_type == "markdown":
+            parts.append(c.source)
+            last_path = None  # prose ends a run
+        elif c.cell_type == "code" and "interactive" in (c.metadata or {}):
+            rel = c.metadata["interactive"]["path"]
+            if rel != last_path:
+                parts.append(f":::{{interactive}}[{rel}]\n:::")
+                seen_directive = True
+            last_path = rel
+        else:
+            sys.exit(f"{path}: unexpected cell in interactive section")
+    if not seen_directive:
+        sys.exit(f"{path}: notebook section has no {{interactive}} code cell")
+    return "\n\n".join(parts) + "\n"
+
+
+def section_source(path: Path) -> str:
+    """Section text in ``NN.md`` form, rebuilding it from a notebook if needed."""
+    if path.suffix == ".ipynb":
+        return reconstruct_interactive_md(path)
+    return path.read_text()
 
 
 def promote_headings(text: str) -> str:
@@ -103,7 +147,7 @@ def merge_chapter(content_chapter: Path, out_root: Path) -> dict:
     )
     sections: list[tuple[str, str]] = []
     for f in section_files:
-        text = f.read_text()
+        text = section_source(f)
         first, _, body = text.partition("\n")
         sm = SECTION_TITLE_RE.match(first)
         if not sm:
@@ -183,7 +227,9 @@ def roundtrip_check(merged_root: Path, results: list[dict]) -> None:
             orig = CONTENT / f"ch{n:02d}"
             roundtripped = tmp_content / f"ch{n:02d}"
             files_to_check = sorted(
-                p.name for p in orig.iterdir() if p.is_file() and p.suffix == ".md"
+                p.name
+                for p in orig.iterdir()
+                if p.is_file() and p.suffix in (".md", ".ipynb")
             )
             for name in files_to_check:
                 a = (orig / name).read_text()
@@ -209,7 +255,7 @@ def roundtrip_check(merged_root: Path, results: list[dict]) -> None:
                 p.name
                 for p in roundtripped.iterdir()
                 if p.is_file()
-                and p.suffix == ".md"
+                and p.suffix in (".md", ".ipynb")
                 and p.name not in files_to_check
             )
             for name in extra:

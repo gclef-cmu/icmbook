@@ -4,6 +4,10 @@ format: jb-book
 root: content/index
 
 parts:
+  - caption: Templates
+    chapters:
+      - file: content/template-notebook
+      - file: content/template-md
   - caption: Course Information
     chapters:
       - file: content/course/home
@@ -22,8 +26,6 @@ parts:
   - caption: Textbook
     chapters:
       - file: content/about
-      - file: content/template-notebook
-      - file: content/template-md
       - file: content/ch00/index
         sections:
           - file: content/ch00/00
@@ -66,6 +68,18 @@ parts:
           - file: content/ch04/04
           - file: content/ch04/05
           - file: content/ch04/06
+      - file: content/ch05/index
+        sections:
+          - file: content/ch05/00
+          - file: content/ch05/01
+          - file: content/ch05/02
+          - file: content/ch05/03
+          - file: content/ch05/04
+          - file: content/ch05/05
+          - file: content/ch05/06
+          - file: content/ch05/07
+          - file: content/ch05/08
+          - file: content/ch05/09
       - file: content/reference/index
         sections:
           - file: content/pyquist/Overview

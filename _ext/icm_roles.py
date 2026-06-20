@@ -26,6 +26,7 @@ role: ``{vocab}`periodic```.
 """
 from __future__ import annotations
 
+import json
 import re
 
 from docutils import nodes
@@ -75,17 +76,17 @@ def _unit_latex(arg: str) -> str:
     return r"\text{%s}" % parts[0]
 
 
-def substitute_units(app: Sphinx, docname: str, source: list[str]) -> None:
-    """Expand ``{unit}`…``` to raw LaTeX in page source, outside code fences.
+def _expand_text(text: str) -> str:
+    """Expand every ``{unit}`…``` in a block of Markdown, outside code fences.
 
-    Sphinx ``source-read`` handler. Walks the source line by line, tracking
-    fenced code blocks (the same way ``tools/split_chapters.py`` does) so that
-    ``{unit}`` examples shown inside ```` ```markdown ```` fences are left
-    verbatim, and rewrites every other occurrence in place.
+    Walks the text line by line, tracking fenced code blocks (the same way
+    ``tools/split_chapters.py`` does) so that ``{unit}`` examples shown inside
+    ```` ```markdown ```` fences are left verbatim, and rewrites every other
+    occurrence in place.
     """
     out: list[str] = []
     fence: str | None = None
-    for line in source[0].splitlines(keepends=True):
+    for line in text.splitlines(keepends=True):
         if fence is None:
             fm = FENCE_RE.match(line)
             if fm:
@@ -98,7 +99,40 @@ def substitute_units(app: Sphinx, docname: str, source: list[str]) -> None:
             stripped = line.strip()
             if stripped and set(stripped) == {fence[0]} and len(stripped) >= len(fence):
                 fence = None
-    source[0] = "".join(out)
+    return "".join(out)
+
+
+def substitute_units(app: Sphinx, docname: str, source: list[str]) -> None:
+    """Expand ``{unit}`…``` to raw LaTeX in page source, outside code fences.
+
+    Sphinx ``source-read`` handler. Markdown pages are rewritten directly.
+
+    Notebooks need special care: ``source-read`` hands us the *raw ``.ipynb``
+    JSON*, and myst-nb decodes that JSON a second time after we run. Splicing
+    raw LaTeX into the JSON text as if it were Markdown would let that second
+    decode mangle the backslash escapes — ``\\frac`` becomes a form-feed plus
+    ``rac``, ``\\text`` becomes a tab plus ``ext`` — which surfaces as "Math
+    input error" in the browser. (The line-based fence tracking is also moot on
+    JSON, whose lines all start with ``"``.) So for a notebook we decode the
+    JSON, expand ``{unit}`` inside each Markdown cell, and re-encode, letting
+    ``json.dumps`` escape the injected LaTeX correctly.
+    """
+    text = source[0]
+    if str(app.env.doc2path(docname)).endswith(".ipynb"):
+        try:
+            nb = json.loads(text)
+        except ValueError:
+            source[0] = _expand_text(text)
+            return
+        for cell in nb.get("cells", []):
+            if cell.get("cell_type") != "markdown":
+                continue
+            cell_src = cell.get("source", "")
+            joined = "".join(cell_src) if isinstance(cell_src, list) else cell_src
+            cell["source"] = _expand_text(joined)
+        source[0] = json.dumps(nb)
+    else:
+        source[0] = _expand_text(text)
 
 
 def setup(app: Sphinx) -> dict:

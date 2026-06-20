@@ -56,6 +56,59 @@
   right: 4.5em;
 }
 
+/* --- per-cell run state + execution time (VSCode-notebook style) -------
+ * live-cells.js tags each executed cell .live-running / .live-ran /
+ * .live-failed and appends a .live-exec-time badge. The cell's left bar takes
+ * the state color; a default (never-run) cell keeps the neutral iron bar. */
+html[data-theme="light"] {
+  --live-ok:  #2e8b57;   /* success green   */
+  --live-err: #c41230;   /* error red       */
+  --live-run: #c8a200;   /* running amber   */
+}
+html[data-theme="dark"] {
+  --live-ok:  #4cc38a;
+  --live-err: #ef6b78;
+  --live-run: #e0c04a;
+}
+
+/* Recolor the left bar by state — both the expanded cell input and the
+ * collapsed "Show setup" code-block bar. The extra body.live-active +
+ * state-class specificity (and !important) beats custom.css's iron spine. */
+body.live-active div.cell.live-running .cell_input,
+body.live-active div.cell.live-running details.hide:not([open]) > summary {
+  border-left-color: var(--live-run) !important;
+}
+body.live-active div.cell.live-ran .cell_input,
+body.live-active div.cell.live-ran details.hide:not([open]) > summary {
+  border-left-color: var(--live-ok) !important;
+}
+body.live-active div.cell.live-failed .cell_input,
+body.live-active div.cell.live-failed details.hide:not([open]) > summary {
+  border-left-color: var(--live-err) !important;
+}
+
+/* Execution-time badge: a quiet tabular-numeral readout pinned to the input's
+ * bottom-right. Ticks while running, freezes at the final duration, and takes
+ * the state color. A faint cell-matched backing keeps it legible over code. */
+.cell .cell_input .live-exec-time {
+  position: absolute;
+  bottom: 0.3em;
+  right: 0.55em;
+  z-index: 2;
+  padding: 0 0.35em;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--pst-color-on-background) 72%, transparent);
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  color: var(--icm-accent-3);
+  pointer-events: none;
+}
+div.cell.live-running .cell_input .live-exec-time { color: var(--live-run); }
+div.cell.live-ran     .cell_input .live-exec-time { color: var(--live-ok); }
+div.cell.live-failed  .cell_input .live-exec-time { color: var(--live-err); }
+
 /* --- floating status pill / connected badge --- */
 
 .live-status {
@@ -234,18 +287,22 @@ body.live-active .live-output .jp-RenderedHTMLCommon {
 body.live-active .live-output [data-mime-type="application/vnd.jupyter.error"],
 body.live-active .live-output .live-error {
   display: block;
-  padding: 0.55rem 0.8rem;
-  background: rgba(196, 18, 48, 0.045);
+  padding: 0.5rem 0.75rem;
+  background: rgba(196, 18, 48, 0.06);
   border-left: 3px solid var(--cmu-red, #c41230);
   border-radius: 4px;
 }
 
+/* Ordinary stderr (tqdm progress, the matplotlib font-cache notice, warnings)
+ * is usually noise, so keep it quiet: muted text on a faint tint with a thin,
+ * soft accent — present but never shouting like an error. */
 body.live-active .live-output [data-mime-type="application/vnd.jupyter.stderr"]:not(.live-error) {
   display: block;
-  padding: 0.45rem 0.7rem;
-  background: rgba(176, 126, 0, 0.07);
-  border-left: 3px solid var(--icm-accent-2, #b07e00);
+  padding: 0.4rem 0.65rem;
+  background: color-mix(in srgb, var(--icm-accent-2, #b07e00) 7%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--icm-accent-2, #b07e00) 45%, transparent);
   border-radius: 4px;
+  color: var(--pst-color-text-muted);
 }
 
 div.cell div.cell_output:has([data-mime-type="application/vnd.jupyter.error"])::before,

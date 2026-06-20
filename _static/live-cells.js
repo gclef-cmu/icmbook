@@ -155,6 +155,81 @@
       state === "starting" ? "starting…" : state === "running" ? "running…" : "▶ Run";
   }
 
+  // ----- per-cell execution state + timing (VSCode-notebook style) --------
+  // A cell the student runs gets a colored left bar — amber while running,
+  // green on success, red on error — and a small time badge that ticks up
+  // while it runs and freezes at the final duration. A cell that has only its
+  // default (built-in) output keeps the neutral iron bar and shows no time.
+
+  var cellTimers = new WeakMap(); // cell -> { start, iv }
+
+  function execBadge(cell) {
+    var input = cell.querySelector(".cell_input");
+    if (!input) return null;
+    var el = input.querySelector(".live-exec-time");
+    if (!el) {
+      el = document.createElement("span");
+      el.className = "live-exec-time";
+      input.appendChild(el);
+    }
+    return el;
+  }
+
+  function fmtSecs(ms) {
+    var s = ms / 1000;
+    return (s < 10 ? s.toFixed(1) : Math.round(s)) + "s";
+  }
+
+  // idle | running | ran | failed — drives the left-bar color (live-cells.css).
+  function setCellState(cell, state) {
+    cell.classList.remove("live-running", "live-ran", "live-failed");
+    if (state === "running") cell.classList.add("live-running");
+    else if (state === "ran") cell.classList.add("live-ran");
+    else if (state === "failed") cell.classList.add("live-failed");
+  }
+
+  function clearTimerInterval(cell) {
+    var t = cellTimers.get(cell);
+    if (t) {
+      clearInterval(t.iv);
+      cellTimers.delete(cell);
+    }
+    return t;
+  }
+
+  // Begin timing: amber "running" bar, a ticking bottom-right badge, and a
+  // live elapsed readout in the Run chip (visible up top while it runs).
+  function startTimer(cell) {
+    clearTimerInterval(cell);
+    setCellState(cell, "running");
+    var badge = execBadge(cell);
+    var chip = cell.querySelector(".live-run-chip");
+    var start = Date.now();
+    if (badge) badge.textContent = "0.0s";
+    var iv = setInterval(function () {
+      var txt = fmtSecs(Date.now() - start);
+      if (badge) badge.textContent = txt;
+      if (chip && chip.classList.contains("live-busy")) chip.textContent = "running " + txt;
+    }, 100);
+    cellTimers.set(cell, { start: start, iv: iv });
+  }
+
+  // Freeze the timer at the final duration and record the outcome.
+  function stopTimer(cell, errored) {
+    var t = clearTimerInterval(cell);
+    var badge = execBadge(cell);
+    if (badge && t) badge.textContent = fmtSecs(Date.now() - t.start);
+    setCellState(cell, errored ? "failed" : "ran");
+  }
+
+  // A run errored if its output carries a traceback (tagged by freshenOutput)
+  // or a Jupyter error mime.
+  function cellErrored(cell) {
+    return !!cell.querySelector(
+      '.cell_output .live-error, .cell_output [data-mime-type="application/vnd.jupyter.error"]'
+    );
+  }
+
   // ----- status pill / connected badge ----------------------------------
 
   var statusEl = null;
@@ -534,6 +609,20 @@
       'if not hasattr(matplotlib.RcParams, "_get"):',
       "    matplotlib.RcParams._get = dict.get"
     );
+    // The inlined chapter scripts (the {interactive} directive — see
+    // _ext/icm_interactive.py) are standalone files that locate their output
+    // folder as `Path(__file__).parent.parent / "assets"` and write WAVs there.
+    // A notebook cell has no __file__, so those scripts NameError on Run. Define
+    // one pointing under the kernel's CWD: the assets dir then mkdir()s and the
+    // soundfile stub writes WAVs into the in-memory FS harmlessly. The writes
+    // are silent by design — readers hear the chapter's audio through the page's
+    // {audio} chips (preserved from the prose), and can add pq.play(...) to hear
+    // their own edits. setdefault so a genuine __file__ (if any) always wins.
+    lines.push(
+      "import os as _os",
+      'if "__file__" not in globals():',
+      '    __file__ = _os.path.join(_os.getcwd(), "code", "inlined_script.py")'
+    );
     var fut = sessionRef.kernel.requestExecute({ code: lines.join("\n") });
     var kernelErr = null;
     fut.onIOPub = function (m) {
@@ -602,9 +691,16 @@
         if (isTarget || !ranIds.has(nb.id)) {
           dropBakedOutput(cell);
           setChip(cell, "running");
-          await nb.execute();
+          startTimer(cell);
+          try {
+            await nb.execute();
+          } catch (e) {
+            stopTimer(cell, true); // kernel-level failure → red bar
+            throw e;
+          }
           ranIds.add(nb.id);
           freshenOutput(cell);
+          stopTimer(cell, cellErrored(cell)); // green, or red on a Python traceback
           if (!isTarget) setChip(cell, "idle");
         }
         if (isTarget) break;

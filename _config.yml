@@ -89,18 +89,32 @@ sphinx:
   #   icm_figure   — {figure} that also takes a simple image+caption body
   #   icm_pyquist  — the {pyquist} role: inline-code links into the Pyquist API
   #                  reference (content/pyquist/api/); _ext/icm_pyquist.py
+  #   icm_interactive — the {interactive} directive: inline a downloadable script
+  #                  as a collapsible code block; sections that use it are split
+  #                  into live notebooks (see tools/split_chapters.py).
   local_extensions:
     icm_roles: _ext/
     icm_glossary: _ext/
     icm_audio: _ext/
     icm_figure: _ext/
     icm_pyquist: _ext/
+    icm_interactive: _ext/
   config:
     # Only auto-linkify strings that include an explicit URL scheme
     # (e.g. https://example.com). Without this, MyST's "fuzzy" linkify
     # mode catches things like `pyquist.web` — `.web` is a real TLD —
     # and wraps the heading in a broken external link.
     myst_linkify_fuzzy_links: false
+
+    # ---- Collapsible code cells (myst-nb) ---------------------------------
+    # Relabel the `hide-input` toggle. Every hidden cell in the book holds a
+    # section's import/setup preamble (collapsed so the reader lands on the
+    # functions that matter), and they are all hide-input — so a fixed
+    # "setup" label is clearer than the default "Show/Hide code cell source".
+    # (custom.css strips the toggle's dropdown chrome so the revealed cell
+    # reads as an ordinary code cell.)
+    nb_code_prompt_show: "Show setup"
+    nb_code_prompt_hide: "Hide setup"
 
     # Copy the standalone 404 page to the site root. GitHub Pages serves
     # /404.html for any unknown URL.
