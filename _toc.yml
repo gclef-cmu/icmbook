@@ -17,6 +17,8 @@ parts:
         sections:
           - file: content/course/projects/1
           - file: content/course/projects/2
+          - file: content/course/projects/3/index
+          - file: content/course/projects/4/index
       - file: content/course/resources/index
         sections:
           - file: content/course/resources/1-software

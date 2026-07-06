@@ -4,6 +4,8 @@
 
 - [Project 1](./1.md)
 - [Project 2](./2.md)
+- [Project 3](./3/index.md)
+- [Project 4](./4/index.md)
 
 ## Submission instructions and policies
 
