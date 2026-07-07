@@ -392,20 +392,45 @@ _WIDGET_JS = """\
   dims.forEach(function (d) { dimByName[d.p.name] = d; });
 
   var needsDraw = true;
-  // Decode every frame up front into persistent Image objects: compositing
-  // is then pure drawImage, with no base64 parse or PNG decode mid-interaction.
+  // Frames are SVG data URIs. A small widget decodes everything up front —
+  // compositing is then pure drawImage. Past EAGER_LIMIT total frames that
+  // strategy wedges the page (thousands of live SVG documents), so a large
+  // widget materializes Image objects on demand around the playhead, keeps
+  // the last-good frame per layer so playback never flickers, and evicts
+  // FIFO. The prefetch keeps sequential playback a few frames ahead.
+  var EAGER_LIMIT = 256;
+  var LRU_MAX = 192;
+  var totalFrames = spec.layers.reduce(function (s, L) {
+    return s + L.frames.length;
+  }, 0);
+  var eager = totalFrames <= EAGER_LIMIT;
+
+  function makeImg(uri) {
+    var im = new Image();
+    im.onload = function () { needsDraw = true; };
+    im.src = uri;
+    if (im.decode) im.decode().catch(function () {});
+    return im;
+  }
+
   var layers = spec.layers.map(function (L) {
-    return {
-      params: L.params,
-      imgs: L.frames.map(function (uri) {
-        var im = new Image();
-        im.onload = function () { needsDraw = true; };
-        im.src = uri;
-        if (im.decode) im.decode().catch(function () {});
-        return im;
-      }),
-    };
+    var lay = { params: L.params, uris: L.frames, cache: {}, order: [], last: null };
+    if (eager) {
+      for (var i = 0; i < L.frames.length; i++) lay.cache[i] = makeImg(L.frames[i]);
+    }
+    return lay;
   });
+
+  function imageAt(lay, i) {
+    var im = lay.cache[i];
+    if (!im) {
+      im = makeImg(lay.uris[i]);
+      lay.cache[i] = im;
+      lay.order.push(i);
+      if (lay.order.length > LRU_MAX) delete lay.cache[lay.order.shift()];
+    }
+    return im;
+  }
 
   function layerIndex(L) {
     var i = 0;
@@ -415,15 +440,32 @@ _WIDGET_JS = """\
     }
     return i;
   }
+
+  function prefetch(lay) {
+    if (eager || !playDim) return;
+    if (lay.params.indexOf(playDim.p.name) === -1) return;
+    var save = playDim.idx;
+    for (var k = 1; k <= 4; k++) {
+      playDim.idx = (save + k) %% playDim.n;
+      imageAt(lay, layerIndex(lay));
+    }
+    playDim.idx = save;
+  }
+
   function composite() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (var l = 0; l < layers.length; l++) {
-      var im = layers[l].imgs[layerIndex(layers[l])];
-      // Explicit destination size: the SVG frames' intrinsic size is in pt
-      // (inches x 72), and the backing store is devicePixelRatio-scaled —
-      // the browser rasterizes the vectors at the drawn size.
-      if (im.complete && im.naturalWidth)
-        ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+      var lay = layers[l];
+      var im = imageAt(lay, layerIndex(lay));
+      if (im.complete && im.naturalWidth) lay.last = im;
+      // A cold frame draws the previous one for a tick instead of
+      // flickering; its onload flags needsDraw and the real frame lands on
+      // the next repaint. Explicit destination size: SVG intrinsic size is
+      // in pt (inches x 72) and the backing store is devicePixelRatio-
+      // scaled — the browser rasterizes the vectors at the drawn size.
+      var draw = im.complete && im.naturalWidth ? im : lay.last;
+      if (draw) ctx.drawImage(draw, 0, 0, canvas.width, canvas.height);
+      prefetch(lay);
     }
   }
   function valueOf(name) {

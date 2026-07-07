@@ -408,11 +408,11 @@ amplitude × frequency × a played phase.
 
 ### The page-weight budget
 
-The page pays for every frame (the product of each layer's value counts,
-~10 KB each). Keep the total in the low hundreds, and check the widget's
-`repr` and `weight_mb` while developing. The cell below rebuilds the
-layered demo **without** `depends=`: the same widget now costs 192 frames
-and over ten times the bytes —
+The page pays for every frame (the product of each layer's value counts —
+a few KB of SVG each). Keep the total in the low hundreds, and check the
+widget's `repr` and `weight_mb` while developing. The cell below rebuilds
+the layered demo **without** `depends=`: the same widget now costs 192
+frames instead of 52 — compare the two printed sizes —
 
 :::{interactive}[notebooks/feature-budget.ipynb]
 :::
