@@ -1,0 +1,26 @@
+# The book's sanctioned parameter-slider widget API. Built into
+# _static/wheels/ by `make wheels` so the in-browser (Pyodide) kernel can
+# import it, and installed editable in the build environment
+# (`pip install -e tools/icm_widgets`) so `execute_notebooks: auto` can too.
+# Never published to PyPI.
+#
+# Why: interactive-widget cells must stay pure Python against the book's
+# approved libraries — no HTML/JavaScript in a notebook cell. ParamPlayer
+# renders every slider combination with matplotlib at build time and embeds
+# its own small mount script in the widget's HTML (there is no separate
+# _static JS file), so the output is self-contained: it renders identically
+# on the book page, in VS Code, and in vanilla Jupyter, and the script only
+# swaps pre-rendered frames. See the interactive template.
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "icm-widgets"
+version = "0.3.0"
+description = "Parameter-slider widgets for Computer Music Principles interactive pages (pre-rendered matplotlib frame grids)."
+requires-python = ">=3.10"
+dependencies = ["numpy", "matplotlib"]
+
+[tool.setuptools]
+py-modules = ["icm_widgets"]

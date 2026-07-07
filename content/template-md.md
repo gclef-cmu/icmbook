@@ -420,34 +420,30 @@ In a `.md` file, code blocks are **always** display-only. To run code at build
 time, author the page as a notebook instead.
 :::
 
-### 7.1 Inlining a runnable script — the `{interactive}` directive
+### 7.1 Embedding a live notebook — the `{interactive}` directive
 
 There is one exception to "code in a `.md` is display-only." The book-specific
-`{interactive}` directive inlines a full script from the chapter's `code/` folder
-as a **collapsible** block the reader can expand, edit, and run in the browser.
-Author it as a single line — the script path in `[brackets]`:
+`{interactive}` directive embeds a companion **notebook** from the chapter's
+`notebooks/` folder as live cells the reader can read, edit, and run in the
+browser. Author it as a single line — the notebook path in `[brackets]`:
 
 ````markdown
-:::{interactive}[./code/wavetable.py]
+:::{interactive}[notebooks/my-widget.ipynb]
 :::
 ````
 
-When `make split` sees this directive, it emits that whole section as a Jupyter
-**notebook** instead of Markdown: the prose becomes Markdown cells, and the
-script becomes a `hide-input` code cell wired to the live-code runtime (so it is
-collapsed by default and runnable in the browser). The rest of the book is
-unchanged — only sections that use `{interactive}` become notebooks, and a
-section may inline more than one script.
+When the split pipeline sees this directive, it emits that whole section as a
+Jupyter **notebook** instead of Markdown: the prose becomes Markdown cells and
+the companion notebook's cells are spliced in where the directive was —
+executed at build time (so their output is baked into the page) and wired to
+the live-code runtime. Each code cell chooses its visibility with a whole-line
+`# hide` / `# collapse` / `# show` marker. The rest of the book is unchanged —
+only sections that use `{interactive}` become notebooks, and a section may
+embed more than one.
 
-In the browser the script runs against a scratch in-memory filesystem, so the
-WAV-writing lines that generate the chapter's assets complete silently. Readers
-hear those clips through the `{audio}` chips in the prose above, and can add
-`pq.play(...)` to audition a result they have changed.
-
-Place the directive where the script is discussed (the upstream convention put a
-plain `[code/foo.py](./code/foo.py)` download link there). Keep short teaching
-snippets inline in the prose as usual; reserve `{interactive}` for the full,
-runnable file.
+See the {doc}`interactive template <template-interactive/index>` for the full
+tutorial: the widget house style, the libraries a widget may use, and the
+visibility markers, around a working demo.
 
 ## 8. Figures and images
 

@@ -36,7 +36,7 @@ from split_chapters import (  # noqa: E402
 
 INDEX_TITLE_RE = re.compile(r"^#\s+(\d+)\.\s+(.+)$")
 SECTION_TITLE_RE = re.compile(r"^#\s+\d+\.\d+\s+(.+)$")
-# Sections are NN.md, or NN.ipynb when they inline a script with `{interactive}`.
+# Sections are NN.md, or NN.ipynb when they embed a notebook with `{interactive}`.
 SECTION_FILE_RE = re.compile(r"^\d{2}\.(md|ipynb)$")
 
 
@@ -44,33 +44,36 @@ def reconstruct_interactive_md(path: Path) -> str:
     """Rebuild the ``NN.md``-equivalent section text from an interactive notebook.
 
     The inverse of ``split_chapters.build_interactive_notebook``: walk the cells
-    in order, emitting each Markdown cell's source and rebuilding each
-    ``{interactive}`` directive from the path stashed in its code cells'
-    metadata, then join with blank lines. A script is decoupled into a *run* of
-    same-path code cells (imports, each function, execution), so the directive is
-    emitted once per run — collapsing that run back into the single line the
-    author wrote. This reproduces the exact string the splitter parsed (for one
-    *or several* inlined scripts), keeping ``split(merge(content))`` byte-identical
-    so the round-trip check covers notebook sections too.
+    in order, emitting each section-prose Markdown cell's source verbatim and
+    rebuilding each ``{interactive}`` directive from the path stashed in the
+    metadata of the cells it expanded to, then join with blank lines. A directive
+    expands to a *run* of same-path cells — the embedded notebook's markdown +
+    code cells — so the directive is emitted once per run, collapsing that run
+    back into the single line the author wrote. This reproduces the exact string
+    the splitter parsed, keeping ``split(merge(content))`` byte-identical.
     """
     nb = nbformat.read(str(path), as_version=4)
     parts: list[str] = []
-    last_path = None  # path of the previous code cell, to collapse a script's run
+    last_path = None  # path of the previous interactive cell, to collapse a run
     seen_directive = False
     for c in nb.cells:
-        if c.cell_type == "markdown":
-            parts.append(c.source)
-            last_path = None  # prose ends a run
-        elif c.cell_type == "code" and "interactive" in (c.metadata or {}):
-            rel = c.metadata["interactive"]["path"]
+        interactive = (c.metadata or {}).get("interactive")
+        if interactive is not None:
+            # A cell expanded from an `{interactive}` directive — markdown *or*
+            # code, for a notebook or a script. Collapse the whole run of
+            # same-path cells back into the single directive line the author wrote.
+            rel = interactive["path"]
             if rel != last_path:
                 parts.append(f":::{{interactive}}[{rel}]\n:::")
                 seen_directive = True
             last_path = rel
+        elif c.cell_type == "markdown":
+            parts.append(c.source)
+            last_path = None  # section prose ends a run
         else:
             sys.exit(f"{path}: unexpected cell in interactive section")
     if not seen_directive:
-        sys.exit(f"{path}: notebook section has no {{interactive}} code cell")
+        sys.exit(f"{path}: notebook section has no {{interactive}} cell")
     return "\n\n".join(parts) + "\n"
 
 
@@ -302,16 +305,19 @@ def main() -> int:
     results: list[dict] = []
     for cd in chapter_dirs:
         r = merge_chapter(cd, args.out)
-        print(
-            f"  {cd.name} -> {r['out_dir'].relative_to(REPO)}  "
-            f"({r['section_count']} section(s))"
-        )
+        out_disp = r["out_dir"]
+        if out_disp.is_relative_to(REPO):
+            out_disp = out_disp.relative_to(REPO)
+        print(f"  {cd.name} -> {out_disp}  ({r['section_count']} section(s))")
         results.append(r)
 
     if not args.skip_verify:
         roundtrip_check(args.out, results)
 
-    print(f"\nmerged tree written to {args.out.relative_to(REPO)}/")
+    out_disp = args.out
+    if out_disp.is_relative_to(REPO):
+        out_disp = out_disp.relative_to(REPO)
+    print(f"\nmerged tree written to {out_disp}/")
     print("compare with upstream:  diff -ruN icm-text/ icm-text-merged/")
     return 0
 

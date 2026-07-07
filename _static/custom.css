@@ -340,6 +340,250 @@ div.cell div.cell_output img {
   margin: 0.4rem 0;
 }
 
+/* ---- matplotlib jshtml animation player -------------------------------
+   `anim.to_jshtml()` (the interactive-widget house pattern) ships its own
+   90s-looking controls: chunky default buttons, a stock range input, serif
+   radio labels. Restyle them into the book's control language — the quiet
+   white pill of the Run chip, the filled Carnegie-red round Play of the
+   audio chip, a slim red-thumbed slider — so a widget reads as a designed
+   object. Markup is matplotlib's own (button glyphs come from the theme's
+   Font Awesome); everything below overrides the <style> block each player
+   embeds. */
+div.cell div.cell_output .animation {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.4rem auto;
+}
+/* Frames are SVG data URIs with an intrinsic size (figure inches × 72):
+   cap them at the column and scale proportionally — being vector, they
+   stay crisp at any rendered size. */
+div.cell div.cell_output .animation img {
+  max-width: 100%;
+  height: auto;
+}
+/* Shrink-wrap the control column to its widest row (the buttons); the
+   slider's 100% then matches the button row instead of spanning the full
+   figure width. */
+div.cell div.cell_output .anim-controls {
+  width: fit-content;
+  margin: 0 auto;
+}
+/* Speed up / slow down: more knobs than a reader needs — drop them. */
+div.cell div.cell_output .anim-buttons button[title="Decrease speed"],
+div.cell div.cell_output .anim-buttons button[title="Increase speed"] {
+  display: none;
+}
+/* Only the jshtml player's slider spans its control column (the player's
+   embedded style block sets a fixed px width that must be overridden); the
+   ParamPlayer (.icm-widget) slider is a fixed short track — keep this
+   override off it. */
+div.cell div.cell_output .animation .anim-slider {
+  width: 100% !important;
+}
+div.cell div.cell_output .anim-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  margin: 0.5rem 0 0;
+  border-radius: 999px;
+  background: #e3e3e3;
+  outline: none;
+}
+div.cell div.cell_output .anim-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+}
+div.cell div.cell_output .anim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;         /* center the thumb on the 4px track */
+  border: none;
+  border-radius: 50%;
+  background: var(--cmu-red);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+div.cell div.cell_output .anim-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--cmu-red-dark);
+}
+div.cell div.cell_output .anim-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #e3e3e3;
+}
+div.cell div.cell_output .anim-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cmu-red);
+  cursor: pointer;
+}
+div.cell div.cell_output .anim-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0.65rem 0 0.5rem;
+}
+div.cell div.cell_output .anim-buttons button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid #d0d0d0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5a5a5a;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease,
+              background 0.15s ease;
+}
+div.cell div.cell_output .anim-buttons button:hover {
+  color: var(--cmu-red);
+  border-color: var(--cmu-red);
+}
+/* Play is the one control most readers touch — fill it like the book's
+   round audio-chip play button. */
+div.cell div.cell_output .anim-buttons button[title="Play"] {
+  background: var(--cmu-red);
+  border-color: var(--cmu-red);
+  color: #ffffff;
+}
+div.cell div.cell_output .anim-buttons button[title="Play"]:hover {
+  background: var(--cmu-red-dark);
+  border-color: var(--cmu-red-dark);
+  color: #ffffff;
+}
+/* Once / Loop / Reflect: a quiet sans caption row with red radios. */
+div.cell div.cell_output .anim-state {
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-size: 0.78rem;
+  color: var(--cmu-iron);
+}
+div.cell div.cell_output .anim-state label {
+  margin: 0 0.9rem 0 0.35rem;
+  cursor: pointer;
+}
+div.cell div.cell_output .anim-state label:last-of-type {
+  margin-right: 0;
+}
+div.cell div.cell_output .anim-state input[type="radio"] {
+  accent-color: var(--cmu-red);
+  cursor: pointer;
+}
+
+/* ---- icm-widgets (ParamPlayer) -----------------------------------------
+   The parameter-slider widgets built by tools/icm_widgets; the mount
+   script is embedded in each widget's own HTML. Controls share the jshtml
+   player's design language above; these rules restate the essentials
+   scoped to .icm-widget so a widget looks right anywhere it lands — a
+   cell output or a `{glue}` embed in prose. Sliders are a short centered
+   cluster (fixed 200px track, right-aligned labels), not full-width. */
+.icm-widget .icm-widget-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  margin: 0.3rem 0;
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-size: 0.78rem;
+  color: var(--cmu-iron);
+}
+.icm-widget .icm-widget-row > span {
+  flex-shrink: 0;
+}
+.icm-widget .icm-widget-row > span:first-child {
+  width: 6.5em;
+  text-align: right;
+}
+.icm-widget .icm-widget-row .anim-slider {
+  flex: 0 0 auto;
+  width: 200px;
+}
+.icm-widget .icm-widget-val {
+  min-width: 3.6em;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.icm-widget .anim-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: #e3e3e3;
+  outline: none;
+}
+.icm-widget .anim-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+}
+.icm-widget .anim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cmu-red);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.icm-widget .anim-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--cmu-red-dark);
+}
+.icm-widget .anim-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #e3e3e3;
+}
+.icm-widget .anim-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cmu-red);
+  cursor: pointer;
+}
+.icm-widget .anim-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0.5rem 0 0.2rem;
+}
+.icm-widget .anim-buttons button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid #d0d0d0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5a5a5a;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease,
+              background 0.15s ease;
+}
+.icm-widget .anim-buttons button:hover {
+  color: var(--cmu-red);
+  border-color: var(--cmu-red);
+}
+.icm-widget .anim-buttons button[title="Play"] {
+  background: var(--cmu-red);
+  border-color: var(--cmu-red);
+  color: #ffffff;
+}
+.icm-widget .anim-buttons button[title="Play"]:hover {
+  background: var(--cmu-red-dark);
+  border-color: var(--cmu-red-dark);
+  color: #ffffff;
+}
+
 /* ----------------------------------------------------------------------
    Collapsible code cells (`hide-input`).
 

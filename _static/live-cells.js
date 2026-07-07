@@ -86,6 +86,7 @@
     cells.forEach(addChip);
     beautifyOutputs(document); // baked audio outputs -> book audio chips
     watchDynamicAudio(); // catch the recorder's player (added on click) too
+    watchRecordButtons(); // turn pq.record()'s button into a ring + countdown
     // Editors normally exist before a student can reach them; this covers a
     // click in the brief window before the idle mount finishes (the static
     // pre is gone once the editor mounts, so these listeners die with it).
@@ -101,7 +102,7 @@
     // page fully intact, so it only reports to the console — the status
     // pill appears solely for things a student explicitly asked for.
     var kick = function () {
-      ensureMounted().catch(function () {});
+      ensureMounted().then(schedulePrewarm).catch(function () {});
     };
     if ("requestIdleCallback" in window) requestIdleCallback(kick, { timeout: 1500 });
     else setTimeout(kick, 250);
@@ -139,7 +140,7 @@
     var chip = document.createElement("button");
     chip.className = "live-run-chip";
     chip.type = "button";
-    chip.title = "Run this cell (runs the cells above it first) — Shift-Enter works too";
+    chip.title = "Run this cell (its setup cells above run first) — Shift-Enter works too";
     chip.textContent = "▶ Run";
     chip.addEventListener("click", function () {
       enqueueRun(cell);
@@ -236,18 +237,25 @@
   var startedAt = 0;
   var ticker = null;
   var lastMsg = "";
+  var lastKind = null;
+  var leaveGuardArmed = false;
 
   function elapsed() {
     return Math.round((Date.now() - startedAt) / 1000);
   }
 
   function status(msg, kind) {
+    lastMsg = msg;
+    lastKind = kind || null;
+    // The background prewarm is silent — the pill appears only for things a
+    // student explicitly asked for. ensureKernel replays the latest state
+    // when the first Run flips kernelRequested.
+    if (!kernelRequested) return;
     if (!statusEl) {
       statusEl = document.createElement("div");
       statusEl.className = "live-status";
       document.body.appendChild(statusEl);
     }
-    lastMsg = msg;
     statusEl.className = "live-status live-status-" + (kind || "busy");
     if (kind === "busy" || !kind) {
       statusEl.textContent = msg + " · " + elapsed() + " s";
@@ -491,8 +499,12 @@
   // ----- kernel start (first Run) ----------------------------------------
 
   function ensureKernel() {
-    if (!kernelPromise) {
+    if (!kernelRequested) {
       kernelRequested = true;
+      // A prewarm may already be underway (or done): surface its state.
+      if (lastMsg) status(lastMsg, lastKind);
+    }
+    if (!kernelPromise) {
       startedAt = Date.now();
       kernelPromise = startKernel().catch(function (err) {
         reportError(err);
@@ -500,6 +512,29 @@
       });
     }
     return kernelPromise;
+  }
+
+  // Pre-boot the kernel and install the wheels in the background once the
+  // page has gone idle: installation always completed, execution only on
+  // click — the first ▶ Run then pays just its own cells. Silent (status()
+  // is gated on kernelRequested) and free of user code (no init cells in
+  // this book). Skipped for readers who asked to save data; on failure the
+  // page simply returns to the boot-on-first-Run path.
+  function schedulePrewarm() {
+    if (navigator.connection && navigator.connection.saveData) return;
+    var warm = function () {
+      if (kernelPromise) return;
+      startedAt = Date.now();
+      kernelPromise = startKernel().catch(function (err) {
+        console.warn("[live-cells] kernel prewarm failed; Run will retry:", err);
+        if (kernelRequested) reportError(err);
+        kernelPromise = null;
+        throw err;
+      });
+      kernelPromise.catch(function () {}); // nobody awaits a prewarm
+    };
+    if ("requestIdleCallback" in window) requestIdleCallback(warm, { timeout: 6000 });
+    else setTimeout(warm, 3000);
   }
 
   async function startKernel() {
@@ -549,13 +584,6 @@
     status("Installing pyquist…");
     await installWheels(thebeConfig);
     await runInitCells_();
-
-    // Leaving the page now would lose kernel state; the built page returns
-    // on reload, so make that an informed choice instead of an accident.
-    window.addEventListener("beforeunload", function (e) {
-      e.preventDefault();
-      e.returnValue = "";
-    });
 
     activationDone = true;
     status("● Python connected — ready in " + elapsed() + " s. Reload page to reset.", "connected");
@@ -669,6 +697,17 @@
   // Serialize runs: clicking several chips queues them instead of
   // interleaving kernel requests.
   function enqueueRun(cell) {
+    if (!leaveGuardArmed) {
+      leaveGuardArmed = true;
+      // Leaving would lose kernel state the student built by RUNNING cells;
+      // the built page returns on reload, so make that an informed choice.
+      // Armed on the first Run, not at boot — a prewarmed kernel with
+      // nothing run isn't state worth nagging about.
+      window.addEventListener("beforeunload", function (e) {
+        e.preventDefault();
+        e.returnValue = "";
+      });
+    }
     setChip(cell, kernelPromise ? "running" : "starting");
     runQueue = runQueue
       .then(function () {
@@ -679,10 +718,29 @@
       });
   }
 
+  // A split page interleaves several self-contained companion notebooks;
+  // the splitter tags each one's code cells `icm-run-group-N` (rendered as
+  // a `tag_…` class). Scope a Run's setup chain to the clicked cell's own
+  // notebook. Pages without groups (ordinary notebook pages, where every
+  // cell shares one namespace arc) keep the whole-page chain.
+  function runGroupOf(cell) {
+    for (var i = 0; i < cell.classList.length; i++) {
+      if (cell.classList[i].indexOf("tag_icm-run-group-") === 0)
+        return cell.classList[i];
+    }
+    return null;
+  }
+
   async function runChain(target) {
     try {
       await ensureKernel();
       var chain = codeCells();
+      var group = runGroupOf(target);
+      if (group) {
+        chain = chain.filter(function (c) {
+          return c.classList.contains(group);
+        });
+      }
       for (var i = 0; i < chain.length; i++) {
         var cell = chain[i];
         var isTarget = cell === target;
@@ -820,6 +878,121 @@
         }
       }
     }).observe(document.body, { childList: true, subtree: true });
+  }
+
+  // pq.record() renders a plain ipywidgets button ("● Record 3s"). Wrap it in a
+  // card that echoes the audio-output card (live-cells.css): a round record
+  // control with a draining ring + a caption that counts the seconds down.
+  // Driven by the widget's own duration label and status text — the browseraudio
+  // widget itself stays untouched.
+  function enhanceRecordButton(origBtn) {
+    if (origBtn.dataset.baRing) return; // idempotent
+    var text = origBtn.textContent || "";
+    if (!/Record/i.test(text)) return; // only the record button
+    var m = text.match(/([\d.]+)\s*s/);
+    var duration = m ? parseFloat(m[1]) : 3;
+    var durLabel = (duration % 1 === 0 ? duration.toFixed(0) : duration.toFixed(1)) + " s";
+    origBtn.dataset.baRing = "1";
+
+    // Hide the ipywidgets button + its status span and render our own card —
+    // forwarding clicks — so none of the widget's button CSS reaches our UI.
+    origBtn.style.display = "none";
+    var status = origBtn.nextElementSibling;
+    if (status && status.tagName === "SPAN") status.style.display = "none";
+
+    // Reuse the book's audio-chip ring (viewBox 36, r=15.9155, dasharray 100)
+    // so the control is identical in size/weight to a pq.play() output chip.
+    var NS = "http://www.w3.org/2000/svg";
+    function circle(cls) {
+      var c = document.createElementNS(NS, "circle");
+      c.setAttribute("class", cls);
+      c.setAttribute("cx", "18");
+      c.setAttribute("cy", "18");
+      c.setAttribute("r", "15.9155");
+      return c;
+    }
+    var ring = document.createElementNS(NS, "svg");
+    ring.setAttribute("class", "audio-chip-ring");
+    ring.setAttribute("viewBox", "0 0 36 36");
+    var fill = circle("acr-fill"); // dasharray 100, offset 100 (empty) via custom.css
+    fill.style.transition = "stroke-dashoffset 0.1s linear";
+    ring.append(circle("acr-track"), fill);
+    var dot = document.createElement("span");
+    dot.className = "ba-dot";
+
+    var ctrl = document.createElement("button");
+    ctrl.type = "button";
+    ctrl.className = "audio-chip audio-chip-lg ba-record";
+    ctrl.title = "Record " + durLabel;
+    ctrl.append(ring, dot);
+
+    var card = document.createElement("div");
+    card.className = "audio-block audio-output";
+    var body = document.createElement("div");
+    body.className = "audio-block-body";
+    var label = document.createElement("span");
+    label.className = "audio-output-name";
+    body.append(label);
+    card.append(ctrl, body);
+    origBtn.parentNode.insertBefore(card, origBtn);
+
+    function setLabel(main, sub) {
+      label.textContent = main + " ";
+      var s = document.createElement("span");
+      s.className = "ba-sub";
+      s.textContent = "· " + sub;
+      label.append(s);
+    }
+    setLabel("Record", durLabel);
+
+    var timer = null;
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      fill.style.strokeDashoffset = "100"; // empty ring
+    }
+
+    ctrl.addEventListener("click", function () {
+      if (timer) return;
+      origBtn.click(); // trigger the widget's capture, within this user gesture
+      var startedAt = performance.now();
+      fill.style.strokeDashoffset = "0"; // full ring at the start
+      timer = setInterval(function () {
+        var elapsed = (performance.now() - startedAt) / 1000;
+        var left = Math.max(0, duration - elapsed);
+        fill.style.strokeDashoffset = String(100 * Math.min(1, elapsed / duration));
+        setLabel("Recording", left.toFixed(1) + " s left");
+        // Stop when the widget reports the take is done or failed (status text),
+        // or as a safety a couple seconds past the requested duration.
+        var s = status ? status.textContent : "";
+        if (/error/i.test(s)) {
+          stop();
+          setLabel("Couldn't record", "check mic access");
+        } else if (/recorded/i.test(s) || elapsed > duration + 2) {
+          stop();
+          setLabel("Recorded", durLabel);
+        }
+      }, 100);
+    });
+  }
+
+  function watchRecordButtons() {
+    function scan(root) {
+      if (!root || root.nodeType !== 1) return;
+      if (root.matches && root.matches(".jupyter-button")) enhanceRecordButton(root);
+      if (root.querySelectorAll) {
+        root.querySelectorAll(".jupyter-button").forEach(enhanceRecordButton);
+      }
+    }
+    new MutationObserver(function (records) {
+      for (var i = 0; i < records.length; i++) {
+        var nodes = records[i].addedNodes;
+        for (var j = 0; j < nodes.length; j++) scan(nodes[j]);
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+    document.querySelectorAll(".jupyter-button").forEach(enhanceRecordButton);
   }
 
   // Append a "1.00 s · 44.1 kHz · mono" caption parsed from the WAV header.

@@ -57,6 +57,23 @@ jobs:
       - name: Install PortAudio (system dep of sounddevice)
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
 
+      # Persist the jupyter-cache between runs so a push only executes the
+      # notebooks it changed — this is what keeps build times flat as the
+      # number of interactive-widget pages grows. jupyter-cache itself
+      # invalidates per-notebook by content hash; the cache KEY only has to
+      # bust when the execution environment changes (packages, widget
+      # library, execution config, pyquist), because stale outputs from an
+      # old environment would otherwise be served forever. The sha suffix
+      # makes every run save an updated cache; restore-keys picks the
+      # newest cache for the same environment.
+      - name: Restore notebook execution cache
+        uses: actions/cache@v4
+        with:
+          path: _build/.jupyter_cache
+          key: jcache-${{ hashFiles('environment.yml', '_config.yml', 'tools/**', 'pyquist/pyquist/**') }}-${{ github.sha }}
+          restore-keys: |
+            jcache-${{ hashFiles('environment.yml', '_config.yml', 'tools/**', 'pyquist/pyquist/**') }}-
+
       - name: Set up Conda environment
         uses: conda-incubator/setup-miniconda@v4
         with:

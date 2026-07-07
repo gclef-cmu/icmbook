@@ -1,4 +1,4 @@
-.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork
+.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork template-interactive
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
@@ -28,6 +28,22 @@ split:
 # fails if the rendered site would change.
 merge:
 	python3 tools/merge_chapters.py
+
+# Regenerate the "Template - Interactive" page. The page in _toc.yml is the
+# GENERATED content/template-interactive/index.ipynb; its sources are main.md
+# (prose + {interactive} directives) and the notebooks/ folder next to it —
+# the same expansion `make split` performs for chapter sections. Edit the
+# sources, then re-run this. Untouched by `make split` (which only rebuilds
+# content/ch*/ and content/course/).
+template-interactive:
+	@python3 -c "import sys; sys.path.insert(0, 'tools'); \
+	from pathlib import Path; \
+	import nbformat; \
+	from split_chapters import build_interactive_notebook; \
+	folder = Path('content/template-interactive'); \
+	nb = build_interactive_notebook((folder / 'main.md').read_text(), folder, 99, 0); \
+	nbformat.write(nb, str(folder / 'index.ipynb')); \
+	print('wrote', folder / 'index.ipynb')"
 
 # Mirror the Pyquist README into content/pyquist/Overview.md from the
 # pinned `pyquist/` git submodule. Runs on every `make book` so the
@@ -85,6 +101,7 @@ wheels:
 	rm -rf _static/wheels
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/sounddevice_stub
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/soundfile_stub
+	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/icm_widgets
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./pyquist
 	@# Install-order manifest consumed by _static/live-cells.js: the stubs
 	@# (sounddevice always; soundfile until the kernel stack reaches Pyodide
@@ -114,7 +131,13 @@ check-thebe-fork:
 		exit 1; }
 
 book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe
-	jupyter-book build ./
+	@# PIP_DISABLE_PIP_VERSION_CHECK: notebook cells run `%pip install -q …`
+	@# at build time; without this, pip's "new release available" notice is
+	@# baked into the page as a visible stderr output block.
+	@# ICM_BOOK_BUILD: kernel-only preview cells (e.g. 5.2's VS Code plotly
+	@# cell) guard on this and build nothing, so their ipywidgets state is
+	@# never recorded into the page.
+	PIP_DISABLE_PIP_VERSION_CHECK=1 ICM_BOOK_BUILD=1 jupyter-book build ./
 	@# Sphinx doesn't track files referenced by raw <img>/<audio> HTML tags,
 	@# so copy each chapter's assets folder into the build output ourselves.
 	@for d in content/ch*/assets; do \

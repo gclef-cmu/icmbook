@@ -45,3 +45,7 @@ dependencies:
       # tracking upstream main. Run `git submodule update --init` after
       # cloning, and `git submodule update --remote pyquist` to bump it.
       - -e ./pyquist
+      # icm-widgets: the book's parameter-slider widget API (ParamPlayer).
+      # Needed to execute widget cells at build time; the same package is
+      # wheeled into _static/wheels by `make wheels` for the browser kernel.
+      - -e ./tools/icm_widgets

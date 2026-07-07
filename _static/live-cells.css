@@ -10,6 +10,24 @@
  * This file only adds what is live-specific: chip, status pill, editor
  * parity, JupyterLab-output normalization, error cards, fresh-run motion. */
 
+/* --- fully hidden inputs (`# hide` in an interactive notebook) ---------
+ * The splitter tags these cells `icm-hide-input` instead of myst-nb's
+ * `remove-input`: the source must stay in the DOM (invisible) so the live
+ * layer can still mount and execute the cell in the run chain — a hidden
+ * setup cell has to run before the cells below it. Only its output shows.
+ * Not gated on body.live-active: the code is hidden on the static page too. */
+div.cell.tag_icm-hide-input .cell_input {
+  display: none;
+}
+
+/* And its output reads as native page content: the reader can't see the
+ * code, so nothing should announce that a cell produced this. Drops the
+ * whisper "OUTPUT" tag custom.css sets on every cell_output — the figure,
+ * player, or audio card stands on its own (baked and live alike). */
+div.cell.tag_icm-hide-input .cell_output::before {
+  content: none;
+}
+
 /* --- per-cell Run chip --- */
 
 .cell .cell_input {
@@ -338,3 +356,29 @@ div.cell div.cell_output:has(.live-error)::before {
 @keyframes live-rail-pulse {
   0%, 55% { border-left-color: var(--cmu-red, #c41230); }
 }
+
+/* --- Record button -------------------------------------------------------
+ * live-cells.js renders pq.record()'s control by REUSING the book's audio chip
+ * (`audio-chip audio-chip-lg` + the `acr` ring) inside an `audio-output` card —
+ * so it's pixel-identical in size to a pq.play() output. The only new bits are
+ * the record dot (instead of a play icon) and the muted caption suffix. */
+/* Give live-output audio cards (the record card + the pq.play / recorder-preview
+ * audio-output cards that sit beside it) a shared min-width they both reach, so
+ * they line up at the same width regardless of caption length. The descendant
+ * selector outspecifies the base `.audio-block.audio-output` (min-width: 14rem). */
+.cell_output .audio-block.audio-output,
+.jp-OutputArea .audio-block.audio-output {
+  min-width: 18rem;
+}
+.ba-record {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ba-record .ba-dot {
+  position: relative; /* above the ring */
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 50%;
+  background: currentColor;
+}
+.audio-output-name .ba-sub { color: var(--pst-color-text-muted, #8a8a8a); font-weight: 500; }
