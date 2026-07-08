@@ -1,0 +1,169 @@
+"""Render manim scenes into the book as chrome-less looping video.
+
+This backs the ``{animation}`` directive: an animation cell defines a manim
+``Scene`` and ends with ``anim.show(SceneCls)``, which renders it headless and
+returns autoplaying, looping ``<video>`` elements with the mp4 inlined — no
+player controls, no JavaScript. Animations are watch-only (manim can't run in
+the browser kernel), so the splitter hides the cell's code; the HTML is built
+here so cells stay pure Python.
+"""
+
+from __future__ import annotations
+
+import base64
+import contextlib
+import io
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+
+from IPython.display import HTML
+from manim import DecimalNumber, MathTex, Scene, Tex, Text, tempconfig
+
+# Book palette, re-exported: `from manim import *` rebinds RED/BLUE/GOLD/TEAL
+# to manim's neon colors, so scenes use anim.RED etc.
+from icm_widgets import BLUE, GOLD, IRON, RED, STEEL, TEAL  # noqa: F401
+
+__all__ = ["show", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL", "INK", "INK_DARK"]
+
+INK = "#3B3B3B"  # house label/axis grey (same as house_style())
+INK_DARK = "#ECECEC"
+_PAGE = "#FFFFFF"  # the theme's light page background
+_PAGE_DARK = "#121212"  # the theme's dark page background
+
+# Quality words mapped to manim's presets.
+_QUALITIES = {
+    "low": "low_quality",  # 480p15 — for iterating
+    "medium": "medium_quality",  # 720p30 — the default
+    "high": "high_quality",  # 1080p60 — heavy, needs a reason
+}
+
+# Only text-like classes get a themed default ink; geometry (Line, Dot, ...)
+# takes explicit colors in scenes.
+_THEMED = (Text, Tex, MathTex, DecimalNumber)
+
+
+def _apply_theme(dark: bool) -> None:
+    ink = INK_DARK if dark else INK
+    for cls in _THEMED:
+        cls.set_default()  # clear any previous default first
+        cls.set_default(color=ink)
+
+
+def _reset_theme() -> None:
+    for cls in _THEMED:
+        cls.set_default()  # bare call restores the original
+
+
+def _render(scene_cls: type[Scene], dark: bool, quality: str) -> str:
+    """One headless render of ``scene_cls`` -> base64 mp4."""
+    media = Path(tempfile.mkdtemp(prefix="icm-anim-"))
+    # The cell's input is hidden, so any render chatter would appear as an
+    # orphaned output block. Capture everything; replay only on failure.
+    out, err = io.StringIO(), io.StringIO()
+    try:
+        with tempconfig(
+            {
+                "quality": quality,
+                "media_dir": str(media),
+                "background_color": _PAGE_DARK if dark else _PAGE,
+                "progress_bar": "none",
+                "verbosity": "WARNING",
+                "disable_caching": True,  # the cache dies with the temp dir anyway
+            }
+        ):
+            _apply_theme(dark)
+            try:
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    scene = scene_cls()
+                    scene.render()
+            except BaseException:
+                sys.stdout.write(out.getvalue())
+                sys.stderr.write(err.getvalue())
+                raise
+            movie = Path(scene.renderer.file_writer.movie_file_path)
+            return base64.b64encode(movie.read_bytes()).decode("ascii")
+    finally:
+        _reset_theme()
+        shutil.rmtree(media, ignore_errors=True)
+
+
+def show(
+    scene_cls: type[Scene],
+    *,
+    theme: str = "auto",
+    quality: str = "medium",
+    loop: bool = True,
+    max_mb: float = 8.0,
+) -> HTML:
+    """Render a manim Scene and return it as chrome-less looping video.
+
+    Call as the last expression of the cell — the returned HTML is what
+    myst-nb bakes into the page. The clip autoplays muted and loops like an
+    embedded figure; there are no player controls.
+
+    Parameters
+    ----------
+    scene_cls:
+        The ``Scene`` subclass to render (the class itself, not an instance).
+    theme:
+        ``"auto"`` (the default) bakes a light and a dark render; the page
+        shows the one matching the reader's light/dark toggle. ``"dark"``
+        pins the 3Blue1Brown look in both modes; ``"light"`` pins the
+        house-light render. Ink and background are reset after each render.
+    quality:
+        ``"low"`` (480p15) to iterate, ``"medium"`` (720p30, the default) to
+        publish, ``"high"`` (1080p60) only with a reason.
+    loop:
+        Play forever. ``False`` plays once.
+    max_mb:
+        Weight budget for the clip as page payload (base64 costs ~4/3 the
+        mp4; ``theme="auto"`` ships both renders). Exceeding it raises
+        instead of quietly shipping a heavy page.
+    """
+    if not (isinstance(scene_cls, type) and issubclass(scene_cls, Scene)):
+        raise TypeError("show() wants the Scene subclass itself, e.g. show(MyScene)")
+    if quality not in _QUALITIES:
+        raise ValueError(
+            f"quality must be one of {sorted(_QUALITIES)} — got {quality!r}"
+        )
+    if theme not in ("auto", "light", "dark"):
+        raise ValueError(f'theme must be "auto", "light" or "dark" — got {theme!r}')
+
+    # Fixed-look clips carry only the bare class, which the custom.css mode
+    # rules never hide.
+    if theme == "auto":
+        variants = [("icm-anim icm-anim-light", False), ("icm-anim icm-anim-dark", True)]
+    else:
+        variants = [("icm-anim", theme == "dark")]
+
+    loop_attr = " loop" if loop else ""
+    videos: list[str] = []
+    weights: list[float] = []
+    for css, dark in variants:
+        data = _render(scene_cls, dark, _QUALITIES[quality])
+        weights.append(len(data) / 1e6)
+        # Layout lives on .icm-anim in custom.css — an inline `display` here
+        # would override the stylesheet's light/dark rules and show both
+        # renders. Only max-width stays inline, for VS Code previews.
+        videos.append(
+            f'<video class="{css}" autoplay muted playsinline{loop_attr} '
+            f'style="max-width:100%;" '
+            f'src="data:video/mp4;base64,{data}"></video>'
+        )
+
+    weight = sum(weights)
+    if weight > max_mb:
+        split = (
+            f" ({weights[0]:.2f} light + {weights[1]:.2f} dark)"
+            if len(weights) == 2
+            else ""
+        )
+        raise ValueError(
+            f"{scene_cls.__name__} weighs {weight:.2f} MB as page payload{split} "
+            f"(budget {max_mb:.2f} MB) — shorten the clip, calm the motion, "
+            f"or check the quality flag"
+        )
+
+    return HTML("\n".join(videos))

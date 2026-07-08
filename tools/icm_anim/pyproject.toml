@@ -1,0 +1,27 @@
+# The book's narrative-animation engine wrapper (manim -> chrome-less <video>).
+#
+# Build-only, by design: manim is compiled machinery (Cairo, Pango, PyAV) with
+# no Pyodide build, so unlike icm_widgets this package is NEVER wheeled into
+# _static/wheels for the browser kernel — animation cells are watch-only.
+# Installed editable in the build environment (environment.yml) so
+# `execute_notebooks: auto` can render clips at build time.
+#
+# icm-widgets (the palette source of truth) is an intentional UNDECLARED
+# dependency: it is never published to PyPI, so declaring it here would make a
+# standalone `pip install -e tools/icm_anim` resolve the name from PyPI —
+# a failure at best, a name-squat at worst. environment.yml installs both
+# editables side by side. Never published; version is informational.
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "icm-anim"
+version = "0.1.0"
+description = "Narrative-animation rendering for Computer Music Principles pages (manim scenes baked to inert looping video)."
+requires-python = ">=3.10"
+dependencies = ["manim>=0.20,<0.21"]
+
+[tool.setuptools]
+py-modules = ["icm_anim"]
