@@ -50,6 +50,11 @@ jobs:
       - name: Install TeX Live (manim MathTex dep)
         run: sudo apt-get install -y texlive texlive-latex-extra dvisvgm
 
+      # ManimPango publishes no Linux wheels, so pip compiles it from source
+      # here — it needs the pango headers.
+      - name: Install Pango headers (manimpango source build)
+        run: sudo apt-get install -y libpango1.0-dev pkg-config
+
       # Persist the jupyter-cache so a push only executes the notebooks it
       # changed. jupyter-cache invalidates per-notebook by content hash; the
       # KEY busts only when the execution environment changes (stale outputs

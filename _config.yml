@@ -18,7 +18,9 @@ only_build_toc_files: true
 # Execution settings ('auto' executes any notebook that is missing outputs)
 execute:
   execute_notebooks: 'auto'
-  timeout: 180
+  # Manim pages render several clips per notebook and CI runners are slow;
+  # 180s was too tight.
+  timeout: 600
   # Run each notebook in a temp dir: the repo's `pyquist/` and
   # `content/pyquist/` directories shadow the installed pyquist package when
   # they're the execution CWD, breaking `import pyquist` at build time. The
@@ -89,6 +91,10 @@ sphinx:
     icm_interactive: _ext/
     icm_animation: _ext/
   config:
+    # A notebook execution error is only a warning by default, which lets a
+    # broken page deploy — fail the build instead.
+    nb_execution_raise_on_error: true
+
     # Only auto-linkify explicit URLs — fuzzy mode catches things like
     # `pyquist.web` (`.web` is a real TLD) and makes broken links.
     myst_linkify_fuzzy_links: false
