@@ -9,6 +9,7 @@ parts:
       - file: content/template-notebook
       - file: content/template-md
       - file: content/template-interactive/index
+      - file: content/template-animation/index
   - caption: Course Information
     chapters:
       - file: content/course/home
