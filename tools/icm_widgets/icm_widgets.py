@@ -55,7 +55,44 @@ from dataclasses import dataclass
 import numpy as np
 
 __version__ = "0.3.0"
-__all__ = ["ParamPlayer", "slider", "play"]
+__all__ = [
+    "ParamPlayer", "slider", "play",
+    "house_style", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL",
+]
+
+# The book's plot palette — Carnegie Mellon's colors. One source of truth so a
+# widget imports the names instead of pasting the hex codes.
+RED, BLUE, GOLD, IRON, TEAL, STEEL = (
+    "#C41230", "#007BC0", "#FDB515", "#6D6E71", "#008F91", "#E0E0E0",
+)
+
+
+def house_style():
+    """Apply the book's house plotting style to matplotlib's rcParams.
+
+    The single source of truth every interactive widget shares (call it once in
+    the widget's style cell): a dpi that keeps the embedded player a sane size,
+    a bottom margin so x-axis labels are never cropped, mathtext (no LaTeX),
+    open spines, and the book's greys. The ``animation.*`` keys only matter for
+    ``to_jshtml()`` widgets and are harmless everywhere else, so one call covers
+    both the FuncAnimation and ParamPlayer patterns.
+    """
+    import matplotlib.pyplot as plt
+
+    plt.rcParams.update({
+        "figure.dpi": 64,                # sets the embedded player's size
+        "figure.subplot.bottom": 0.18,   # reserve room so x-axis labels aren't cropped
+        "animation.html": "jshtml",      # to_jshtml widgets: vector SVG frames
+        "animation.frame_format": "svg",
+        "animation.embed_limit": 40,     # MB; matplotlib's 20 MB default drops frames
+        "text.usetex": False,            # mathtext: no LaTeX install needed
+        "font.size": 12,
+        "axes.spines.top": False, "axes.spines.right": False,
+        "axes.edgecolor": "#6D6E71",
+        "xtick.color": "#6D6E71", "ytick.color": "#6D6E71",
+        "xtick.labelcolor": "#3b3b3b", "ytick.labelcolor": "#3b3b3b",
+        "axes.labelcolor": "#3b3b3b",
+    })
 
 
 @dataclass(frozen=True)
@@ -167,9 +204,18 @@ class ParamPlayer:
             raise ValueError(f'frame_format must be "svg" or "png", got {frame_format!r}')
         mime = "svg+xml" if frame_format == "svg" else "png"
 
+        # Crop every frame to a FIXED box that includes the axis labels. Saving at
+        # the raw figure bbox clips any label a short figure pushes past its bottom
+        # edge (figure.subplot.bottom is only a fraction of height, so it can't
+        # guarantee room). get_tightbbox measures the drawn content (labels
+        # included); reusing the SAME box for the background and every transparent
+        # overlay keeps the layers pixel-aligned.
+        save_bbox = fig.get_tightbbox()
+
         def frame(transparent):
             buf = io.BytesIO()
-            fig.savefig(buf, format=frame_format, dpi=fig.dpi, transparent=transparent)
+            fig.savefig(buf, format=frame_format, dpi=fig.dpi, transparent=transparent,
+                        bbox_inches=save_bbox)
             return f"data:image/{mime};base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
         # Background: the figure's static chrome, dynamic artists hidden.

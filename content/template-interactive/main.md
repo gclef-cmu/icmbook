@@ -78,8 +78,8 @@ every example on this page reads instantly:
 1. **Dependencies** (`# hide`) — the `%pip install` line (inside a
    `with capture_output():` block) and every import. Copy it verbatim from
    Section 4.
-2. **Style and precompute** (`# collapse`) — the house rcParams block and
-   palette (Section 5), plus the arrays the animation will need.
+2. **Style and precompute** (`# collapse`) — `house_style()` and the palette
+   import (Section 5), plus the arrays the animation will need.
 3. **The widget** (visible, or `# hide` if the code is beside the point) — a
    figure, an `animate(n)` callback that only *moves* artists, a
    `FuncAnimation`, and the player registered and displayed:
@@ -189,36 +189,30 @@ notebooks run in any order on the page.
 
 ## 5. The house style
 
-Widgets should look like the book drew them. Start every widget notebook with
-this rcParams block, right after the dependencies:
+Widgets should look like the book drew them. Every widget's **Style** cell
+(right after the dependencies) applies the shared house style with one call and
+imports the palette — both live in `icm_widgets`, so there's a single source of
+truth and no rcParams block to keep in sync across notebooks:
 
 ```python
-plt.rcParams.update({
-    "figure.dpi": 64,                # sets the player's intrinsic size only —
-    "figure.subplot.bottom": 0.18,   # reserve room for x-axis labels (jshtml crops at the figure bbox)
-    "animation.html": "jshtml",      # SVG frames are vector, sharp at any zoom
-    "animation.frame_format": "svg", # ~3x smaller gzipped than PNG, and crisp
-    "animation.embed_limit": 40,     # MB; matplotlib's 20 MB default drops frames
-    "text.usetex": False,            # mathtext: no LaTeX install needed locally
-    "font.size": 12,
-    "axes.spines.top": False, "axes.spines.right": False,
-    "axes.edgecolor": "#6D6E71",
-    "xtick.color": "#6D6E71", "ytick.color": "#6D6E71",
-    "xtick.labelcolor": "#3b3b3b", "ytick.labelcolor": "#3b3b3b",
-    "axes.labelcolor": "#3b3b3b",
-})
+from icm_widgets import house_style, RED, BLUE, GOLD, IRON, TEAL, STEEL
+house_style()
 ```
 
-The one line that decides how the animation *ages* is
-`"animation.frame_format": "svg"`: frames ship as vectors, so the player is
-retina-crisp at any size — and base64 SVG text gzips about 3× on the wire,
-where PNG barely compresses. The exception is a figure with **raster content**
-(`imshow`, a spectrogram): SVG would embed the raster into every frame — set
-`"animation.frame_format": "png"` in that notebook instead.
+`house_style()` sets the book's rcParams: `figure.dpi` (a sane player size), a
+`figure.subplot.bottom` margin so x-axis labels are never cropped, mathtext (no
+LaTeX install), open spines, and the greys. It also sets
+`animation.frame_format = "svg"` — the one setting that decides how an animation
+*ages*: frames ship as vectors, so the player is retina-crisp at any size, and
+base64 SVG text gzips about 3× where PNG barely compresses. The exception is a
+figure with **raster content** (`imshow`, a spectrogram): override it in that
+notebook with `plt.rcParams["animation.frame_format"] = "png"`, since SVG would
+embed the raster into every frame.
 
-Color is meaning. Widgets draw from CMU's palette — Carnegie red is both the
-university's color and the book's accent (chips, links, the cell spine), so a
-widget colored this way reads as part of the course:
+Color is meaning. The palette imports from `icm_widgets` (`RED`, `BLUE`, `GOLD`,
+`IRON`, `TEAL`, `STEEL`) — Carnegie red is both the university's color and the
+book's accent (chips, links, the cell spine), so a widget colored this way reads
+as part of the course:
 
 | Swatch | Hex | Role |
 | ------ | --- | ---- |
@@ -440,7 +434,7 @@ machine, working in this repo is enough; outside it,
 | The figure appears twice — a static copy under the player | Missing `plt.close(fig)` before the cell ends |
 | pip chatter printed on the page | The `%pip install` line isn't inside the `with capture_output():` block |
 | The animation stops early or frames are missing | Over `animation.embed_limit` — matplotlib drops frames silently; raise the limit or use fewer frames |
-| The animation is blurry | Raster frames — the house rcParams (`"animation.frame_format": "svg"`) is missing |
+| The animation is blurry | Raster frames — `house_style()` sets `animation.frame_format="svg"`; call it in the Style cell (or you overrode it) |
 | An `imshow`/spectrogram animation is enormous | SVG embeds the raster into every frame — set `"animation.frame_format": "png"` in that notebook |
 | Code shows on the page that shouldn't | The marker isn't on a whole line of its own, or isn't the cell's first line |
 | The widget is missing from the built page | The directive path doesn't match the notebook, or you edited the generated `.ipynb` instead of the source and re-split |
