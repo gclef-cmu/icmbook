@@ -442,6 +442,16 @@ div.cell div.cell_output .anim-buttons button {
   transition: color 0.15s ease, border-color 0.15s ease,
               background 0.15s ease;
 }
+/* On a live re-run, thebe wraps the output in `.jp-RenderedHTMLCommon`, whose
+   `svg { height: auto }` (thebe.css, specificity 0,1,1) outranks Font Awesome's
+   `.svg-inline--fa { height: 1em }` (0,1,0) and balloons the player's glyph
+   icons to their intrinsic ~40px — they overflow the buttons and collide. The
+   baked output is plain `.cell_output`, so it's unaffected. Pin the glyphs back
+   to 1em so the live player matches the baked one. */
+div.cell div.cell_output .anim-buttons button .svg-inline--fa {
+  height: 1em;
+  width: auto;
+}
 div.cell div.cell_output .anim-buttons button:hover {
   color: var(--cmu-red);
   border-color: var(--cmu-red);

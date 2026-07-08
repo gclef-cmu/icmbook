@@ -75,8 +75,9 @@ sections. Edit the sources, regenerate, rebuild.
 Every widget notebook is the same **three cells** — learn this shape once and
 every example on this page reads instantly:
 
-1. **Dependencies** (`%%capture` + `# hide`) — the `%pip install` line and
-   every import. Copy it verbatim from Section 4.
+1. **Dependencies** (`# hide`) — the `%pip install` line (inside a
+   `with capture_output():` block) and every import. Copy it verbatim from
+   Section 4.
 2. **Style and precompute** (`# collapse`) — the house rcParams block and
    palette (Section 5), plus the arrays the animation will need.
 3. **The widget** (visible, or `# hide` if the code is beside the point) — a
@@ -145,35 +146,41 @@ cell that makes a figure and a sound. This is the file the quick start copies:
 
 Two conventions keep the same cell runnable in both environments:
 
-- Start the dependencies cell with `%%capture` and then
-  `%pip install -q numpy matplotlib myst-nb`. The install is a no-op wherever
-  the packages already exist (both environments) and documents what the
-  notebook needs; `%%capture` keeps pip's chatter off the page (it must be
-  the cell's first line — the visibility marker goes right below it).
-  `pyquist` is deliberately **not** in the install line — the build uses the
-  repo's editable install and the browser pre-installs the book's own wheel,
-  so a PyPI fetch would fight both.
+- Install with `%pip install -q numpy matplotlib` **inside a
+  `with capture_output():` block**, so pip's chatter stays off the page while a
+  genuine install failure still raises loudly. Do **not** wrap the whole cell in
+  a bare `%%capture` — it swallows the traceback too, and a silently-failed
+  setup resurfaces cells later as a baffling `NameError`. The install is a no-op
+  wherever the packages already exist (both environments) and documents what the
+  notebook needs. Two packages are deliberately **not** in the install line:
+  `pyquist` (the build uses the repo's editable install and the browser
+  pre-installs the book's own wheel, so a PyPI fetch would fight both) and
+  `myst-nb` (build-time only — it pulls `pyzmq`, which has no browser wheel, so
+  the browser kernel stubs `glue` to a no-op instead).
 - Import everything in that one cell, `# hide` it (Section 6), and let the
   teaching cells stay free of plumbing.
 
 The standard first cell, in full:
 
 ```python
-%%capture
 # hide
 # --- Dependencies -----------------------------------------------------------
 # Everything this notebook imports, installed up front. The installs are
 # no-ops when the packages are already present (they ship with the book's
-# build environment and with the browser kernel), so this cell just needs to
-# run once. %%capture keeps pip's chatter off the page.
-%pip install -q numpy matplotlib myst-nb
-
-import numpy as np
-import matplotlib.pyplot as plt
-import pyquist as pq
-from matplotlib.animation import FuncAnimation
-from myst_nb import glue
-from IPython.display import HTML
+# build environment and with the browser kernel). The capture_output() block
+# hides pip's chatter but still lets a genuine install failure raise. myst-nb
+# isn't installed here — it's build-time only, and the browser kernel stubs
+# its glue() to a no-op.
+from IPython.utils.capture import capture_output
+with capture_output():                 # swallow pip + import chatter (e.g. matplotlib's font cache); real failures still raise
+    # numpy + matplotlib are Pyodide built-ins; the install is a no-op at build time
+    %pip install -q numpy matplotlib
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import pyquist as pq
+    from matplotlib.animation import FuncAnimation
+    from myst_nb import glue
+    from IPython.display import HTML
 ```
 
 Every companion notebook on this page opens with a cell like it — that is
@@ -188,6 +195,7 @@ this rcParams block, right after the dependencies:
 ```python
 plt.rcParams.update({
     "figure.dpi": 64,                # sets the player's intrinsic size only —
+    "figure.subplot.bottom": 0.18,   # reserve room for x-axis labels (jshtml crops at the figure bbox)
     "animation.html": "jshtml",      # SVG frames are vector, sharp at any zoom
     "animation.frame_format": "svg", # ~3x smaller gzipped than PNG, and crisp
     "animation.embed_limit": 40,     # MB; matplotlib's 20 MB default drops frames
@@ -268,9 +276,8 @@ shows, with a whole-line marker:
 | `# show` (or no marker) | source visible and editable | the code you are teaching |
 | `# no-output` (additional) | the cell's **baked output** is dropped from the page (it still runs, at build and in the browser) | a kernel-only cell whose output is dead page weight — e.g. a VS Code preview widget that bakes megabytes of inert state |
 
-The marker must be a line of its own (conventionally the first — or right
-below `%%capture`, which has to come first), it is case-insensitive, and the
-first one wins. It is an ordinary comment: the split pipeline reads it to tag
+The marker must be a line of its own (conventionally the first line of the
+cell), it is case-insensitive, and the first one wins. It is an ordinary comment: the split pipeline reads it to tag
 the cell (`# hide` → `icm-hide-input`, `# collapse` → `hide-input`) and
 leaves the line in place — expand any **Show setup** bar on this page and
 the `# collapse` that put it there is the first thing you read, and a cell
@@ -431,11 +438,11 @@ machine, working in this repo is enough; outside it,
 | Symptom | Cause and fix |
 | ------- | ------------- |
 | The figure appears twice — a static copy under the player | Missing `plt.close(fig)` before the cell ends |
-| pip chatter printed on the page | `%%capture` is not the cell's **first** line |
+| pip chatter printed on the page | The `%pip install` line isn't inside the `with capture_output():` block |
 | The animation stops early or frames are missing | Over `animation.embed_limit` — matplotlib drops frames silently; raise the limit or use fewer frames |
 | The animation is blurry | Raster frames — the house rcParams (`"animation.frame_format": "svg"`) is missing |
 | An `imshow`/spectrogram animation is enormous | SVG embeds the raster into every frame — set `"animation.frame_format": "png"` in that notebook |
-| Code shows on the page that shouldn't | The marker isn't on a whole line of its own, or isn't first (right below `%%capture`) |
+| Code shows on the page that shouldn't | The marker isn't on a whole line of its own, or isn't the cell's first line |
 | The widget is missing from the built page | The directive path doesn't match the notebook, or you edited the generated `.ipynb` instead of the source and re-split |
 | A slider widget takes ages to render or is huge | The frame grid multiplied out — check `repr(widget)` / `weight_mb`, coarsen slider steps, or split artists into layers with `depends=` (Section 8) |
 | A bare figure shows instead of the slider widget | The `ParamPlayer` isn't the cell's trailing expression (and don't `plt.close(fig)` — it closes the figure itself) |
