@@ -1,44 +1,20 @@
-// live-cells.js — button-free live code for notebook pages.
+// live-cells.js — live code on notebook pages, no launch button.
 //
-// The page is born editable: as soon as the DOM is ready (and the browser is
-// idle), the vendored thebe core bundle replaces every code cell's static
-// <pre> with a CodeMirror editor styled to be pixel-identical, so students
-// can click in and type immediately — no activation step, no visible mode
-// switch. Nothing Python-related runs yet: thebelab.bootstrap() is called at
-// mount time, but the JupyterLite server it tries to start is a gated
-// stand-in (window.thebeLite placeholder) whose promise we only release on
-// the first Run. That first Run loads the thebe-lite server bundle, boots
-// Pyodide (pinned below), micropip-installs the wheels listed in
-// _static/wheels/manifest.json, then executes the requested cell — running
-// any not-yet-run cells above it first (a fresh kernel can't satisfy a
-// mid-page cell otherwise). Baked outputs stay in place inside their cells
-// until that cell first re-executes. While the kernel comes up, the status
-// pill ticks elapsed seconds; once it's ready, a compact "Python connected"
-// badge stays on screen.
+// At page load (idle-time, silent) the vendored thebe bundle swaps each code
+// cell's static <pre> for a CodeMirror editor. The heavy stack — thebe-lite
+// server, Pyodide, the wheels in _static/wheels — loads only on the first
+// Run, which executes the clicked cell after any unrun setup cells above it.
+// Baked outputs stay in place until their cell first re-executes; reloading
+// the page is the reset. Pages without code cells exit immediately.
 //
-// Cost when dormant: this file plus live-cells.css; on pages without code
-// cells it exits immediately. On notebook pages the editor mount costs one
-// cached fetch + parse of thebe-dist/core/index.js (~1.4 MB, idle-time);
-// the heavy stack (thebe-lite server, Pyodide CDN, wheels, ~25 MB first
-// visit) still loads only when a student actually runs something. Page
-// reload restores the pristine built page — that IS the reset affordance.
-//
-// Also owns the output "beautifier": <audio> elements inside cell outputs
-// (baked at build time or freshly produced by pq.play in the live kernel)
-// are swapped for the book's round audio-chip card (see _ext/icm_audio.py /
-// _static/audio-chip.js), so code-produced audio looks native to the book
-// instead of the browser's default widget.
-//
-// Deliberately self-contained: no globals from the sphinx-thebe page glue
-// are required (its initThebe()/modifyDOMForThebe() are coupled to the
-// launch button and delete baked outputs), and the config tag is parsed
-// leniently — so the layer still works on a page built with UPSTREAM
-// sphinx-thebe instead of the TeachBooks fork (see readThebeConfig).
+// Also swaps <audio> outputs (baked or live) for the book's audio-chip card.
+// Self-contained on purpose: no globals from the sphinx-thebe page glue, and
+// the config tag is parsed leniently (see readThebeConfig), so the layer
+// survives a page built with upstream sphinx-thebe instead of the fork.
 (function () {
   "use strict";
 
-  // Same contract as the fork's loadScriptAsync, owned here so the layer
-  // doesn't depend on which sphinx-thebe build emitted the page.
+  // Owned here so the layer doesn't depend on the fork's loadScriptAsync.
   function loadScript(src) {
     return new Promise(function (resolve, reject) {
       var s = document.createElement("script");
@@ -56,9 +32,8 @@
   var SEL_INPUT = typeof thebe_selector_input !== "undefined" ? thebe_selector_input : "pre";
   var SEL_OUTPUT = typeof thebe_selector_output !== "undefined" ? thebe_selector_output : ".output, .cell_output";
 
-  // Current thebe stack (thebe-lite 0.5.0 / thebe 0.9.3), self-hosted under
-  // vendor/thebe-dist by `make vendor-thebe` — the kernel web worker must
-  // be same-origin, so a CDN copy cannot be used.
+  // thebe-lite 0.5.0 / thebe 0.9.3, self-hosted under vendor/thebe-dist
+  // (`make vendor-thebe`) — the kernel web worker must be same-origin.
 
   var thebeConfig = null; // parsed + patched text/x-thebe-config
   var mountPromise = null; // single-flight: editors mounted into the DOM
@@ -79,17 +54,12 @@
   function init() {
     var cells = codeCells();
     if (!cells.length) return; // prose page: do nothing, load nothing
-    // The rocket launcher is redundant once cells self-activate, and the
-    // fork's initThebe() path (which it triggers) breaks our kept outputs.
-    var rocket = document.querySelector(".dropdown-launch-buttons");
-    if (rocket) rocket.remove();
     cells.forEach(addChip);
     beautifyOutputs(document); // baked audio outputs -> book audio chips
     watchDynamicAudio(); // catch the recorder's player (added on click) too
     watchRecordButtons(); // turn pq.record()'s button into a ring + countdown
-    // Editors normally exist before a student can reach them; this covers a
-    // click in the brief window before the idle mount finishes (the static
-    // pre is gone once the editor mounts, so these listeners die with it).
+    // Covers a click in the brief window before the idle mount finishes
+    // (these listeners die with the static pre they're attached to).
     cells.forEach(function (cell) {
       var pre = cell.querySelector(".cell_input " + SEL_INPUT);
       if (!pre) return;
@@ -98,9 +68,8 @@
         ensureMounted().then(focusPending).catch(function () {});
       });
     });
-    // Mount as soon as the page settles. A mount failure leaves the static
-    // page fully intact, so it only reports to the console — the status
-    // pill appears solely for things a student explicitly asked for.
+    // Mount once the page settles. A mount failure leaves the static page
+    // intact, so it only reports to the console.
     var kick = function () {
       ensureMounted().then(schedulePrewarm).catch(function () {});
     };
@@ -117,9 +86,8 @@
   }
 
   // Real, runnable cells only: skip the extension's hidden init cell and
-  // anything tagged as not executable. Before the mount a cell holds a
-  // static `pre`; after thebe mounts, that pre is replaced by an editor
-  // carrying data-thebe-id — accept either form.
+  // anything tagged non-executable. A cell holds a static `pre` before the
+  // mount and a data-thebe-id editor after — accept either form.
   function codeCells() {
     return Array.prototype.slice
       .call(document.querySelectorAll(SEL_CELL))
@@ -157,10 +125,8 @@
   }
 
   // ----- per-cell execution state + timing (VSCode-notebook style) --------
-  // A cell the student runs gets a colored left bar — amber while running,
-  // green on success, red on error — and a small time badge that ticks up
-  // while it runs and freezes at the final duration. A cell that has only its
-  // default (built-in) output keeps the neutral iron bar and shows no time.
+  // A run cell gets a colored left bar (amber running, green ok, red error)
+  // and a time badge that ticks up and freezes at the final duration.
 
   var cellTimers = new WeakMap(); // cell -> { start, iv }
 
@@ -198,8 +164,7 @@
     return t;
   }
 
-  // Begin timing: amber "running" bar, a ticking bottom-right badge, and a
-  // live elapsed readout in the Run chip (visible up top while it runs).
+  // Amber bar, ticking badge, and a live elapsed readout in the Run chip.
   function startTimer(cell) {
     clearTimerInterval(cell);
     setCellState(cell, "running");
@@ -223,8 +188,7 @@
     setCellState(cell, errored ? "failed" : "ran");
   }
 
-  // A run errored if its output carries a traceback (tagged by freshenOutput)
-  // or a Jupyter error mime.
+  // Errored = a traceback (tagged by freshenOutput) or a Jupyter error mime.
   function cellErrored(cell) {
     return !!cell.querySelector(
       '.cell_output .live-error, .cell_output [data-mime-type="application/vnd.jupyter.error"]'
@@ -248,8 +212,7 @@
     lastMsg = msg;
     lastKind = kind || null;
     // The background prewarm is silent — the pill appears only for things a
-    // student explicitly asked for. ensureKernel replays the latest state
-    // when the first Run flips kernelRequested.
+    // student asked for. ensureKernel replays the latest state on first Run.
     if (!kernelRequested) return;
     if (!statusEl) {
       statusEl = document.createElement("div");
@@ -294,13 +257,10 @@
   }
 
   // The text/x-thebe-config tag. The TeachBooks fork emits strict JSON, but
-  // a build that silently got UPSTREAM sphinx-thebe (same dist name AND
-  // version — see check-thebe-fork in the Makefile) emits a JS object
-  // literal with unquoted keys, which JSON.parse rejects. That exact mixup
-  // took down the first deploy, so parse leniently and then force every
-  // setting our self-hosted runtime needs: the result is byte-identical on
-  // fork-built pages and repairs upstream-built ones (which would otherwise
-  // point thebe at BINDER with a dark editor theme and no rootPath).
+  // upstream sphinx-thebe (same dist name and version — see check-thebe-fork
+  // in the Makefile) emits a JS object literal that JSON.parse rejects. So
+  // parse leniently, then force every setting our self-hosted runtime needs:
+  // a no-op on fork-built pages, a repair on upstream-built ones.
   function readThebeConfig() {
     var tag = document.querySelector('script[type="text/x-thebe-config"]');
     var config = {};
@@ -320,9 +280,8 @@
     config.requestKernel = true;
     config.kernelOptions = Object.assign({}, config.kernelOptions, { path: "/" });
     if (!config.rootPath) {
-      // The fork writes the docs root (e.g. ".."); derive it from our own
-      // script tag otherwise. Root-level pages get "." ("" would resolve
-      // subsequent "/thebe-dist/…" paths to the DOMAIN root).
+      // Derive the docs root from our own script tag. Root-level pages get
+      // "." — "" would resolve "/thebe-dist/…" against the domain root.
       var me = document.querySelector('script[src*="live-cells.js"]');
       var prefix = me ? me.getAttribute("src").replace(/_static\/live-cells\.js.*$/, "") : "";
       config.rootPath = prefix ? prefix.replace(/\/$/, "") : ".";
@@ -332,17 +291,15 @@
 
   async function mountEditors() {
     var config = readThebeConfig();
-    // Our chips are the single execution path (they own run-above
-    // semantics), so suppress thebe's own buttons. Restart keys in both
-    // spellings: the extension's config tag uses "mountRestartallButton",
-    // which thebe 0.9.3 ignores (it reads camel-case "All").
+    // The chips are the single execution path, so suppress thebe's own
+    // buttons. Restart keys in both spellings: the extension writes
+    // "mountRestartallButton" but thebe 0.9.3 reads camel-case "All".
     config.mountRunButton = false;
     config.mountRunAllButton = false;
     config.mountRestartButton = false;
     config.mountRestartallButton = false;
     config.mountRestartAllButton = false;
-    // Static code blocks have no gutters and the book is a light theme;
-    // keep the editors identical (upstream-built pages say theme "abcdef").
+    // Match the static code blocks: no gutters, default theme.
     config.codeMirrorConfig = Object.assign({}, config.codeMirrorConfig, {
       lineNumbers: false,
       theme: "default",
@@ -350,13 +307,11 @@
     });
     thebeConfig = config;
 
-    // The gate: bootstrap() below calls connectToJupyterLiteServer(), which
-    // requires window.thebeLite and invokes its startJupyterLiteServer right
-    // away. This stand-in satisfies the check but parks the server start on
-    // a promise that startKernel() resolves on the first Run — so the mount
-    // is free of Pyodide, the service worker, and all network weight. The
-    // real thebe-lite bundle later Object.assign()s itself over this object,
-    // which is fine: the parked call already captured the gate.
+    // The gate. bootstrap() calls window.thebeLite.startJupyterLiteServer
+    // right away; this stand-in parks that call on a promise released on the
+    // first Run, keeping the mount free of Pyodide and all network weight.
+    // The real bundle later Object.assign()s itself over this object — fine,
+    // the parked call already captured the gate.
     var gate = new Promise(function (resolve) {
       openGate = resolve;
     });
@@ -375,17 +330,15 @@
     document.body.classList.add("live-active");
 
     thebelab.on("status", function (evt, data) {
-      // The gated server emits a "launching" event at mount time, and kernel
-      // busy/idle events keep firing during normal use; only narrate while a
-      // student is actually waiting for the runtime to come up.
+      // Only narrate while a student is actually waiting for the runtime;
+      // mount-time and steady-state kernel events stay silent.
       if (!kernelRequested || activationDone) return;
       if (data.status === "ready" || data.status === "attached") return;
       status("Starting Python (" + data.status + ") — first visit downloads ~25 MB");
     });
 
-    // thebe 0.9.x renders all editors synchronously-ish inside bootstrap,
-    // then awaits the (gated) server — so the promise resolves only after
-    // the first Run opens the gate, but the editors exist right away.
+    // bootstrap renders the editors right away, then awaits the gated
+    // server — so its promise resolves only after the first Run.
     bootPromise = thebelab.bootstrap(config);
     bootPromise.catch(function (err) {
       if (kernelRequested) reportError(err);
@@ -412,9 +365,8 @@
     });
   }
 
-  // Per-editor wiring once CodeMirror exists: notebook keybindings, copy
-  // buttons, and a refresh for editors revealed by <details> (hide-input
-  // cells mount while collapsed, so CodeMirror measures them at zero width).
+  // Per-editor wiring: notebook keybindings, copy buttons, and a refresh
+  // for editors revealed by <details> (they mount collapsed, at zero width).
   function bindEditors() {
     codeCells().forEach(function (cell) {
       var el = cell.querySelector(".CodeMirror");
@@ -431,8 +383,8 @@
           "Ctrl-Enter": run,
         })
       );
-      // The theme's copy button reads the static <pre> the editor replaced;
-      // re-point it at the editor's current text (clone drops old handlers).
+      // Re-point the copy button at the editor's current text — it still
+      // reads the static <pre> the editor replaced (clone drops handlers).
       cell.querySelectorAll("button.copybtn").forEach(function (b) {
         var fresh = b.cloneNode(true);
         b.parentNode.replaceChild(fresh, b);
@@ -458,10 +410,9 @@
     });
   }
 
-  // Mark inputs executable for thebe. Baked outputs are left exactly where
-  // they are: thebe only adopts elements marked data-output, which ours
-  // never get. Each is tagged so the cell's first re-execution removes it
-  // (the live output area takes its place inside the same cell).
+  // Mark inputs executable for thebe. Baked outputs never get data-output,
+  // so thebe leaves them alone; each is tagged so the cell's first
+  // re-execution removes it.
   function prepareCells() {
     codeCells().forEach(function (cell, i) {
       if (!cell.id) cell.id = "livecell" + i;
@@ -478,13 +429,10 @@
     if (baked) baked.remove();
   }
 
-  // Thebe renders each cell's live output area INSIDE .cell_input (inside
-  // the gray code box). The static page puts outputs outside the box in a
-  // .cell_output container, so move each live area into one of those —
-  // the theme then styles live results identically to baked ones. Moving
-  // the node is safe: thebe keeps a reference to the same element. (This
-  // also covers hide-input cells, whose live output would otherwise be
-  // stuck inside the collapsed <details>.)
+  // Thebe renders live output areas INSIDE .cell_input; move each into a
+  // .cell_output container so live results are styled like baked ones (and
+  // hide-input cells' output isn't stuck inside the collapsed <details>).
+  // Moving the node is safe: thebe keeps a reference to the same element.
   function relocateLiveOutputs() {
     codeCells().forEach(function (cell) {
       var area = cell.querySelector(".cell_input .jp-OutputArea");
@@ -514,12 +462,9 @@
     return kernelPromise;
   }
 
-  // Pre-boot the kernel and install the wheels in the background once the
-  // page has gone idle: installation always completed, execution only on
-  // click — the first ▶ Run then pays just its own cells. Silent (status()
-  // is gated on kernelRequested) and free of user code (no init cells in
-  // this book). Skipped for readers who asked to save data; on failure the
-  // page simply returns to the boot-on-first-Run path.
+  // Pre-boot the kernel in the background once the page goes idle, so the
+  // first ▶ Run pays only for its own cells. Silent, runs no user code,
+  // skipped for save-data readers; on failure Run just boots normally.
   function schedulePrewarm() {
     if (navigator.connection && navigator.connection.saveData) return;
     var warm = function () {
@@ -542,18 +487,14 @@
     status("Starting Python — first visit downloads ~25 MB");
     await loadScript(thebeConfig.rootPath + "/thebe-dist/lite/thebe-lite.min.js");
 
-    // Pin the kernel's runtime stack. Pyodide 0.27.7 is the sweet spot:
-    // pyquist needs numpy>=2.0 (so >= 0.27), and the pyodide_kernel 0.4.7
-    // inside thebe-lite 0.5.0 (the newest released) crashes on >= 0.28
-    // (NoGilError / importlib API changes). 0.27 lacks the real WASM
-    // soundfile, which is why tools/soundfile_stub exists — when the
-    // thebe-lite/pyodide_kernel stack catches up to 0.28, bump this URL
-    // and delete that stub. The piplite URLs self-host the kernel wheels
-    // (vendored next to the bundle) instead of thebe-lite's unpkg
-    // defaults. This must be passed through startJupyterLiteServer's own
-    // config merge: thebe 0.9.3 never forwards a lite config, and
-    // thebe-lite overwrites the page-level litePluginSettings PageConfig
-    // unconditionally.
+    // Pin the runtime. Pyodide 0.27.7: pyquist needs numpy>=2.0 (so >=0.27)
+    // and the bundled pyodide_kernel 0.4.7 crashes on >=0.28. 0.27 has no
+    // WASM soundfile — that's why tools/soundfile_stub exists; bump this URL
+    // and delete the stub when the kernel stack reaches 0.28. The piplite
+    // URLs self-host the kernel wheels instead of thebe-lite's unpkg
+    // defaults, and must go through startJupyterLiteServer's own config
+    // merge — thebe never forwards a lite config, and thebe-lite overwrites
+    // the page-level litePluginSettings unconditionally.
     var liteSettings = {
       "@jupyterlite/pyodide-kernel-extension:kernel": {
         pyodideUrl: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js",
@@ -566,9 +507,8 @@
         ).href,
       },
     };
-    // The lite bundle just merged the real startJupyterLiteServer over our
-    // placeholder; releasing the gate hands the parked mount-time call this
-    // wrapper, which injects the pinned settings into the real start.
+    // The lite bundle just replaced our placeholder; release the gate with a
+    // wrapper that injects the pinned settings into the real start.
     var realStart = window.thebeLite.startJupyterLiteServer;
     openGate(function (cfg) {
       cfg = Object.assign({}, cfg);
@@ -593,13 +533,10 @@
     var base = new URL(config.rootPath + "/_static/wheels/", document.baseURI);
     var manifest = await (await fetch(new URL("manifest.json", base))).json();
     var lines = [
-      // Load pyquist's compiled/dist dependencies straight from the Pyodide
-      // distribution FIRST. micropip resolves bare dependency names to the
-      // newest compatible wheel across its indexes, and PyPI sometimes
-      // carries newer pure-Python wheels that need native libraries the
-      // browser doesn't have. Pre-loading pins these to the WASM builds.
-      // (soundfile is deliberately absent: not in the 0.27 distribution —
-      // the manifest's stub wheel stands in for it.)
+      // Load the compiled dependencies from the Pyodide distribution FIRST,
+      // pinning them to the WASM builds — micropip might otherwise resolve
+      // a newer PyPI wheel that needs native libraries the browser lacks.
+      // (soundfile is absent from 0.27; the manifest's stub stands in.)
       "import pyodide_js",
       "from pyodide.ffi import to_js",
       'await pyodide_js.loadPackage(to_js(["numpy", "matplotlib", "soxr", "requests", "tqdm"]))',
@@ -608,18 +545,15 @@
     manifest.forEach(function (name) {
       lines.push('await micropip.install("' + new URL(name, base).href + '")');
     });
-    // Optional features pulled from PyPI, but only when a code cell on THIS
-    // page actually uses them — so prose/plotting pages don't pay for heavy
-    // extras (e.g. anywidget, which browseraudio's recorder pulls in). Keyed
-    // on strings that appear in the page's code.
+    // Optional PyPI extras, installed only when a cell on THIS page uses
+    // them, so other pages don't pay for them. Keyed on strings in the code.
     var pageCode = Array.prototype.map
       .call(document.querySelectorAll(".cell_input"), function (e) {
         return e.textContent;
       })
       .join("\n");
     var pypiFeatures = [
-      // pq.record() / browseraudio: in-browser mic recording. record() now
-      // auto-detects the browser, so any page that records needs browseraudio.
+      // browseraudio: in-browser mic recording for pq.record().
       { pkg: "browseraudio", when: ["browseraudio", "pq.record"] },
     ];
     pypiFeatures.forEach(function (f) {
@@ -637,15 +571,11 @@
       'if not hasattr(matplotlib.RcParams, "_get"):',
       "    matplotlib.RcParams._get = dict.get"
     );
-    // The inlined chapter scripts (the {interactive} directive — see
-    // _ext/icm_interactive.py) are standalone files that locate their output
-    // folder as `Path(__file__).parent.parent / "assets"` and write WAVs there.
-    // A notebook cell has no __file__, so those scripts NameError on Run. Define
-    // one pointing under the kernel's CWD: the assets dir then mkdir()s and the
-    // soundfile stub writes WAVs into the in-memory FS harmlessly. The writes
-    // are silent by design — readers hear the chapter's audio through the page's
-    // {audio} chips (preserved from the prose), and can add pq.play(...) to hear
-    // their own edits. setdefault so a genuine __file__ (if any) always wins.
+    // The inlined chapter scripts locate their output folder via __file__,
+    // which a notebook cell doesn't have — they'd NameError on Run. Define
+    // one under the kernel's CWD so their WAV writes land harmlessly in the
+    // in-memory FS (readers hear the chapter audio through the {audio}
+    // chips). Guarded so a genuine __file__ always wins.
     lines.push(
       "import os as _os",
       'if "__file__" not in globals():',
@@ -667,10 +597,9 @@
     }
   }
 
-  // The extension injects hidden cells tagged thebe-init (e.g. its
-  // matplotlib patch) that expect to run right after the kernel is up.
-  // They are display:none and never thebe-mounted (codeCells() skips them),
-  // so run their SOURCE directly on the kernel — output is irrelevant.
+  // The extension injects hidden thebe-init cells (e.g. its matplotlib
+  // patch) that expect to run right after the kernel is up. They're never
+  // thebe-mounted, so run their source directly on the kernel.
   async function runInitCells_() {
     var initCells = document.querySelectorAll(".thebe-init, .tag_thebe-init");
     for (var i = 0; i < initCells.length; i++) {
@@ -681,8 +610,7 @@
     }
   }
 
-  // The thebe notebook cell backing a DOM cell, via the data-thebe-id the
-  // mount stamps on the editor. Null for unmounted cells.
+  // The thebe notebook cell backing a DOM cell; null for unmounted cells.
   function nbCellOf(cell) {
     var marked = cell.querySelector("[data-thebe-id]");
     if (!marked || !nbRef) return null;
@@ -694,13 +622,11 @@
 
   // ----- execution --------------------------------------------------------
 
-  // Serialize runs: clicking several chips queues them instead of
-  // interleaving kernel requests.
+  // Serialize runs: several clicked chips queue instead of interleaving.
   function enqueueRun(cell) {
     if (!leaveGuardArmed) {
       leaveGuardArmed = true;
-      // Leaving would lose kernel state the student built by RUNNING cells;
-      // the built page returns on reload, so make that an informed choice.
+      // Leaving loses the kernel state the student built by running cells.
       // Armed on the first Run, not at boot — a prewarmed kernel with
       // nothing run isn't state worth nagging about.
       window.addEventListener("beforeunload", function (e) {
@@ -718,11 +644,10 @@
       });
   }
 
-  // A split page interleaves several self-contained companion notebooks;
-  // the splitter tags each one's code cells `icm-run-group-N` (rendered as
-  // a `tag_…` class). Scope a Run's setup chain to the clicked cell's own
-  // notebook. Pages without groups (ordinary notebook pages, where every
-  // cell shares one namespace arc) keep the whole-page chain.
+  // A split page interleaves several self-contained companion notebooks,
+  // each tagged `icm-run-group-N` by the splitter. Scope a Run's setup
+  // chain to the clicked cell's group; pages without groups keep the
+  // whole-page chain.
   function runGroupOf(cell) {
     for (var i = 0; i < cell.classList.length; i++) {
       if (cell.classList[i].indexOf("tag_icm-run-group-") === 0)
@@ -768,15 +693,12 @@
     }
   }
 
-  // Post-execution polish for one cell: convert any audio the run produced
-  // into the book's chip card, tell tracebacks apart from ordinary stderr,
-  // and pulse the output rail so the fresh result is findable without
-  // being loud.
+  // Post-run polish: audio → chip cards, tracebacks tagged, and a gentle
+  // pulse on the output rail so the fresh result is findable.
   function freshenOutput(cell) {
     beautifyOutputs(cell);
-    // thebe's rendermime emits tracebacks under the stderr mime type — the
-    // same one tqdm progress bars use — so the red error treatment can't
-    // hang off the mime type alone (live-cells.css styles .live-error).
+    // thebe emits tracebacks under the same stderr mime type tqdm uses, so
+    // the red error treatment can't hang off the mime type alone.
     cell
       .querySelectorAll('[data-mime-type="application/vnd.jupyter.stderr"]')
       .forEach(function (el) {
@@ -792,14 +714,10 @@
   }
 
   // ----- output beautifier ------------------------------------------------
-  //
-  // pq.play emits IPython.display.Audio: a bare browser <audio controls>
-  // (no autoplay), which looks nothing like the book. Swap each one — baked
-  // at build time or just produced by the live kernel — for the same round
-  // play/pause chip card the {audio} directive renders (markup mirrors
-  // _ext/icm_audio.py's _chip_button; behavior shared via the wiring hook
-  // audio-chip.js exposes). The WAV header inside the data URI is parsed
-  // for a "1.00 s · 44.1 kHz · mono" caption.
+  // Swap each bare <audio> output — baked or live — for the same chip card
+  // the {audio} directive renders (markup mirrors _ext/icm_audio.py; wiring
+  // via the hook audio-chip.js exposes). The WAV header is parsed for a
+  // "1.00 s · 44.1 kHz · mono" caption.
 
   var CHIP_MARKUP =
     '<svg class="audio-chip-ring" viewBox="0 0 36 36" aria-hidden="true">' +
@@ -812,8 +730,7 @@
     '<rect x="13.5" y="5" width="3.5" height="14"></rect></g>' +
     "</svg>";
 
-  // Download icon for the audio-output card, matching the {audio} directive's
-  // control (_ext/icm_audio.py) so authored and code-produced audio look alike.
+  // Download icon matching the {audio} directive's control.
   var DOWNLOAD_MARKUP =
     '<svg class="audio-download-icon" viewBox="0 0 24 24" aria-hidden="true">' +
     '<path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5z"></path></svg>';
@@ -844,8 +761,7 @@
       body.appendChild(name);
       card.appendChild(chip);
       card.appendChild(body);
-      // Trailing download control — saves the produced clip (a data:/blob: URL,
-      // both of which honor the `download` attribute).
+      // Trailing download control (data:/blob: URLs honor `download`).
       var dl = document.createElement("a");
       dl.className = "audio-download";
       dl.href = src;
@@ -860,10 +776,9 @@
     });
   }
 
-  // The recorder's inline player is added to the DOM when the student clicks
-  // Record — after the cell finished running, so freshenOutput never sees it.
-  // Watch for any <audio> appearing in an output and give it the chip card too,
-  // so recorded and played audio look identical.
+  // The recorder's player appears only when the student clicks Record —
+  // after freshenOutput ran — so watch for late <audio> nodes and give them
+  // the chip card too.
   function watchDynamicAudio() {
     new MutationObserver(function (records) {
       for (var i = 0; i < records.length; i++) {
@@ -880,11 +795,9 @@
     }).observe(document.body, { childList: true, subtree: true });
   }
 
-  // pq.record() renders a plain ipywidgets button ("● Record 3s"). Wrap it in a
-  // card that echoes the audio-output card (live-cells.css): a round record
-  // control with a draining ring + a caption that counts the seconds down.
-  // Driven by the widget's own duration label and status text — the browseraudio
-  // widget itself stays untouched.
+  // Wrap pq.record()'s plain ipywidgets button in an audio-output-style
+  // card: a round record control with a draining ring and a countdown
+  // caption. Driven by the widget's own labels; the widget stays untouched.
   function enhanceRecordButton(origBtn) {
     if (origBtn.dataset.baRing) return; // idempotent
     var text = origBtn.textContent || "";
@@ -894,14 +807,14 @@
     var durLabel = (duration % 1 === 0 ? duration.toFixed(0) : duration.toFixed(1)) + " s";
     origBtn.dataset.baRing = "1";
 
-    // Hide the ipywidgets button + its status span and render our own card —
-    // forwarding clicks — so none of the widget's button CSS reaches our UI.
+    // Hide the widget's button + status span and render our own card,
+    // forwarding clicks.
     origBtn.style.display = "none";
     var status = origBtn.nextElementSibling;
     if (status && status.tagName === "SPAN") status.style.display = "none";
 
-    // Reuse the book's audio-chip ring (viewBox 36, r=15.9155, dasharray 100)
-    // so the control is identical in size/weight to a pq.play() output chip.
+    // Reuse the audio-chip ring geometry (viewBox 36, r=15.9155,
+    // dasharray 100) so the control matches a pq.play() output chip.
     var NS = "http://www.w3.org/2000/svg";
     function circle(cls) {
       var c = document.createElementNS(NS, "circle");
@@ -964,8 +877,8 @@
         var left = Math.max(0, duration - elapsed);
         fill.style.strokeDashoffset = String(100 * Math.min(1, elapsed / duration));
         setLabel("Recording", left.toFixed(1) + " s left");
-        // Stop when the widget reports the take is done or failed (status text),
-        // or as a safety a couple seconds past the requested duration.
+        // Stop when the widget reports done or failed, or as a safety a
+        // couple seconds past the requested duration.
         var s = status ? status.textContent : "";
         if (/error/i.test(s)) {
           stop();
@@ -995,9 +908,8 @@
     document.querySelectorAll(".jupyter-button").forEach(enhanceRecordButton);
   }
 
-  // Append a "1.00 s · 44.1 kHz · mono" caption parsed from the WAV header.
-  // pq.play uses a data: URI (parsed synchronously); the recorder's preview
-  // uses a blob: URL (fetched, so the caption fills in a moment later).
+  // Append the "1.00 s · 44.1 kHz · mono" caption. data: URIs parse
+  // synchronously; blob: URLs are fetched, so the caption fills in later.
   function setAudioMeta(body, src) {
     function append(text) {
       if (!text) return;
@@ -1024,7 +936,7 @@
     }
   }
 
-  // Parse a canonical 44-byte RIFF/WAV PCM header into the caption string.
+  // Parse a canonical 44-byte RIFF/WAV header into the caption string.
   // Any surprise -> null (no caption), never an error.
   function captionFromWavBytes(bytes) {
     if (bytes.length < 44) return null;

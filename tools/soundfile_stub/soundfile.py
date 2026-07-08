@@ -1,17 +1,11 @@
 """Browser stand-in for ``soundfile``: WAV in/out via the stdlib.
 
-pyquist touches exactly two functions (``Audio.from_file`` -> ``sf.read``,
-``Audio.write`` -> ``sf.write``). This module implements both for RIFF WAV
-(PCM 8/16/24/32) using ``wave`` + numpy, matching soundfile's conventions:
-``read`` returns float64 in [-1, 1], 1-D for mono and (frames, channels)
-otherwise; ``write`` emits 16-bit PCM. Both accept a file PATH *or* a
-file-like object (``Audio.from_url`` hands ``sf.read`` a ``BytesIO``).
-
-Anything the stand-in can't actually do raises a clear ``LibsndfileError``
-rather than failing obscurely or writing mislabeled data: compressed formats
-(mp3/flac/ogg) on read, and any non-WAV target on write. The real WASM
-soundfile (with those formats) arrives when the in-browser kernel stack
-reaches Pyodide >= 0.28 — at which point this whole stub can be deleted.
+Implements the two functions pyquist uses — ``sf.read`` and ``sf.write`` —
+for RIFF WAV (PCM 8/16/24/32) with ``wave`` + numpy, matching soundfile's
+conventions (float64 in [-1, 1] on read, 16-bit PCM on write, path or
+file-like accepted). Anything else — compressed formats on read, non-WAV on
+write — raises a clear ``LibsndfileError``. Delete this stub once the
+in-browser kernel stack reaches Pyodide >= 0.28, which ships real soundfile.
 """
 
 import os as _os
@@ -34,10 +28,8 @@ class LibsndfileError(RuntimeError):
 
 
 def _as_target(file, probe):
-    """``wave.open`` takes a path string or a file-like object. Pass file-like
-    objects (e.g. a ``BytesIO`` from ``Audio.from_url``) straight through;
-    ``str()``-ing one would turn it into a bogus filename and fail with a
-    confusing ``FileNotFoundError``."""
+    """Pass file-like objects straight to ``wave.open``; ``str()``-ing one
+    would turn it into a bogus filename."""
     return file if hasattr(file, probe) else str(file)
 
 
@@ -51,9 +43,8 @@ def read(file, dtype="float64", always_2d=False, **kwargs):
     except FileNotFoundError:
         raise LibsndfileError(f"File not found: {file!r}.") from None
     except (_wave.Error, EOFError, OSError):
-        # Not a RIFF/WAV stream — most often a compressed file (mp3/flac/ogg).
-        # `from None` drops the stdlib wave.py frames so the student sees the
-        # plain-language message, not a RIFF-header traceback.
+        # Not a WAV stream, most often a compressed file. `from None` hides
+        # the stdlib wave.py traceback behind the plain-language message.
         raise LibsndfileError(
             f"Could not read {file!r} as a WAV file — {_BROWSER_MSG}"
         ) from None
@@ -82,8 +73,8 @@ def read(file, dtype="float64", always_2d=False, **kwargs):
 
 
 def _target_format(file, format):
-    """The format soundfile would infer: an explicit ``format=`` wins,
-    otherwise the path's extension, defaulting to WAV for nameless streams."""
+    """The format soundfile would infer: explicit ``format=``, else the
+    path's extension, defaulting to WAV for nameless streams."""
     if format:
         return format.upper()
     name = None

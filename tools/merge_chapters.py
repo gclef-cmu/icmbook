@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """Combine content/ch{nn}/ section files back into {n}-{slug}/index.md chapters.
 
-This is the inverse of tools/split_chapters.py. It re-assembles the hand-edited
-per-section files in content/ back into the chapter-level layout used by the
-icm-text repo, so the diff can be PR'd up to icm-text.
+The inverse of tools/split_chapters.py, for PRing edits back up to icm-text.
+By design `split(merge(content)) == content` byte for byte; the round-trip is
+verified after writing and fails loudly if the rendered tree would change.
 
-By design, `split(merge(content)) == content` (byte for byte). The script
-verifies this round-trip after writing the merged output and fails loudly if
-the rendered tree would change.
-
-Output: icm-text-merged/{n}-{slug}/index.md (plus copied assets/code/figures).
-Use `--out DIR` to override. The default is a sibling of icm-text/ so you can
-diff it against the submodule before opening a PR upstream.
+Output goes to icm-text-merged/ (override with --out) so it can be diffed
+against the submodule before opening a PR.
 """
 from __future__ import annotations
 
@@ -25,7 +20,7 @@ from pathlib import Path
 import nbformat
 
 REPO = Path(__file__).resolve().parent.parent
-SOURCE = REPO / "icm-text"  # ground-truth prose, pinned git submodule
+SOURCE = REPO / "icm-text"  # ground-truth prose submodule
 CONTENT = REPO / "content"
 
 from split_chapters import (  # noqa: E402
@@ -36,60 +31,59 @@ from split_chapters import (  # noqa: E402
 
 INDEX_TITLE_RE = re.compile(r"^#\s+(\d+)\.\s+(.+)$")
 SECTION_TITLE_RE = re.compile(r"^#\s+\d+\.\d+\s+(.+)$")
-# Sections are NN.md, or NN.ipynb when they embed a notebook with `{interactive}`.
+# Sections are NN.md, or NN.ipynb when they embed a companion notebook.
 SECTION_FILE_RE = re.compile(r"^\d{2}\.(md|ipynb)$")
 
+# Directive kinds a section notebook's cells can come from; each such cell
+# stashes metadata[kind] = {"path": ...}. Matches split_chapters.DIRECTIVE_OPEN_RE.
+DIRECTIVE_KINDS = ("interactive", "animation")
 
-def reconstruct_interactive_md(path: Path) -> str:
-    """Rebuild the ``NN.md``-equivalent section text from an interactive notebook.
 
-    The inverse of ``split_chapters.build_interactive_notebook``: walk the cells
-    in order, emitting each section-prose Markdown cell's source verbatim and
-    rebuilding each ``{interactive}`` directive from the path stashed in the
-    metadata of the cells it expanded to, then join with blank lines. A directive
-    expands to a *run* of same-path cells — the embedded notebook's markdown +
-    code cells — so the directive is emitted once per run, collapsing that run
-    back into the single line the author wrote. This reproduces the exact string
-    the splitter parsed, keeping ``split(merge(content))`` byte-identical.
+def reconstruct_section_md(path: Path) -> str:
+    """Rebuild the ``NN.md``-equivalent section text from a section notebook.
+
+    Inverse of ``split_chapters.build_section_notebook``: prose Markdown cells
+    are emitted verbatim, and each run of cells expanded from the same
+    directive collapses back into the one directive line the author wrote,
+    reproducing the exact string the splitter parsed.
     """
     nb = nbformat.read(str(path), as_version=4)
     parts: list[str] = []
-    last_path = None  # path of the previous interactive cell, to collapse a run
+    last: tuple[str, str] | None = None  # (kind, path) of the previous embed cell
     seen_directive = False
     for c in nb.cells:
-        interactive = (c.metadata or {}).get("interactive")
-        if interactive is not None:
-            # A cell expanded from an `{interactive}` directive — markdown *or*
-            # code, for a notebook or a script. Collapse the whole run of
-            # same-path cells back into the single directive line the author wrote.
-            rel = interactive["path"]
-            if rel != last_path:
-                parts.append(f":::{{interactive}}[{rel}]\n:::")
+        meta = c.metadata or {}
+        kind = next((kd for kd in DIRECTIVE_KINDS if meta.get(kd)), None)
+        if kind is not None:
+            # The run key is the (kind, path) pair — path alone would wrongly
+            # merge an {interactive} directly followed by an {animation} over
+            # the same companion notebook.
+            rel = meta[kind]["path"]
+            if (kind, rel) != last:
+                parts.append(f":::{{{kind}}}[{rel}]\n:::")
                 seen_directive = True
-            last_path = rel
+            last = (kind, rel)
         elif c.cell_type == "markdown":
             parts.append(c.source)
-            last_path = None  # section prose ends a run
+            last = None  # section prose ends a run
         else:
-            sys.exit(f"{path}: unexpected cell in interactive section")
+            sys.exit(f"{path}: unexpected cell in section notebook")
     if not seen_directive:
-        sys.exit(f"{path}: notebook section has no {{interactive}} cell")
+        sys.exit(f"{path}: notebook section has no directive cell")
     return "\n\n".join(parts) + "\n"
 
 
 def section_source(path: Path) -> str:
     """Section text in ``NN.md`` form, rebuilding it from a notebook if needed."""
     if path.suffix == ".ipynb":
-        return reconstruct_interactive_md(path)
+        return reconstruct_section_md(path)
     return path.read_text()
 
 
 def promote_headings(text: str) -> str:
-    """Promote markdown headings by one level (# -> ##, ## -> ###, ...).
+    """Promote headings one level (# -> ##, ...), skipping fenced code blocks.
 
-    Inverse of split_chapters.demote_headings. Respects fenced code blocks so
-    `#`-comments inside ```python``` aren't touched. Headings already at
-    level 6 are left alone (can't go deeper).
+    Inverse of split_chapters.demote_headings; level-6 headings stay put.
     """
     lines = text.splitlines(keepends=True)
     out: list[str] = []
@@ -183,9 +177,8 @@ def merge_chapter(content_chapter: Path, out_root: Path) -> dict:
         if src_sub.exists():
             shutil.copytree(src_sub, out_dir / sub)
 
-    # Carry over any top-level files that live in upstream icm-text/{slug}/ but
-    # are not managed through content/ (e.g. OUTLINE, chapter-level READMEs).
-    # Without this, rsync --delete into the icm-text fork would wipe them.
+    # Carry over top-level files that live upstream but aren't managed through
+    # content/ (e.g. OUTLINE); rsync --delete would otherwise wipe them.
     upstream_chapter = SOURCE / slug
     if upstream_chapter.exists():
         managed = {"index.md", "assets", "code", "figures"}

@@ -1,4 +1,4 @@
-.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork template-interactive
+.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork template-interactive template-animation
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
@@ -6,51 +6,49 @@ PYQUIST_README     := content/pyquist/_pyquist_readme.md
 
 all: book
 
-# Split each icm-text/{n}-{slug}/index.md into per-section files under
-# content/ch{nn}/ so Jupyter Book's sidebar lists one entry per `## ` section.
-# icm-text/ is the pinned ground-truth prose submodule. Run this MANUALLY when
-# you want to pull the latest prose into content/ (bump the submodule first
-# with `git submodule update --remote icm-text` to advance the pin).
-# It also mirrors icm-text/refs.bib (the professor's ground-truth bibliography)
-# into content/references.bib, so citations resolve against the upstream entries,
-# and mirrors the icm-f26/ course-website submodule verbatim into content/course/
-# (copied, not split), regenerating the "Course Information" part of _toc.yml.
-# WARNING: it wipes content/ch*/ and content/course/ entirely, dropping any
-# local styling overrides (figure refactors, admonition wrappers, margin notes),
-# and overwrites content/references.bib. Use `git diff content/` afterwards to
-# review and re-apply your styling.
+# Pull the latest prose from the icm-text submodule into per-section files
+# under content/ch{nn}/ (bump the submodule first to advance the pin). Also
+# mirrors icm-f26/ into content/course/ and refs.bib into content/references.bib.
+# WARNING: wipes content/ch*/ and content/course/ entirely, dropping any local
+# styling overrides — review with `git diff content/` afterwards.
 split:
 	python3 tools/split_chapters.py
 
-# Inverse of split: combines content/ch{nn}/ section files back into chapter-
-# level icm-text-merged/{n}-{slug}/index.md files matching the icm-text layout,
-# for preparing a PR up to icm-text. Includes a round-trip self-check that
-# fails if the rendered site would change.
+# Inverse of split: reassembles content/ch{nn}/ into icm-text-merged/ for a
+# PR up to icm-text. Self-checks that the round-trip is byte-identical.
 merge:
 	python3 tools/merge_chapters.py
 
-# Regenerate the "Template - Interactive" page. The page in _toc.yml is the
-# GENERATED content/template-interactive/index.ipynb; its sources are main.md
-# (prose + {interactive} directives) and the notebooks/ folder next to it —
-# the same expansion `make split` performs for chapter sections. Edit the
-# sources, then re-run this. Untouched by `make split` (which only rebuilds
-# content/ch*/ and content/course/).
+# Regenerate the "Template - Interactive" page: index.ipynb is GENERATED from
+# main.md + the notebooks/ folder next to it, the same expansion `make split`
+# performs for chapters. Edit the sources, then re-run this. Untouched by
+# `make split`.
 template-interactive:
 	@python3 -c "import sys; sys.path.insert(0, 'tools'); \
 	from pathlib import Path; \
 	import nbformat; \
-	from split_chapters import build_interactive_notebook; \
+	from split_chapters import build_section_notebook; \
 	folder = Path('content/template-interactive'); \
-	nb = build_interactive_notebook((folder / 'main.md').read_text(), folder, 99, 0); \
+	nb = build_section_notebook((folder / 'main.md').read_text(), folder, 99, 0); \
 	nbformat.write(nb, str(folder / 'index.ipynb')); \
 	print('wrote', folder / 'index.ipynb')"
 
-# Mirror the Pyquist README into content/pyquist/Overview.md from the
-# pinned `pyquist/` git submodule. Runs on every `make book` so the
-# Overview reflects whatever commit the submodule is checked out at
-# (bump it with `git submodule update --remote pyquist`). The sed step
-# rewrites `examples/…` relative links to absolute GitHub URLs so they
-# resolve from the book site.
+# Regenerate the "Template - Animation" page — same model as above, with
+# manim companions in notebooks/. sec_index=1 keeps its cell ids (ch99s01…)
+# clear of template-interactive's (ch99s00…). Untouched by `make split`.
+template-animation:
+	@python3 -c "import sys; sys.path.insert(0, 'tools'); \
+	from pathlib import Path; \
+	import nbformat; \
+	from split_chapters import build_section_notebook; \
+	folder = Path('content/template-animation'); \
+	nb = build_section_notebook((folder / 'main.md').read_text(), folder, 99, 1); \
+	nbformat.write(nb, str(folder / 'index.ipynb')); \
+	print('wrote', folder / 'index.ipynb')"
+
+# Mirror the Pyquist README from the pinned submodule; runs on every
+# `make book`. The sed step rewrites `examples/…` relative links to absolute
+# GitHub URLs so they resolve from the book site.
 sync-pyquist-readme:
 	@test -f $(PYQUIST_README_SRC) || { \
 		echo "ERROR: $(PYQUIST_README_SRC) not found — is the submodule initialized?"; \
@@ -61,22 +59,15 @@ sync-pyquist-readme:
 	@sed -i.bak 's|](examples/|](https://github.com/gclef-cmu/pyquist/blob/main/examples/|g' $(PYQUIST_README)
 	@rm -f $(PYQUIST_README).bak
 
-# Fetch the pinned thebe runtime bundles the live-code layer loads (see
-# _static/live-cells.js). Self-hosted because the kernel web worker must be
-# same-origin — a CDN copy is blocked by the browser. thebe-lite 0.5.0 /
-# thebe 0.9.3 are the newest released; they embed pyodide_kernel 0.4.7,
-# which caps the runtime at Pyodide 0.27.x (it crashes on >= 0.28 — the
-# pyodideUrl pin lives in _static/live-cells.js, and tools/soundfile_stub
-# fills 0.27's missing soundfile; upgrade recipe in README "Live code").
-# The TeachBooks extension's own vendored bundle is NOT used: it ships
-# kernel 0.2.0, which hangs on `await`. Downloaded once and cached
-# (gitignored); `rm -rf vendor/thebe-dist` to force a re-fetch.
+# Fetch the pinned thebe runtime bundles for the live-code layer. Self-hosted
+# because the kernel web worker must be same-origin. This stack embeds
+# pyodide_kernel 0.4.7, which caps the runtime at Pyodide 0.27.x (the pin
+# lives in _static/live-cells.js; tools/soundfile_stub fills the gap).
+# Cached and gitignored; `rm -rf vendor/thebe-dist` to force a re-fetch.
 # IMPORTANT: lives under vendor/ (html_extra_path), NOT _static/ — Jupyter
-# Book auto-registers every .js under _static as a page script, which would
-# eagerly execute the bundle's worker-only webpack chunks on page load
-# (breaking them AND shipping ~4 MB on every page). html_extra_path copies
-# files verbatim with no registration. The service worker must be served
-# from the site root to get root scope.
+# Book registers every _static .js as a page script, which would eagerly
+# execute the bundle's worker-only chunks and ship ~4 MB on every page. The
+# service worker must sit at the site root to get root scope.
 THEBE_DIST := vendor/thebe-dist
 vendor-thebe:
 	@if [ ! -f $(THEBE_DIST)/.ok ]; then \
@@ -91,37 +82,28 @@ vendor-thebe:
 		touch $(THEBE_DIST)/.ok; \
 	fi
 
-# Build the wheels that the in-browser (thebe-lite/Pyodide) kernel installs:
-# the real pyquist wheel from the pinned submodule, plus a stub `sounddevice`
-# (see tools/sounddevice_stub/) that stands in for the PortAudio package,
-# which cannot exist in WebAssembly. Both are pure Python — any python3 with
-# pip builds them. Output is gitignored; rebuilt on every `make book` so the
-# wheel always matches the submodule pin.
+# Build the wheels the in-browser kernel installs: pyquist from the pinned
+# submodule, icm-widgets, and the browser stubs. Output is gitignored and
+# rebuilt on every `make book` so it always matches the submodule pin.
 wheels:
 	rm -rf _static/wheels
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/sounddevice_stub
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/soundfile_stub
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/icm_widgets
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./pyquist
-	@# Install-order manifest consumed by _static/live-cells.js: the stubs
-	@# (sounddevice always; soundfile until the kernel stack reaches Pyodide
-	@# 0.28) must install before pyquist so micropip treats those dependencies
-	@# as satisfied and never fetches the real packages. (browseraudio — for
-	@# pq.record_widget() — is installed lazily from PyPI by live-cells.js on
-	@# pages that record, so it is NOT built here.)
+	@# Install-order manifest for live-cells.js: the stubs must install
+	@# before pyquist so micropip treats those dependencies as satisfied and
+	@# never fetches the real packages.
 	python3 -c "import glob, json, os; \
 		ws = sorted(os.path.basename(p) for p in glob.glob('_static/wheels/*.whl')); \
 		ws.sort(key=lambda w: 0 if w.startswith(('sounddevice', 'soundfile')) else 1); \
 		open('_static/wheels/manifest.json', 'w').write(json.dumps(ws))"
 
-# The live-code page glue must come from the TeachBooks sphinx-thebe FORK,
-# but upstream ships the same dist name AND version (0.3.1). A fresh
-# `conda env create` therefore silently keeps upstream (conda's jupyter-book
-# pulls it in; pip then treats the git pin in environment.yml as already
-# satisfied) — the build still succeeds and the deployed pages crash
-# live-cells.js in the browser. Detect the fork by a file only it ships and
-# fail loudly with the fix instead. (.github/workflows/deploy-book.yml
-# force-installs the fork for the same reason.)
+# The live-code page glue needs the TeachBooks sphinx-thebe FORK, but
+# upstream ships the same dist name AND version, so a fresh env silently
+# keeps upstream — the build succeeds and the deployed pages break in the
+# browser. Detect the fork by a file only it ships and fail loudly with the
+# fix. (CI force-installs the fork for the same reason.)
 check-thebe-fork:
 	@python3 -c "import pathlib, sphinx_thebe; \
 		raise SystemExit(0 if (pathlib.Path(sphinx_thebe.__file__).parent \
@@ -131,12 +113,9 @@ check-thebe-fork:
 		exit 1; }
 
 book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe
-	@# PIP_DISABLE_PIP_VERSION_CHECK: notebook cells run `%pip install -q …`
-	@# at build time; without this, pip's "new release available" notice is
-	@# baked into the page as a visible stderr output block.
-	@# ICM_BOOK_BUILD: kernel-only preview cells (e.g. 5.2's VS Code plotly
-	@# cell) guard on this and build nothing, so their ipywidgets state is
-	@# never recorded into the page.
+	@# PIP_DISABLE_PIP_VERSION_CHECK: keeps pip's "new release" notice out of
+	@# baked %pip cell output. ICM_BOOK_BUILD: kernel-only preview cells
+	@# guard on this and build nothing.
 	PIP_DISABLE_PIP_VERSION_CHECK=1 ICM_BOOK_BUILD=1 jupyter-book build ./
 	@# Sphinx doesn't track files referenced by raw <img>/<audio> HTML tags,
 	@# so copy each chapter's assets folder into the build output ourselves.

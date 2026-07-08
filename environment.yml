@@ -24,28 +24,26 @@ dependencies:
   - sphinx-proof
   - pip:
       - sphinxcontrib-svg2pdfconverter
-      # Live code: TeachBooks fork of sphinx-thebe (same dist name/version as
-      # upstream, so it replaces the copy jupyter-book depends on). Vendors a
-      # thebe-lite bundle for in-browser Pyodide execution — no Binder. Pinned
-      # to a commit because the fork publishes no tags. CAUTION: because conda
-      # installs upstream sphinx-thebe 0.3.1 first (jupyter-book dependency),
-      # pip treats this line as already satisfied and SKIPS it — this took
-      # down a deploy once. After creating/updating the env, force it:
+      # Live code: TeachBooks fork of sphinx-thebe, pinned to a commit (the
+      # fork publishes no tags). CAUTION: conda installs upstream sphinx-thebe
+      # first (same dist name/version), so pip SKIPS this line as already
+      # satisfied. After creating/updating the env, force it:
       #   pip install --force-reinstall --no-deps "sphinx-thebe @ git+...@<pin>"
       # `make book` refuses to build with upstream (check-thebe-fork), and CI
-      # runs the force-install explicitly (.github/workflows/deploy-book.yml).
+      # runs the force-install explicitly.
       - sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0
-      # Needed by the fork's copy_over_files (not declared in its metadata,
-      # which mirrors upstream's).
+      # Needed by the fork's copy_over_files but not declared in its metadata.
       - wcmatch
-      # Pyquist: the course audio library. Needed to execute notebook pages
-      # (e.g. content/Template.ipynb) at build time, and introspected by
-      # Sphinx autodoc to generate content/pyquist/api/*.md. Installed from
-      # the pinned `pyquist/` git submodule (see .gitmodules) rather than
-      # tracking upstream main. Run `git submodule update --init` after
-      # cloning, and `git submodule update --remote pyquist` to bump it.
+      # Pyquist, the course audio library — executes notebook pages at build
+      # time and feeds autodoc. Installed from the pinned submodule; run
+      # `git submodule update --init` after cloning.
       - -e ./pyquist
-      # icm-widgets: the book's parameter-slider widget API (ParamPlayer).
-      # Needed to execute widget cells at build time; the same package is
-      # wheeled into _static/wheels by `make wheels` for the browser kernel.
+      # icm-widgets: the parameter-slider widget API; also wheeled into
+      # _static/wheels for the browser kernel.
       - -e ./tools/icm_widgets
+      # Manim + icm-anim: the {animation} directive's engine. Build-only —
+      # manim has no Pyodide build, so it's never wheeled for the browser.
+      # Encoding uses manim's bundled PyAV (no system ffmpeg); MathTex scenes
+      # need latex/dvisvgm (TeX Live locally, texlive apt in CI).
+      - manim==0.20.1
+      - -e ./tools/icm_anim

@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """Combine content/ch{nn}/ section files back into {n}-{slug}/index.md chapters.
 
-This is the inverse of tools/split_pure_md.py. It re-assembles the hand-edited
-per-section files in content/ back into the chapter-level layout used by the
-icm-text repo, so the diff can be PR'd up to icm-text.
+The inverse of tools/split_pure_md.py, for PRing edits back up to icm-text.
+By design `split(merge(content)) == content` byte for byte; the round-trip is
+verified after writing and fails loudly if the rendered tree would change.
 
-By design, `split(merge(content)) == content` (byte for byte). The script
-verifies this round-trip after writing the merged output and fails loudly if
-the rendered tree would change.
-
-Output: icm-text-merged/{n}-{slug}/index.md (plus copied assets/code/figures).
-Use `--out DIR` to override. The default is a sibling of icm-text/ so you can
-diff it against the submodule before opening a PR upstream.
+Output goes to icm-text-merged/ (override with --out) so it can be diffed
+against the submodule before opening a PR.
 """
 from __future__ import annotations
 
@@ -23,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SOURCE = REPO / "icm-text"  # ground-truth prose, pinned git submodule
+SOURCE = REPO / "icm-text"  # ground-truth prose submodule
 CONTENT = REPO / "content"
 
 from split_pure_md import (  # noqa: E402
@@ -38,11 +33,9 @@ SECTION_FILE_RE = re.compile(r"^\d{2}\.md$")
 
 
 def promote_headings(text: str) -> str:
-    """Promote markdown headings by one level (# -> ##, ## -> ###, ...).
+    """Promote headings one level (# -> ##, ...), skipping fenced code blocks.
 
-    Inverse of split_pure_md.demote_headings. Respects fenced code blocks so
-    `#`-comments inside ```python``` aren't touched. Headings already at
-    level 6 are left alone (can't go deeper).
+    Inverse of split_pure_md.demote_headings; level-6 headings stay put.
     """
     lines = text.splitlines(keepends=True)
     out: list[str] = []
@@ -136,9 +129,8 @@ def merge_chapter(content_chapter: Path, out_root: Path) -> dict:
         if src_sub.exists():
             shutil.copytree(src_sub, out_dir / sub)
 
-    # Carry over any top-level files that live in upstream icm-text/{slug}/ but
-    # are not managed through content/ (e.g. OUTLINE, chapter-level READMEs).
-    # Without this, rsync --delete into the icm-text fork would wipe them.
+    # Carry over top-level files that live upstream but aren't managed through
+    # content/ (e.g. OUTLINE); rsync --delete would otherwise wipe them.
     upstream_chapter = SOURCE / slug
     if upstream_chapter.exists():
         managed = {"index.md", "assets", "code", "figures"}

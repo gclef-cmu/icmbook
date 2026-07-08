@@ -1,13 +1,10 @@
 /* ======================================================================
-   Computer Music Principles — 15-322 / 15-622
-   Carnegie Mellon University
-
+   Computer Music Principles — 15-322 / 15-622, Carnegie Mellon University
    Theme styling layered on the Sphinx Book Theme (pydata-sphinx-theme).
 
-   Design rule: never hard-code a background or text color on shared page
-   elements. Light/dark values are defined once per theme below, so both
-   color schemes stay legible. (The previous stylesheet forced a light
-   `body` background, which broke dark mode.)
+   Rule: never hard-code a background or text color on shared page
+   elements — define light/dark values per theme below so both modes
+   stay legible.
    ====================================================================== */
 
 /* ---- Carnegie Mellon brand palette ----------------------------------- */
@@ -20,11 +17,9 @@
   --cmu-teal:       #008996;  /* CMU secondary palette — exercise accent */
   --cmu-teal-bright:#3fb6c2;  /* lightened teal, legible on dark surfaces */
 
-  /* Typography --------------------------------------------------------- */
-  /* The book's serif typeface — body text and navigation share it.      */
+  /* Typography */
   --icm-serif: "Palatino", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-  /* Sidebar/menu text — smaller than the 1rem body text. These are the  */
-  /* theme's own variables, so they size both the left and right menus.  */
+  /* Theme variables, so they size both the left and right menus. */
   --pst-sidebar-font-size: 0.85rem;
   --pst-sidebar-font-size-mobile: 0.85rem;
 }
@@ -76,11 +71,8 @@ html[data-theme="dark"] {
   font-family: var(--icm-serif);
 }
 
-/* Margin / sidenote / caption content. sphinx-book-theme sets its own
-   sans-serif font-family on `aside.margin` and `.sidebar`, and the pydata
-   theme sets its sans heading font on `figure figcaption`; both would
-   override the inherited textbook serif. Force the serif back so margin
-   asides and figure captions match the body. */
+/* The theme sets its own sans font on margin asides, sidebars, and figure
+   captions; force the serif back so they match the body. */
 .bd-article aside.margin,
 .bd-article aside.margin p,
 .bd-article aside.margin li,
@@ -116,11 +108,8 @@ html[data-theme="dark"] {
   padding-bottom: 0.2rem;
 }
 
-/* A heading whose text is inline code — e.g. the Pyquist Overview's
-   ``# `pyquist` `` title (mirrored verbatim from the upstream README) — should
-   read at heading size. The theme otherwise applies its small body-code metric,
-   shrinking the title. Keep the monospace family and code color (it IS a
-   package name), just match the heading's size and weight. */
+/* A heading whose text is inline code (e.g. `# `pyquist` `) should read at
+   heading size; the theme's small body-code metric would shrink it. */
 .bd-article h1 code,
 .bd-article h2 code,
 .bd-article h3 code,
@@ -138,11 +127,9 @@ html[data-theme="dark"] {
 
 /* ======================================================================
    Callout boxes — exercises, solutions, proofs, theorems, definitions.
-
-   The sphinx-exercise / sphinx-proof extensions ship a fixed blue accent.
-   These rules rebrand them in Carnegie colors and, crucially, give them a
-   theme-aware background so they no longer render as light boxes on a
-   dark page. `!important` is used only to win against the extension CSS.
+   Rebrand sphinx-exercise / sphinx-proof (which ship a fixed blue accent)
+   in Carnegie colors with theme-aware backgrounds. `!important` only to
+   win against the extension CSS.
    ====================================================================== */
 .proof.admonition {
   background-color: var(--icm-box-bg) !important;
@@ -152,8 +139,8 @@ html[data-theme="dark"] {
 }
 
 /* Exercises and solutions follow the standard admonition recipe (light fill
-   → mid title → dark spine) using iron gray, so they sit alongside note /
-   tip / warning rather than reading as a separate cream textbook box. */
+   → mid title → dark spine) in iron gray, so they sit alongside note/tip
+   rather than reading as a separate cream box. */
 .exercise.admonition,
 .solution.admonition {
   background-color: var(--icm-ex-bg) !important;
@@ -177,16 +164,14 @@ html[data-theme="dark"] {
   background-color: var(--pst-color-surface) !important;
 }
 
-/* Recolor the exercise title's pencil glyph (a Font Awesome icon the
-   extension renders blue) to match the teal box accent. */
+/* Recolor the exercise title's pencil glyph (rendered blue by the
+   extension) to match the box accent. */
 .exercise.admonition  > .admonition-title::after {
   color: var(--icm-accent-3) !important;
 }
 
-/* Suppress the auto-generated "Definition N" / "Exercise N" counter in
-   sphinx-proof and sphinx-exercise titles. Authors give every directive a
-   meaningful name (e.g. `{prf:definition} Waveform`), so the running number
-   adds noise without information. Titles now render as "(Waveform)" etc. */
+/* Hide the auto "Definition N" / "Exercise N" counters — every directive
+   here has a meaningful name, so the number is just noise. */
 .proof.admonition    > .admonition-title .caption-number,
 .exercise.admonition > .admonition-title .caption-number,
 .solution.admonition > .admonition-title .caption-number {
@@ -195,16 +180,9 @@ html[data-theme="dark"] {
 
 /* ----------------------------------------------------------------------
    Standard MyST admonitions (note / tip / important / warning / seealso).
-
-   Each type gets its own pastel-tinted card at a shared luminance, with
-   a slightly deeper title band and a saturated spine of the same hue.
-   The whole set reads like color-coded highlighter on the page —
-   distinct hues, but the same recipe (light fill → mid title → dark
-   spine) ties them together. Dark mode uses deep tints of the same
-   hues so each type stays recognizable against a dark page.
-
-   Per-type colors are declared as custom properties so the rules below
-   can be written once. To retint a type, change its variables.
+   One recipe — pastel fill, deeper title band, saturated spine — in a
+   distinct hue per type, with dark-mode tints of the same hues. Colors
+   are custom properties so the rules below are written once.
    ---------------------------------------------------------------------- */
 html[data-theme="light"] {
   --ad-note-bg:   #eaf0f6;  --ad-note-title:   #dde7f0;  --ad-note-spine:   #6a8aab;
@@ -251,9 +229,7 @@ html[data-theme="dark"] {
   color: var(--pst-color-text-base);
 }
 
-/* Recolor the theme's auto-injected title glyph (a Font Awesome icon
-   the theme renders in the original blue/green/orange) to match each
-   admonition's spine. */
+/* Recolor the theme's auto-injected title glyph to match each spine. */
 .admonition.note      > .admonition-title::after,
 .admonition.tip       > .admonition-title::after,
 .admonition.hint      > .admonition-title::after,
@@ -263,32 +239,31 @@ html[data-theme="dark"] {
   color: var(--ad-spine) !important;
 }
 
-/* (The old `.admonition.listen` "🔊 Listen" callout styling was removed when
-   the {audio} directive switched to the `audio-block` card — see below.) */
-
 /* ---- Code cells: subtle iron-gray spine, theme keeps the background -- */
 div.cell div.cell_input {
   border: 1px solid var(--icm-box-border);
   border-left: 0.25rem solid var(--cmu-iron);
   border-radius: 4px;
 }
+/* In dark mode myst-nb paints the input card #505050 while the code surface
+   inside is #2b2b2b — a grey ring around every block. Unify them; the
+   mounted editors' --cm-bg (live-cells.css) matches too. */
+html[data-theme="dark"] div.cell div.cell_input {
+  background-color: var(--live-code-bg);
+}
 
 /* ---- Code cell outputs --------------------------------------------------
    Everything a cell prints sits in a clean block beneath its input card,
-   introduced by a whisper-small OUTPUT tag — no heavy left rail (it clashed
-   with the input's run-state spine and stacked a "bar inside a bar" against
-   the error/warning cards). Results read as designed objects, not loose text.
-   The same rules style outputs baked at build time and live results produced
-   in the browser (live-cells.js relocates those into an identical .cell_output
-   container; it also upgrades <audio> outputs into the .audio-output chip
-   card — see the audio section below). */
+   introduced by a whisper-small OUTPUT tag. The same rules style outputs
+   baked at build time and live results (live-cells.js relocates those into
+   an identical .cell_output container). */
 div.cell div.cell_output {
-  /* !important: the TeachBooks code.css forces margin-top 0.2em on
-     .cell_output and a bordered .output.stream, both with !important. */
+  /* !important: the TeachBooks code.css forces margin-top and a bordered
+     .output.stream, both with !important. */
   margin: 0.5rem 0 1.6rem !important;
   padding: 0;
 }
-/* The OUTPUT tag, set on its own quiet header row above the results. */
+/* The OUTPUT tag, on its own quiet header row above the results. */
 div.cell div.cell_output::before {
   content: "output";
   display: block;
@@ -302,10 +277,8 @@ div.cell div.cell_output::before {
 }
 
 /* Output text keeps the input's code metrics but no box chrome of its own
-   (the theme wraps baked text outputs in a bordered .highlight box that
-   reads like a disabled input — strip it; the rail is the container now);
-   a generous-but-bounded height stops a runaway print from swallowing the
-   page (the rail scrolls instead). */
+   (the theme's bordered .highlight box would read like a disabled input);
+   a bounded height stops a runaway print from swallowing the page. */
 div.cell div.cell_output .output,
 div.cell div.cell_output .highlight {
   margin: 0 !important;
@@ -324,16 +297,15 @@ div.cell div.cell_output pre {
   overflow: auto;
 }
 
-/* Breathing room between one cell's consecutive outputs (stream + player +
-   figure…), in both the baked and the live DOM shape. */
+/* Breathing room between one cell's consecutive outputs, in both the baked
+   and the live DOM shape. */
 div.cell div.cell_output .output + .output,
 div.cell div.cell_output .jp-OutputArea-child + .jp-OutputArea-child {
   margin-top: 0.55rem !important;
 }
 
-/* Plots: block-level and capped to the rail width. Figures are saved with
-   transparent backgrounds (bauhaus.mplstyle), so they sit directly on the
-   page — no extra frame. */
+/* Plots: block-level, capped to the rail width. Figures are saved with
+   transparent backgrounds, so they sit directly on the page. */
 div.cell div.cell_output img {
   display: block;
   max-width: 100%;
@@ -341,30 +313,24 @@ div.cell div.cell_output img {
 }
 
 /* ---- matplotlib jshtml animation player -------------------------------
-   `anim.to_jshtml()` (the interactive-widget house pattern) ships its own
-   90s-looking controls: chunky default buttons, a stock range input, serif
-   radio labels. Restyle them into the book's control language — the quiet
-   white pill of the Run chip, the filled Carnegie-red round Play of the
-   audio chip, a slim red-thumbed slider — so a widget reads as a designed
-   object. Markup is matplotlib's own (button glyphs come from the theme's
-   Font Awesome); everything below overrides the <style> block each player
-   embeds. */
+   Restyle `anim.to_jshtml()`'s stock controls into the book's control
+   language: the quiet white pill, the filled Carnegie-red round Play, a
+   slim red-thumbed slider. Everything below overrides the <style> block
+   each player embeds; the markup is matplotlib's own. */
 div.cell div.cell_output .animation {
   display: block;
   width: fit-content;
   max-width: 100%;
   margin: 0.4rem auto;
 }
-/* Frames are SVG data URIs with an intrinsic size (figure inches × 72):
-   cap them at the column and scale proportionally — being vector, they
-   stay crisp at any rendered size. */
+/* Frames are SVG data URIs with an intrinsic size: cap at the column and
+   scale proportionally — vector, so they stay crisp. */
 div.cell div.cell_output .animation img {
   max-width: 100%;
   height: auto;
 }
-/* Shrink-wrap the control column to its widest row (the buttons); the
-   slider's 100% then matches the button row instead of spanning the full
-   figure width. */
+/* Shrink-wrap the control column to its widest row (the buttons) so the
+   slider matches the button row instead of the full figure width. */
 div.cell div.cell_output .anim-controls {
   width: fit-content;
   margin: 0 auto;
@@ -374,10 +340,9 @@ div.cell div.cell_output .anim-buttons button[title="Decrease speed"],
 div.cell div.cell_output .anim-buttons button[title="Increase speed"] {
   display: none;
 }
-/* Only the jshtml player's slider spans its control column (the player's
-   embedded style block sets a fixed px width that must be overridden); the
-   ParamPlayer (.icm-widget) slider is a fixed short track — keep this
-   override off it. */
+/* Only the jshtml player's slider spans its control column (its embedded
+   style block sets a fixed px width); keep this off the ParamPlayer's
+   fixed short track. */
 div.cell div.cell_output .animation .anim-slider {
   width: 100% !important;
 }
@@ -442,12 +407,9 @@ div.cell div.cell_output .anim-buttons button {
   transition: color 0.15s ease, border-color 0.15s ease,
               background 0.15s ease;
 }
-/* On a live re-run, thebe wraps the output in `.jp-RenderedHTMLCommon`, whose
-   `svg { height: auto }` (thebe.css, specificity 0,1,1) outranks Font Awesome's
-   `.svg-inline--fa { height: 1em }` (0,1,0) and balloons the player's glyph
-   icons to their intrinsic ~40px — they overflow the buttons and collide. The
-   baked output is plain `.cell_output`, so it's unaffected. Pin the glyphs back
-   to 1em so the live player matches the baked one. */
+/* On a live re-run, thebe.css's `svg { height: auto }` outranks Font
+   Awesome's `.svg-inline--fa { height: 1em }` and balloons the player's
+   glyphs to ~40px. Pin them back so the live player matches the baked one. */
 div.cell div.cell_output .anim-buttons button .svg-inline--fa {
   height: 1em;
   width: auto;
@@ -487,12 +449,10 @@ div.cell div.cell_output .anim-state input[type="radio"] {
 }
 
 /* ---- icm-widgets (ParamPlayer) -----------------------------------------
-   The parameter-slider widgets built by tools/icm_widgets; the mount
-   script is embedded in each widget's own HTML. Controls share the jshtml
-   player's design language above; these rules restate the essentials
-   scoped to .icm-widget so a widget looks right anywhere it lands — a
-   cell output or a `{glue}` embed in prose. Sliders are a short centered
-   cluster (fixed 200px track, right-aligned labels), not full-width. */
+   The parameter-slider widgets from tools/icm_widgets. Same control
+   language as the jshtml player above, restated scoped to .icm-widget so
+   a widget looks right anywhere it lands (cell output or {glue} embed).
+   Sliders are a short centered cluster, not full-width. */
 .icm-widget .icm-widget-row {
   display: flex;
   align-items: center;
@@ -596,15 +556,10 @@ div.cell div.cell_output .anim-state input[type="radio"] {
 
 /* ----------------------------------------------------------------------
    Collapsible code cells (`hide-input`).
-
-   A hidden cell holds a section's import/setup preamble, collapsed so the
-   reader lands on the functions that matter. The theme dresses the
-   `<details>` as an admonition (white card, blue spine, drop shadow, bold
-   "Hide code cell source" banner) — which makes the revealed code read as a
-   special box rather than an ordinary cell. Strip that chrome so, expanded,
-   it IS a regular code cell (the inner `.cell_input` keeps its standard
-   spine/border/radius, untouched) preceded by a slim toggle. The label text
-   is set in `_config.yml` (`nb_code_prompt_show` / `nb_code_prompt_hide`).
+   The theme dresses the <details> as an admonition (white card, blue
+   spine, banner). Strip that chrome so, expanded, it IS a regular code
+   cell preceded by a slim toggle. The label text is set in _config.yml
+   (nb_code_prompt_show / nb_code_prompt_hide).
    ---------------------------------------------------------------------- */
 div.cell details.hide {
   margin: 0;                    /* the enclosing .cell carries the outer margin */
@@ -615,12 +570,10 @@ div.cell details.hide {
   box-shadow: none !important;  /* was the admonition drop shadow */
 }
 
-/* The toggle: a small, muted control with its own disclosure triangle —
-   deliberately not a banner, so the eye reads the code below as the content. */
+/* The toggle: a small, muted control with its own disclosure triangle. */
 div.cell details.hide > summary {
-  /* !important: myst-nb forces `display: block` on this summary at a higher
-     specificity; without flex the ::before chevron becomes an inline box,
-     which ignores width/height and collapses to a sliver. */
+  /* !important: myst-nb forces `display: block` here; without flex the
+     ::before chevron becomes an inline box and collapses to a sliver. */
   display: flex !important;
   align-items: center;
   gap: 0.4em;
@@ -643,9 +596,8 @@ div.cell details.hide > summary::-webkit-details-marker { display: none; }
 div.cell details.hide > summary:hover {
   color: var(--pst-color-primary);
 }
-/* A clean chevron (echoing the sidebar nav's): points right when collapsed,
-   down when open. Two thin borders on a rotated box read lighter than a filled
-   triangle — which looked like a stray block. */
+/* A clean chevron (echoing the sidebar nav's): right when collapsed, down
+   when open. */
 div.cell details.hide > summary::before {
   content: "";
   flex: none;
@@ -668,11 +620,9 @@ div.cell details.hide > summary > p.admonition-title {
   color: inherit;
 }
 
-/* Collapsed, the toggle reads as a slim code block — the same tinted panel,
-   border, radius and iron left spine as a real `.cell_input` — so it stands in
-   for the cell it hides instead of floating as bare text. (Expanded, the
-   revealed `.cell_input` provides that frame and the summary is the slim toggle
-   above it.) The spine recolors with run state via live-cells.css. */
+/* Collapsed, the toggle reads as a slim code block — the same panel,
+   border, and iron spine as a real .cell_input — so it stands in for the
+   cell it hides. The spine recolors with run state via live-cells.css. */
 div.cell details.hide:not([open]) > summary {
   width: auto;
   padding: 0.45rem 0.8rem !important;
@@ -684,8 +634,8 @@ div.cell details.hide:not([open]) > summary {
 
 /* ======================================================================
    Colored-math macros (\blue{}, \red{}, ... defined in _config.yml).
-   Each color has a light-mode and a dark-mode value so highlighted terms
-   in equations stay readable against either background.
+   Each color has a light- and a dark-mode value so highlighted terms in
+   equations stay readable against either background.
    ====================================================================== */
 html[data-theme="light"] {
   --m-blue:#0271ae;   --m-red:#dc2830;     --m-orange:#f2aa00;
@@ -714,13 +664,8 @@ html[data-theme="dark"] {
 
 /* ======================================================================
    Auto-generated API reference (sphinx.ext.autodoc).
-
-   The Pyquist reference page is generated from docstrings, so every
-   function/class/method renders through Sphinx's default Python domain
-   markup. These rules give those entries the same Carnegie Red /
-   Palatino feel as the rest of the textbook, and reuse the same
-   theme-aware box variables the exercise admonitions use, so dark mode
-   stays legible.
+   Give the Pyquist reference entries the book's Carnegie Red / Palatino
+   feel, reusing the theme-aware box variables so dark mode stays legible.
    ====================================================================== */
 
 /* Each function/class/method entry: a soft card with a Carnegie Red spine. */
@@ -733,8 +678,8 @@ html[data-theme="dark"] {
   margin: 1rem 0 1.25rem;
 }
 
-/* Nested entries (methods inside a class) should not stack the card style —
-   only show a thin separator so the parent class card still reads as one. */
+/* Nested entries (methods inside a class) don't stack the card style —
+   just a thin separator, so the class card still reads as one. */
 .bd-article dl.py dl.py {
   background-color: transparent;
   border: 0;
@@ -744,9 +689,7 @@ html[data-theme="dark"] {
   margin: 0.6rem 0 0;
 }
 
-/* The signature line (def name(args) -> ret). Keep it monospace — code is
-   code — but lift the symbol name in Carnegie Red so it scans like a
-   chapter heading inside the card. */
+/* The signature line: monospace, with the symbol name lifted in red. */
 .bd-article dl.py > dt.sig,
 .bd-article dl.py > dt {
   font-family: var(--pst-font-family-monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
@@ -772,23 +715,20 @@ html[data-theme="dark"] {
   margin-right: 0.35em;
 }
 
-/* The body of an entry (description, params, returns) returns to the
-   textbook serif so prose docstrings read as part of the book. */
+/* Entry bodies return to the textbook serif. */
 .bd-article dl.py > dd {
   font-family: var(--icm-serif);
   margin-top: 0.45rem;
 }
 
-/* Don't justify autodoc paragraphs — the narrow param column looks ragged
-   when justified. Let it stay left-aligned. */
+/* Don't justify autodoc paragraphs — the narrow param column looks ragged. */
 .bd-article dl.py > dd p,
 .bd-article dl.py > dd li {
   text-align: left;
   hyphens: manual;
 }
 
-/* Parameters / Returns / Raises field list — give the field names the
-   Carnegie Red accent and a touch of weight so they pop out of the body. */
+/* Parameters / Returns / Raises field names get the red accent. */
 .bd-article dl.py dl.field-list > dt {
   color: var(--pst-color-primary);
   font-weight: 600;
@@ -810,11 +750,9 @@ html[data-theme="dark"] {
 
 /* ======================================================================
    GLOSSARY
-   The Glossary page is regrouped into A–Z sections by a build-time
-   transform (_ext/icm_glossary.py), mirroring Sphinx's back-of-book
-   `genindex`. These rules style the sticky alphabet jump bar, the big
-   letter headings, and the dictionary-style term / definition layout,
-   all in the book's Carnegie-red / Palatino house style.
+   The Glossary page is regrouped A–Z by _ext/icm_glossary.py. These rules
+   style the sticky alphabet bar, the letter headings, and the
+   dictionary-style term/definition layout.
    ====================================================================== */
 
 /* ---- A–Z jump bar: sticks just below the top header while scrolling --- */
@@ -832,8 +770,8 @@ html[data-theme="dark"] {
   z-index: 2;
 }
 
-/* Each letter is a square chip. Present letters are solid Carnegie-red
-   links; absent letters are greyed out and inert. */
+/* Each letter is a square chip: solid red links for present letters,
+   greyed-out and inert for absent ones. */
 .bd-article .glossary-nav-letter {
   display: inline-flex;
   align-items: center;
@@ -890,9 +828,8 @@ html[data-theme="dark"] .bd-article a.glossary-nav-letter {
   color: var(--pst-color-text-base);
   margin-top: 0.7rem;
 }
-/* Capitalize the headword's first letter (display only) so entries read as
-   dictionary headwords — "additive synthesis" -> "Additive synthesis" — while
-   the source term stays lowercase, keeping {vocab} prose and term ids intact. */
+/* Capitalize the headword's first letter for display only — the source
+   term stays lowercase, keeping {vocab} prose and term ids intact. */
 .bd-article dl.glossary > dt::first-letter {
   text-transform: uppercase;
 }
@@ -914,11 +851,9 @@ html[data-theme="dark"] .bd-article a.glossary-nav-letter {
   float: left !important;
 }
 
-/* Figure captions and margin notes: ragged-right, never justified. The body
-   justify rule above (`.bd-article p`) outranks both the theme's caption
-   alignment and any bare-element selector here, so these need the
-   `.bd-article` prefix to win. Captions are often a few words and margin
-   columns are narrow — justified, they stretch into gappy lines. */
+/* Captions and margin notes: ragged-right, never justified (short lines
+   stretch into gaps). The `.bd-article` prefix is needed to outrank the
+   body justify rule above. */
 .bd-article figcaption p,
 .bd-article aside.margin p,
 .bd-article aside.margin li,
@@ -930,17 +865,13 @@ html[data-theme="dark"] .bd-article a.glossary-nav-letter {
   hyphens: manual;
 }
 
-/* Captions step down from body size so they read as captions rather than a
-   continuation of the page text (same 0.9em as the audio captions below). */
+/* Captions step down from body size (same 0.9em as the audio captions). */
 .bd-article figure figcaption {
   font-size: 0.9em;
 }
 
-/* Suppress the auto-generated "Fig. N" counter Sphinx prepends to every
-   figure caption (numfig). Captions in this book stand on their own, so the
-   running number adds noise without information — only the caption text
-   remains. Same treatment as the proof/exercise titles above. (The trailing
-   space sits inside this span, so hiding it leaves no gap before the text.) */
+/* Hide the auto "Fig. N" counter (numfig) — captions here stand on their
+   own. The trailing space sits inside the span, so no gap is left. */
 figcaption .caption-number {
   display: none;
 }
@@ -948,15 +879,14 @@ figcaption .caption-number {
 /* ======================================================================
    INLINE AUDIO ({audio} role) + AUDIO-FIGURE grids
    `` {audio}`label <url>` `` renders a small round play/pause button
-   (icm_audio.py + audio-chip.js); the visible label is the surrounding text.
-   An `audio-figure` div (from an upstream `:::figure` that groups clips)
-   arranges items — optionally paired with waveform images — into a responsive
-   row whose last paragraph is the shared caption.
+   (icm_audio.py + audio-chip.js). An audio-figure div arranges clips —
+   optionally with waveforms — into a responsive row whose last paragraph
+   is the shared caption.
    ====================================================================== */
 
-/* Round play/pause button. Its circular outline is the SVG progress ring (not
-   a CSS border): a faint track + a red arc that audio-chip.js fills as the clip
-   plays, so you can see how much is left. Sits inline, centered on the text. */
+/* Round play/pause button. The circular outline is the SVG progress ring
+   (a faint track + a red arc audio-chip.js fills as the clip plays), not
+   a CSS border. Sits inline, centered on the text. */
 .audio-chip {
   position: relative;
   display: inline-flex;
@@ -1016,26 +946,24 @@ figcaption .caption-number {
 .audio-chip.is-playing .ac-pause { display: inline; }
 
 /* ----------------------------------------------------------------------
-   BLOCK AUDIO ({audio} directive) — a clean card that echoes the inline
-   play button: a larger round play/pause control beside the caption, with
-   a subtle tinted panel + red accent. (Replaces the old "🔊 Listen"
-   admonition with the native <audio controls> widget.)
+   BLOCK AUDIO ({audio} directive) — a clean card echoing the inline
+   button: a larger round play/pause control beside the caption, on a
+   subtle tinted panel with a red accent.
    ---------------------------------------------------------------------- */
 .audio-block {
   display: flex;
   align-items: center;
   gap: 0.8rem;
   margin: 1.3rem 0;
-  /* `!important` beats the theme's `.container` rule (docutils tags this div
-     `container`), which would otherwise zero the horizontal padding and jam
-     the button against the red accent. */
+  /* `!important` beats the theme's `.container` rule, which would zero the
+     horizontal padding and jam the button against the red accent. */
   padding: 0.6rem 0.95rem !important;
   background: var(--icm-box-bg);
   border-left: 3px solid var(--cmu-red);
   border-radius: 5px;
 }
-/* The larger play button for blocks. Reset the inline chip's side margins so
-   the spacing to the caption is exactly the flex `gap`, nothing more. */
+/* The larger play button for blocks. Reset the inline chip's side margins
+   so the spacing to the caption is exactly the flex `gap`. */
 .audio-chip-lg {
   width: 2.3em;
   height: 2.3em;
@@ -1053,10 +981,9 @@ figcaption .caption-number {
 .audio-block-body > :first-child { margin-top: 0; }
 .audio-block-body > :last-child { margin-bottom: 0; }
 
-/* Download control on the trailing edge of an audio card (the {audio} directive
-   and code-cell audio outputs both append one). A muted round icon link that
-   warms to the red accent on hover, echoing the play chip without competing
-   with it. The flex `gap` on .audio-block sets its spacing from the caption. */
+/* Download control on the trailing edge of an audio card: a muted round
+   icon link that warms to red on hover. The flex `gap` on .audio-block
+   sets its spacing from the caption. */
 .audio-download {
   flex: none;
   align-self: center;
@@ -1082,10 +1009,9 @@ figcaption .caption-number {
   fill: currentColor;
 }
 
-/* Audio produced BY code cells (pq.play): live-cells.js swaps the browser's
-   default <audio> widget for this compact cousin of the audio-block card —
-   same chip, same red spine, but sized to its content like a small player,
-   with a sans UI label ("Audio output · 1.00 s · 44.1 kHz · mono"). */
+/* Audio produced BY code cells (pq.play): live-cells.js swaps the default
+   <audio> widget for this compact cousin of the audio-block card, sized to
+   its content, with a sans UI label ("Audio output · 1.00 s · …"). */
 .audio-block.audio-output {
   width: fit-content;
   min-width: 14rem;
@@ -1110,16 +1036,14 @@ figcaption .caption-number {
   color: var(--icm-accent-3);
 }
 
-/* Three container variants (chosen by the split tool from the group's content):
-   `audio-figure` — each clip paired with its own waveform → centered row of
-   matched cards for a side-by-side comparison; `audio-list` — clips + text
-   labels → wider grid columns so each label sits on one line; `audio-board` —
-   several clips above ONE combined plot → buttons in a centered row, the plot
-   full-width below. In all three the last paragraph is the shared caption. */
+/* Three container variants (chosen by the split tool from the group's
+   content): `audio-figure` (clip + waveform cards side by side),
+   `audio-list` (wider columns so text labels fit one line), `audio-board`
+   (clips in a row above one combined plot). In all three the last
+   paragraph is the shared caption. */
 
-/* audio-figure: flexbox (not grid) so a 2-item figure centers cleanly instead
-   of leaving an empty grid column, while items never stretch full-width on wrap
-   (flex can grow toward filling a row but is capped by max-width). */
+/* audio-figure: flexbox (not grid) so a 2-item figure centers cleanly,
+   while wrapped items never stretch full-width. */
 .audio-figure {
   display: flex;
   flex-wrap: wrap;
@@ -1129,9 +1053,8 @@ figcaption .caption-number {
   margin: 1.5rem 0;
 }
 .audio-figure > p {
-  /* Small basis so three cards still fit one row (like the old 190px grid
-     track); grow fills the row, but max-width keeps a 2-card figure from
-     ballooning and stops a wrapped lone card from stretching full-width. */
+  /* Small basis so three cards fit one row; max-width keeps a 2-card
+     figure from ballooning or a wrapped lone card from going full-width. */
   flex: 1 1 190px;
   max-width: 300px;
   margin: 0;
@@ -1177,8 +1100,8 @@ figcaption .caption-number {
   color: var(--cmu-iron);
 }
 
-/* `audio-board`: clip buttons flow in a centered row that wraps as needed (so
-   they never orphan); the shared plot and the caption each take a full row. */
+/* audio-board: clip buttons flow in a centered row that wraps as needed;
+   the shared plot and the caption each take a full row. */
 .audio-board {
   display: flex;
   flex-wrap: wrap;
@@ -1213,12 +1136,8 @@ figcaption .caption-number {
 
 /* ======================================================================
    NAVIGATION
-   Styling for the left sidebar (page nav), right sidebar (in-page TOC),
-   prev/next bar between pages, and the page footer. They share a smaller
+   Left sidebar, right in-page TOC, prev/next bar, footer. A smaller
    serif scale so navigation reads as secondary to article content.
-   Overall sidebar font size is set on `:root` above via the theme's
-   `--pst-sidebar-font-size` variable; the rules here add hierarchy,
-   spacing, layout, and color tweaks.
    ====================================================================== */
 
 /* ---- Shared: serif typeface across every navigation surface ---------- */
@@ -1230,10 +1149,8 @@ footer.bd-footer-content {
 }
 
 /* ---- Left sidebar: layout (desktop only) ----------------------------- */
-/* Widen the column so long titles like "Synthesis and Vectorized
-   Computation" fit on a single line. The theme uses both a CSS custom
-   property and direct width/flex declarations depending on which grid
-   container is active, so all three are set. */
+/* Widen the column so long titles fit one line. The theme uses a custom
+   property or direct widths depending on the grid container, so set all. */
 @media (min-width: 960px) {
   .bd-container {
     --pst-sidebar-primary: 20rem;
@@ -1246,10 +1163,8 @@ footer.bd-footer-content {
 }
 
 /* ---- Left sidebar: part captions (section headers) ------------------- */
-/* Each _toc.yml part `caption:` renders as <p class="caption"> preceding its
-   <ul>. Style them as prominent editorial section headers — bold, uppercase,
-   letter-spaced — so the nav reads as captioned groups with the chapter links
-   sitting quietly beneath, matching the book's reference sidebar design. */
+/* Each _toc.yml part caption renders as <p class="caption">. Style them as
+   bold uppercase section headers with the links sitting quietly beneath. */
 .bd-sidebar-primary nav.bd-links p.caption {
   margin: 1.75rem 0 0.55rem;
   font-family: var(--icm-serif);
@@ -1265,61 +1180,52 @@ footer.bd-footer-content {
 }
 
 /* ---- Left sidebar: entry styling ------------------------------------- */
-/* Top-level entries (chapters, course pages, reference) sit beneath their
-   caption in a medium weight — the uppercase captions now carry the section
-   hierarchy, so the links read as a calm, evenly weighted list rather than a
-   stack of bold headers. */
+/* Top-level entries in a medium weight — the uppercase captions carry the
+   hierarchy, so the links read as a calm, even list. */
 .bd-sidebar-primary .toctree-l1 > a.reference {
   font-weight: 500;
 }
 
-/* Tighten the vertical rhythm of the nav links. The theme pads each link
-   0.25rem top+bottom; trimming it (plus the small inter-entry margin below)
-   pulls the entries closer together so a captioned group reads as one balanced
-   block instead of a loosely spaced list. Applies to nested section links too. */
+/* Tighten the vertical rhythm: trim the theme's 0.25rem link padding so a
+   captioned group reads as one block. Applies to nested links too. */
 .bd-sidebar-primary nav.bd-links li > a {
   padding-top: 0.14rem;
   padding-bottom: 0.14rem;
 }
 
-/* A hair of separation between top-level entries on top of the trimmed link
-   padding. We use `margin-bottom` on every l1 instead of `margin-top` +
-   `:first-child` reset because Jupyter Book emits one <ul> per "part" in
-   `_toc.yml` — a `:first-child` selector would silently drop the margin on
-   whichever chapter is first in its part, producing uneven gaps. */
+/* A hair of separation between top-level entries. `margin-bottom` on every
+   l1 rather than `margin-top` + `:first-child`: Jupyter Book emits one <ul>
+   per _toc.yml part, so a :first-child reset would drop the margin on
+   whichever chapter is first in its part, making uneven gaps. */
 .bd-sidebar-primary .toctree-l1 {
   margin-bottom: 0.08rem;
 }
 
-/* Sub-section links shrink so visual hierarchy matches semantic depth.
-   Sizes are absolute (rem) so levels don't compound. */
+/* Sub-section links shrink so visual hierarchy matches depth. Absolute
+   (rem) sizes so levels don't compound. */
 nav.bd-links .toctree-l2 a,
 nav.bd-links .toctree-l3 a,
 nav.bd-links .toctree-l4 a {
   font-size: 0.78rem;
 }
 
-/* Expand/collapse chevrons use the muted text color so they don't
-   compete with the entry labels for attention. */
+/* Expand/collapse chevrons in the muted color so they don't compete with
+   the labels. */
 .bd-sidebar-primary .toctree-toggle {
   color: var(--pst-color-text-muted);
 }
 
-/* The theme marks the current page with an inset left-edge bar drawn via
-   `box-shadow` (not border-left, which is why the obvious override
-   doesn't work). Keep the bar on the top-level chapter only — the active
-   sub-section is already indicated by red text + bold weight, so a
-   second bar reads as visual noise. */
+/* The theme marks the current page with an inset bar drawn via box-shadow
+   (not border-left — which is why the obvious override fails). Keep the
+   bar on the top-level chapter only; active sub-sections already show as
+   red + bold. */
 nav.bd-links li.current:not(.toctree-l1) > a {
   box-shadow: none !important;
 }
 
-/* Sidebar entries whose titles are inline code (e.g. `pyquist`) render as a
-   <code> wrapper. Keep the code chip (box + color), but the theme gives it a
-   larger code metric than the plain-text siblings, so it sits oversized. Pin
-   the size/weight to the link's so it's a code chip at the SAME scale as the
-   rest of the nav, and let its color follow the link (so the active-state red
-   shows through). */
+/* Sidebar entries whose titles are inline code (e.g. `pyquist`) keep the
+   code chip but at the same scale and color as their siblings, so the
+   active-state red shows through. */
 nav.bd-links a code,
 nav.bd-links a code .pre {
   color: inherit;
@@ -1353,21 +1259,73 @@ footer.bd-footer-content {
 }
 
 /* ======================================================================
-   HIDDEN THEME UI
-   The pydata-sphinx-theme ships a couple of UI controls we don't use.
-   Hiding them here keeps the markup clean without forking the theme.
+   HIDDEN THEME UI — theme controls the book doesn't use, hidden here
+   instead of forking the theme.
    ====================================================================== */
 
-/* The header's magnifying-glass search button is redundant — the sidebar
-   already exposes a real search input that's always visible. */
+/* The header search button is redundant — the sidebar has a real search
+   input that's always visible. */
 .search-button {
   display: none !important;
 }
 
-/* The theme switcher cycles light → dark → auto by default. The matching
-   JS in `course-nav.js` forces it to skip "auto" so the user only ever
-   toggles between sun and moon; this rule hides the third (auto) glyph
-   that would otherwise flicker during the click. */
+/* course-nav.js forces the theme switcher to skip "auto"; this hides the
+   third (auto) glyph that would otherwise flicker during the click. */
 .theme-switch-button svg.theme-switch[data-mode="auto"] {
   display: none !important;
+}
+
+/* ======================================================================
+   NARRATIVE ANIMATIONS (icm_anim / the {animation} directive)
+   theme="auto" clips are baked twice — light and dark renders as sibling
+   <video>s — and these rules show the one matching the reader's mode.
+   Fixed-look clips carry only the bare .icm-anim class and are never
+   hidden. Layout lives HERE, not inline on the element: an inline
+   `display` would outrank the two mode rules and show both renders.
+   ====================================================================== */
+.icm-anim {
+  display: block;
+  max-width: 100%;
+  margin: 0.5rem auto;
+}
+html[data-theme="dark"] .icm-anim-light {
+  display: none;
+}
+html:not([data-theme="dark"]) .icm-anim-dark {
+  display: none;
+}
+/* Dark mode wraps .text_html outputs in a light "legibility card". An
+   animation output is theme-aware by construction, so opt it out (the
+   doubled .output.text_html outranks the theme rule regardless of
+   stylesheet order). */
+html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(> .icm-anim) {
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* ======================================================================
+   SELF-STYLED OUTPUTS IN DARK MODE
+   The dark-mode light "legibility card" is right for baked-light figures
+   but wrong for outputs that carry their own design: the audio chip is
+   fully theme-aware, and the ParamPlayer / jshtml players get ONE
+   deliberate light surface below instead of a card-in-card.
+   ====================================================================== */
+html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(audio),
+html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(.audio-block),
+html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(.icm-widget),
+html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(.animation) {
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  /* The card rule also sets dark on-card ink; without the card that ink
+     would be invisible dark-on-dark. */
+  color: inherit;
+}
+html[data-theme="dark"] .icm-widget,
+html[data-theme="dark"] div.cell div.cell_output .animation {
+  background-color: #e9ebee;
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: #262626; /* the players' own light face keeps dark ink */
 }

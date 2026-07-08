@@ -1,16 +1,11 @@
-# The book's narrative-animation engine wrapper (manim -> chrome-less <video>).
+# The book's animation engine (manim -> chrome-less <video>). Build-only:
+# manim has no Pyodide build, so unlike icm_widgets this is never wheeled for
+# the browser kernel. Installed editable via environment.yml.
 #
-# Build-only, by design: manim is compiled machinery (Cairo, Pango, PyAV) with
-# no Pyodide build, so unlike icm_widgets this package is NEVER wheeled into
-# _static/wheels for the browser kernel — animation cells are watch-only.
-# Installed editable in the build environment (environment.yml) so
-# `execute_notebooks: auto` can render clips at build time.
-#
-# icm-widgets (the palette source of truth) is an intentional UNDECLARED
-# dependency: it is never published to PyPI, so declaring it here would make a
-# standalone `pip install -e tools/icm_anim` resolve the name from PyPI —
-# a failure at best, a name-squat at worst. environment.yml installs both
-# editables side by side. Never published; version is informational.
+# icm-widgets (the palette source) is deliberately NOT declared as a
+# dependency: it isn't on PyPI, so declaring it would make a standalone
+# `pip install -e tools/icm_anim` resolve a stranger's package instead.
+# environment.yml installs both editables side by side.
 
 [build-system]
 requires = ["setuptools>=64"]

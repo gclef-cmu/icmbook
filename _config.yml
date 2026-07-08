@@ -15,22 +15,14 @@ exclude_patterns: [_build, "**.ipynb_checkpoints"]
 only_build_toc_files: true
 
 #######################################################################################
-# Execution settings
-#   'auto' executes any notebook that is missing outputs. The placeholder MyST
-#   notebooks below still use a stand-in API and would fail, so they are excluded
-#   until rewritten against the real Pyquist API.
+# Execution settings ('auto' executes any notebook that is missing outputs)
 execute:
   execute_notebooks: 'auto'
   timeout: 180
-  # Run each notebook in a temp dir, not its source folder. The repo has two
-  # sibling directories named `pyquist` — the `pyquist/` submodule and the
-  # `content/pyquist/` docs — either of which, when it's the execution CWD,
-  # shadows the editable-installed `pyquist` package as an empty namespace
-  # package (setuptools' editable finder is appended after PathFinder on
-  # sys.meta_path, so CWD wins) and breaks `import pyquist` at build time.
-  # A temp CWD has no such sibling, so the install resolves. The notebooks
-  # read no files by relative path (test audio comes from the package's
-  # absolute TEST_DATA_DIR), so temp execution is safe.
+  # Run each notebook in a temp dir: the repo's `pyquist/` and
+  # `content/pyquist/` directories shadow the installed pyquist package when
+  # they're the execution CWD, breaking `import pyquist` at build time. The
+  # notebooks read no files by relative path, so temp execution is safe.
   run_in_temp: true
 
 #######################################################################################
@@ -62,10 +54,11 @@ repository:
   path_to_book: ""
   branch: main
 
-# NOTE: do not add a top-level `launch_buttons:` section here. Because we set
-# sphinx.config.html_theme_options explicitly below, that dict REPLACES the
-# theme options Jupyter Book computes (including any launch_buttons), so the
-# Live Code button must be configured inside html_theme_options directly.
+# NOTE: no launch buttons anywhere, on purpose. live-cells.js mounts editors
+# at page load, and thebe is wired solely by sphinx.config.thebe_config below;
+# a launch_buttons theme option would only draw a dead rocket menu. A
+# top-level `launch_buttons:` section would be ignored anyway —
+# sphinx.config.html_theme_options REPLACES the computed theme options.
 
 #######################################################################################
 # Advanced and power-user settings
@@ -74,24 +67,19 @@ sphinx:
     - sphinxcontrib.inkscapeconverter
     - sphinx_exercise
     - sphinx_proof
-    # Pull the Pyquist API reference straight from the installed package's
-    # docstrings. The API pages under content/pyquist/api/ use `{eval-rst}`
-    # blocks to invoke these directives, mirroring the upstream
-    # gclef-cmu/pyquist `docs/api/*.rst` layout. Whenever Pyquist's main
-    # branch updates, the next book build picks it up.
+    # Autodoc: the API pages under content/pyquist/api/ pull the Pyquist
+    # reference straight from the installed package's docstrings.
     - sphinx.ext.autodoc
     - sphinx.ext.napoleon
     - sphinx.ext.viewcode
-  # Book-specific extensions:
-  #   icm_roles    — inline roles ({vocab}, {unit}); source in _ext/icm_roles.py
-  #   icm_glossary — groups the Glossary into an A–Z index; _ext/icm_glossary.py
-  #   icm_audio    — the {audio} directive (captioned player); _ext/icm_audio.py
-  #   icm_figure   — {figure} that also takes a simple image+caption body
-  #   icm_pyquist  — the {pyquist} role: inline-code links into the Pyquist API
-  #                  reference (content/pyquist/api/); _ext/icm_pyquist.py
-  #   icm_interactive — the {interactive} directive: inline a downloadable script
-  #                  as a collapsible code block; sections that use it are split
-  #                  into live notebooks (see tools/split_chapters.py).
+  # Book-specific extensions (sources in _ext/):
+  #   icm_roles       — inline roles {vocab} and {unit}
+  #   icm_glossary    — groups the Glossary into an A–Z index
+  #   icm_audio       — the {audio} directive and role (captioned players)
+  #   icm_figure      — {figure} that also takes a simple image+caption body
+  #   icm_pyquist     — the {pyquist} role: links into the Pyquist API reference
+  #   icm_interactive — the {interactive} directive (live companion notebooks)
+  #   icm_animation   — the {animation} directive (watch-only manim clips)
   local_extensions:
     icm_roles: _ext/
     icm_glossary: _ext/
@@ -99,29 +87,22 @@ sphinx:
     icm_figure: _ext/
     icm_pyquist: _ext/
     icm_interactive: _ext/
+    icm_animation: _ext/
   config:
-    # Only auto-linkify strings that include an explicit URL scheme
-    # (e.g. https://example.com). Without this, MyST's "fuzzy" linkify
-    # mode catches things like `pyquist.web` — `.web` is a real TLD —
-    # and wraps the heading in a broken external link.
+    # Only auto-linkify explicit URLs — fuzzy mode catches things like
+    # `pyquist.web` (`.web` is a real TLD) and makes broken links.
     myst_linkify_fuzzy_links: false
 
     # ---- Collapsible code cells (myst-nb) ---------------------------------
-    # Relabel the `hide-input` toggle. Every hidden cell in the book holds a
-    # section's import/setup preamble (collapsed so the reader lands on the
-    # functions that matter), and they are all hide-input — so a fixed
-    # "setup" label is clearer than the default "Show/Hide code cell source".
-    # (custom.css strips the toggle's dropdown chrome so the revealed cell
-    # reads as an ordinary code cell.)
+    # Relabel the `hide-input` toggle: every hidden cell holds setup code, so
+    # "setup" beats the default "Show/Hide code cell source".
     nb_code_prompt_show: "Show setup"
     nb_code_prompt_hide: "Hide setup"
 
-    # Copy the standalone 404 page to the site root. GitHub Pages serves
-    # /404.html for any unknown URL.
-    # vendor/ holds the live-code runtime (make vendor-thebe): the thebe
-    # bundles must NOT live in _static (Jupyter Book auto-registers all
-    # _static *.js as page scripts, eagerly executing worker-only chunks),
-    # and service-worker.js must sit at the site root for root scope.
+    # 404.html: served by GitHub Pages for unknown URLs. vendor/ holds the
+    # live-code runtime — the thebe bundles must NOT live in _static (every
+    # _static .js is auto-registered as a page script), and the service
+    # worker must sit at the site root for root scope.
     html_extra_path: ["404.html", "vendor"]
 
     # ---- Autodoc / Napoleon -----------------------------------------------
@@ -138,23 +119,17 @@ sphinx:
     napoleon_use_rtype: true
     html_theme_options:
       use_download_button: false
-      # Keep the root landing page (content/index) out of the left sidebar:
-      # it's reachable by opening the site and via the logo/title link, so a
-      # sidebar entry for it would be redundant. The first sidebar item is then
-      # the "Course Information" caption group.
+      # Keep the landing page out of the left sidebar — it's already
+      # reachable via the logo/title link.
       home_page_in_toc: false
       default_mode: light
-      # Live code: in-browser execution via thebe + Pyodide. launch_buttons
-      # makes the TeachBooks sphinx-thebe fork (pinned in environment.yml —
-      # see README "Live code" and its fork-trap warning) emit its thebe
-      # config tag on notebook pages. The visible Live Code button itself is
-      # removed at runtime by _static/live-cells.js, which mounts editors at
-      # page load, loads the self-hosted bundles from vendor/thebe-dist, and
-      # pins the Pyodide version.
+      # `launch_buttons` is deliberately absent: it would bake a rocket menu
+      # into every notebook page that then has to be stripped at runtime
+      # (flashing on refresh, stuck on watch-only animation pages). The
+      # sphinx-thebe fork emits its config tag via thebe_config below,
+      # independent of launch buttons.
       repository_url: https://github.com/gclef-cmu/icmbook
       repository_branch: main
-      launch_buttons:
-        thebe: true
     html_sidebars:
       "**":
         - navbar-logo.html
@@ -166,22 +141,15 @@ sphinx:
       - https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js
       - course-nav.js
       - audio-chip.js
-      # Phase 2: button-free live code. Editors mount silently at page load
-      # (thebe core bundle from vendor/, idle-time), so notebook cells are
-      # editable immediately; the kernel stack (thebe-lite server, Pyodide
-      # from the CDN, wheels) loads only on the first Run, and the Pyodide/
-      # kernel version pins live inside this file. Prose pages exit
-      # immediately. Also restyles cell outputs (audio -> book chip cards).
-      # live-cells.css pairs with it (auto-included from _static).
+      # Button-free live code: editors mount at page load, the kernel stack
+      # loads on the first Run. live-cells.css pairs with it.
       - live-cells.js
     thebe_config:
       use_thebe_lite: true
-      # The TeachBooks extension copies book SOURCE files into _build/html so
-      # the kernel can read them. We publish none of them: the kernel only
-      # needs the wheels in _static/wheels (built by `make wheels`), and this
-      # keeps icm-text/, pyquist/, content sources, etc. off the public site.
-      # The dot patterns matter — `**` alone does NOT match dotfiles, which
-      # would otherwise publish .git/ onto the site.
+      # The extension would copy book SOURCE files into _build/html for the
+      # kernel; publish none of them (the kernel only needs the wheels). The
+      # dot patterns matter: `**` alone does NOT match dotfiles, which would
+      # publish .git/ onto the site.
       exclude_patterns: ["**", ".*", ".*/**"]
     # Reusable text snippets — insert with {{ name }} in any page.
     myst_substitutions:

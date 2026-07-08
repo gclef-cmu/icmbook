@@ -1,19 +1,10 @@
 """Group the glossary into A–Z sections with a clickable alphabet bar.
 
-Registered via Jupyter Book's ``local_extensions`` in ``_config.yml``. Sphinx's
-``{glossary}`` directive renders a single flat definition list; this extension
-post-processes that list (at ``doctree-resolved``) so the Glossary page reads
-like Sphinx's own back-of-book index (``genindex``):
-
-- entries are split into per-initial-letter groups, each under a big letter
-  heading with a stable anchor (``#glossary-letter-a``), and
-- a jump bar of A–Z links is prepended, with letters that have no entries
-  shown greyed-out and non-clickable.
-
-The transform only *regroups* existing definition-list items — it never edits
-their content — so every term keeps its ``term-*`` id and all ``{vocab}``
-cross-references continue to resolve. Styling lives in ``_static/custom.css``
-(see the GLOSSARY section).
+Post-processes Sphinx's flat ``{glossary}`` definition list at
+``doctree-resolved``: entries are grouped under per-letter headings and an
+A–Z jump bar is prepended (empty letters greyed out). Items are only
+regrouped, never edited, so term ids and ``{vocab}`` references still
+resolve.
 """
 from __future__ import annotations
 
@@ -58,9 +49,8 @@ def _group_one(dl: nodes.definition_list) -> None:
 
     new_nodes: list[nodes.Node] = []
 
-    # --- A–Z jump bar -----------------------------------------------------
-    # Must be a paragraph (an inline/TextElement context): the HTML writer
-    # asserts that a reference in a *block* parent wraps a single image.
+    # A–Z jump bar. Must be a paragraph: the HTML writer asserts that a
+    # reference in a block parent wraps a single image.
     nav = nodes.paragraph(classes=["glossary-nav"])
     for letter in list(ALPHABET) + ([_SYMBOL] if _SYMBOL in groups else []):
         if letter in present_set:
@@ -74,7 +64,7 @@ def _group_one(dl: nodes.definition_list) -> None:
             )
     new_nodes.append(nav)
 
-    # --- One heading + sub-list per present letter ------------------------
+    # One heading + sub-list per present letter.
     for letter in present:
         heading = nodes.rubric(
             "", letter, ids=[_anchor(letter)],

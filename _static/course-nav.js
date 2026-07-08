@@ -1,13 +1,9 @@
 (function () {
   // Suppress Sphinx's post-search highlighting + "Hide Search Matches"
-  // banner. sphinx_highlight.js reads the terms from two places on every
-  // page load: localStorage["sphinx_highlight_terms"] (written by the
-  // search page and persisting across navigations — this is why the
-  // banner appeared even when clicking a sidebar link), and the URL's
-  // ?highlight=... fallback. Clearing both synchronously here, before
-  // sphinx_highlight.js's DOMContentLoaded handler runs, makes it find
-  // no terms and skip rendering the banner. SPHINX_HIGHLIGHT_ENABLED
-  // is a `const` so it can't be toggled from another script.
+  // banner. sphinx_highlight.js reads terms from localStorage (persists
+  // across navigations) and the ?highlight= URL param; clearing both
+  // synchronously, before its DOMContentLoaded handler, makes it find
+  // nothing and skip the banner.
   try {
     window.localStorage.removeItem("sphinx_highlight_terms");
   } catch (e) { /* ignore */ }
@@ -17,9 +13,8 @@
     window.history.replaceState(null, "", url.toString());
   }
 
-  // Restrict the theme switcher to light/dark only. The pydata-sphinx-theme
-  // switcher is one button that cycles light → dark → auto; we force-skip
-  // the auto step so users only ever toggle between sun and moon.
+  // Restrict the theme switcher to light/dark only: the theme's one button
+  // cycles light → dark → auto, and we force-skip the auto step.
   function restrictThemeToggle() {
     const root = document.documentElement;
     function forceLight() {
@@ -46,19 +41,11 @@
     observer.observe(root, { attributes: true, attributeFilter: ["data-mode"] });
   }
 
-  // Rewrite sphinx-proof and sphinx-exercise titles from the default
-  // "Definition N (Waveform)" format to "Definition: Waveform". The
-  // running counter adds noise without information when every directive
-  // already has a meaningful name; the surrounding parens read like a
-  // parenthetical aside instead of a proper title.
-  //
-  // The extension renders the title as
-  //   <p class="admonition-title"><span class="caption-number">Definition 2 </span> (Waveform)</p>
-  // We extract the type word ("Definition") from caption-number and the
-  // title from the parenthesized text node, then rebuild as plain text.
-  // If a directive has no title (no parens), we keep just the type word.
-  // The caption-number span is also CSS-hidden as a no-JS fallback, so
-  // pages remain readable if this script is blocked.
+  // Rewrite sphinx-proof / sphinx-exercise titles from "Definition N
+  // (Waveform)" to "Definition: Waveform" — the counter is noise when every
+  // directive has a name. The type word comes from the caption-number span,
+  // the title from the parenthesized text; with no parens, keep just the
+  // type word. The span is also CSS-hidden as a no-JS fallback.
   function rewriteAdmonitionTitles() {
     const titles = document.querySelectorAll(
       ".proof > .admonition-title, .exercise > .admonition-title, .solution > .admonition-title"

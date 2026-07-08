@@ -1,12 +1,9 @@
-// Minimal play/pause controller for `.audio-chip` buttons (emitted by the
-// {audio} role + directive in _ext/icm_audio.py). Each chip lazily creates its
-// Audio on first click; starting one pauses any other that's playing. The
-// `is-playing` class drives the play/pause icon swap, and the `.acr-fill`
-// progress ring tracks playback position (see _static/custom.css).
-//
-// Chips created after page load (live-cells.js builds them for audio that
-// code cells produce) are wired through window.icmWireAudioChip, so every
-// chip on the page shares the same exclusive-playback state.
+// Play/pause controller for `.audio-chip` buttons (from _ext/icm_audio.py).
+// Each chip lazily creates its Audio on first click; starting one pauses any
+// other. The `is-playing` class swaps the icon and the `.acr-fill` ring
+// tracks position. Chips created after page load (by live-cells.js) are
+// wired through window.icmWireAudioChip so all chips share the same
+// exclusive-playback state.
 (function () {
   "use strict";
 
@@ -24,8 +21,8 @@
     function setRing(offset) {
       if (fill) fill.style.strokeDashoffset = String(offset);
     }
-    // Drive the ring on every animation frame (~60fps) rather than the
-    // audio `timeupdate` event (which only fires ~4×/s and looks chunky).
+    // Drive the ring per animation frame — `timeupdate` only fires ~4×/s
+    // and looks chunky.
     function loop() {
       if (audio.duration)
         setRing(100 - (audio.currentTime / audio.duration) * 100);

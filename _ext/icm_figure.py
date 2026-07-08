@@ -1,12 +1,7 @@
-"""Custom ``figure`` directive accepting the upstream simple form.
+"""``figure`` directive that also accepts the upstream simple form.
 
-Overrides the stock docutils/MyST ``figure`` so a figure can be authored as
-just an image and a caption — matching the icm-text source — while staying
-fully backward-compatible with the standard ``:::{figure} path`` + options
-form already used in chapters 0–2 and the templates.
-
-Simple form (no argument; the first body line is the image, either a plain
-Markdown image or the upstream ``:figure`` role prefix)::
+Besides the standard ``:::{figure} path`` + options form, a figure can be
+just an image line and a caption (matching the icm-text source)::
 
     :::{figure}
     ![alt text](./assets/x.png)
@@ -14,18 +9,7 @@ Markdown image or the upstream ``:figure`` role prefix)::
     The caption.
     :::
 
-Standard form (path argument + options) is untouched and keeps working::
-
-    :::{figure} ./assets/x.png
-    :width: 80%
-    :name: fig-x
-
-    The caption.
-    :::
-
-Registered via ``local_extensions`` in ``_config.yml`` (``override=True``). The
-split tool braces a simple upstream ``:::figure`` to ``:::{figure}`` only when
-its next line is an image, so grid/audio figures stay untouched.
+Registered with ``override=True``, replacing the stock figure directive.
 """
 from __future__ import annotations
 
@@ -34,8 +18,8 @@ import re
 from sphinx.application import Sphinx
 from sphinx.directives.patches import Figure  # Sphinx's Figure: adds :name:/numfig
 
-# First body line of the simple form: a Markdown image, optionally carrying the
-# upstream ``:figure`` role prefix — ``![alt](path)`` or ``:figure![alt](path)``.
+# The simple form's image line: ``![alt](path)`` or upstream's
+# ``:figure![alt](path)``.
 _IMAGE_RE = re.compile(
     r"^\s*(?::figure)?!\[(?P<alt>[^\]]*)\]\(\s*(?P<path>\S+?)\s*\)\s*$"
 )

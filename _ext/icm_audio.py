@@ -1,16 +1,7 @@
-"""Custom ``audio`` directive for the textbook.
+"""The ``{audio}`` directive and role — captioned audio players for the book.
 
-Registered via Jupyter Book's ``local_extensions`` in ``_config.yml``. Gives
-authors a clean, semantic way to embed a short audio clip with a caption,
-replacing the verbose ``{admonition} 🔊 Listen`` + ``:class: note listen`` +
-raw ``<audio>`` pattern.
-
-Authoring syntax mirrors the upstream ``icm-text`` source (the professor's
-remark-flavored ``:::audio``) so the body is identical across both renderers —
-only the fence marker differs (``:::audio`` there, ``:::{audio}`` here, which
-the split/merge tooling bridges). The first line of the body is a Markdown
-link whose target is the audio file and whose text describes the clip; any
-remaining content is the caption::
+The body's first line is a Markdown link to the clip; the rest is the
+caption::
 
     :::{audio}
     [A 440 Hz sine tone](./assets/audio-sine-440.wav)
@@ -18,12 +9,9 @@ remaining content is the caption::
     A 440 Hz sine tone, one second long.
     :::
 
-This renders the same DOM as the old hand-written callout — an
-``.admonition.note.listen`` with a "🔊 Listen" title, an ``<audio controls>``
-player, and the caption — so the existing ``listen`` CSS in
-``_static/custom.css`` styles it unchanged. The link text is preserved as the
-player's ``aria-label`` and as a download fallback for browsers without
-``<audio>`` support.
+The body matches the upstream icm-text authoring (only the fence marker
+differs; the split tooling bridges it). Also provides the inline ``{audio}``
+role and the audio-figure/list/board grid wrappers.
 """
 from __future__ import annotations
 
@@ -44,14 +32,8 @@ _ROLE_RE = re.compile(r"^(?P<label>.*?)\s*<(?P<url>[^>\s]+)>\s*$")
 
 
 class AudioDirective(Directive):
-    """``:::{audio}`` — a captioned audio clip.
-
-    Body: a Markdown link to the clip on the first non-blank line, then an
-    optional caption. Renders a clean ``audio-block`` card — a large round
-    play/pause button (the same control as the inline ``{audio}`` role) beside
-    the caption, with a download icon on the trailing edge — instead of the old
-    "🔊 Listen" admonition.
-    """
+    """``:::{audio}`` — an ``audio-block`` card: a round play/pause button
+    beside the caption, with a download icon on the trailing edge."""
 
     has_content = True
 
@@ -76,12 +58,10 @@ class AudioDirective(Directive):
 
         block = nodes.container()
         block["classes"] = ["audio-block"]
-        # The big play/pause button — same chip control as the inline role, so
-        # _static/audio-chip.js wires it and the styling stays consistent.
+        # Same chip control as the inline role; wired by _static/audio-chip.js.
         block += nodes.raw("", _chip_button(src, label, "audio-chip-lg"), format="html")
 
-        # The caption (everything after the link line) sits beside the button,
-        # parsed as Markdown so math, emphasis, and links render normally.
+        # The caption, parsed as Markdown so math and links render normally.
         body = nodes.container()
         body["classes"] = ["audio-block-body"]
         caption = content[link_index + 1 :]
@@ -92,9 +72,7 @@ class AudioDirective(Directive):
         else:
             body += nodes.inline("", label)  # fall back to the link text
         block += body
-        # Trailing download control — saves the clip file (the same href the
-        # play button streams). Sits on the card's right edge; styled by
-        # `.audio-download` in _static/custom.css.
+        # Trailing download control on the card's right edge.
         block += nodes.raw("", _download_link(src, label), format="html")
 
         return [block]
@@ -108,10 +86,9 @@ class AudioDirective(Directive):
         return error
 
 
-# A round play/pause button. The play triangle and pause bars are both present;
-# CSS shows one based on the `is-playing` class that _static/audio-chip.js
-# toggles. Shared by the inline {audio} role and the block {audio} directive
-# (the block passes ``audio-chip-lg`` for a larger button).
+# The round play/pause button, shared by the inline role and the block
+# directive (which passes ``audio-chip-lg``). CSS shows play or pause based
+# on the `is-playing` class audio-chip.js toggles.
 def _chip_button(src: str, label: str, extra_class: str = "") -> str:
     cls = "audio-chip" + (f" {extra_class}" if extra_class else "")
     label = escape(label, quote=True)
@@ -119,8 +96,8 @@ def _chip_button(src: str, label: str, extra_class: str = "") -> str:
         f'<button type="button" class="{cls}" '
         f'data-audio-src="{escape(src, quote=True)}" '
         f'aria-label="Play {label}" title="{label}">'
-        # Progress ring (the button's circular outline). r=15.9155 → circumference
-        # 100, so audio-chip.js sets `stroke-dashoffset = 100 − percent`.
+        # Progress ring: r=15.9155 gives circumference 100, so audio-chip.js
+        # sets `stroke-dashoffset = 100 - percent`.
         '<svg class="audio-chip-ring" viewBox="0 0 36 36" aria-hidden="true">'
         '<circle class="acr-track" cx="18" cy="18" r="15.9155"></circle>'
         '<circle class="acr-fill" cx="18" cy="18" r="15.9155"></circle>'
@@ -133,9 +110,8 @@ def _chip_button(src: str, label: str, extra_class: str = "") -> str:
     )
 
 
-# A download icon link for an audio card. `href` + `download` saves the clip
-# (works for file URLs as well as the data:/blob: sources code cells produce).
-# Shares the `.audio-download` styling with live-cells.js's code-output cards.
+# Download icon link; `href` + `download` also works for the data:/blob:
+# sources code cells produce.
 def _download_link(src: str, label: str) -> str:
     name = escape(label or "audio clip", quote=True)
     return (
@@ -159,18 +135,10 @@ def _label_nodes(label: str) -> list:
 
 
 class AudioRole(SphinxRole):
-    """``{audio}`label <url>``` — a compact *inline* play button + label.
+    """``{audio}`label <url>``` — a small inline play button + visible label.
 
-    The block ``{audio}`` directive above is a full "🔊 Listen" callout; this
-    inline counterpart drops a small round play/pause button mid-flow or inside
-    an ``audio-figure``/``audio-list``/``audio-board`` group, followed by the
-    **visible label** (``$…$`` in the label renders as math). So the button
-    always comes first and the label is self-contained — no separate text is
-    needed next to it. Behavior is wired by ``_static/audio-chip.js``, styling
-    by ``_static/custom.css``.
-
-    Upstream authors it as ``:audio[label](url)`` (+ a descriptive label line or
-    trailing text); the split tool folds that into ``{audio}`label <url>```.
+    Used mid-flow or inside the audio-figure/list/board grids; ``$…$`` in the
+    label renders as math. Wired by audio-chip.js.
     """
 
     def run(self):
@@ -182,25 +150,17 @@ class AudioRole(SphinxRole):
         # The aria/tooltip name is the plain label (drop `$` math delimiters).
         aria = re.sub(r"\$([^$]+)\$", r"\1", label).strip() or "audio clip"
         button = nodes.raw("", _chip_button(url, aria), format="html")
-        # A trailing download icon, so inline clips (incl. those in the
-        # audio-figure/list/board grids) can be saved like the block cards.
         download = nodes.raw("", _download_link(url, aria), format="html")
         return [button, *_label_nodes(label), download], []
 
 
 class ClassContainerDirective(Directive):
-    """A ``<div>`` carrying a fixed CSS class, with a Markdown body.
+    """A ``<div>`` with a fixed CSS class and a Markdown body.
 
-    Backs the audio-grid wrappers — ``:::{audio-figure}``, ``:::{audio-board}``,
-    ``:::{audio-list}`` — so they author with the same braced ``:::{name}`` fence
-    as every other directive instead of the brace-less ``:::name`` colon-fence
-    div. It reproduces exactly what MyST's ``colon_fence`` emitted for that
-    brace-less form: a ``container`` node flagged ``is_div`` (so the HTML writer
-    drops the generic ``container`` class) with the wrapper name appended to its
-    classes. The rendered DOM — and the ``_static/custom.css`` styling keyed on
-    it — is therefore unchanged. The body (one ``{audio}`` clip per paragraph,
-    then a shared caption paragraph) is parsed as Markdown so the inline
-    ``{audio}`` roles and images render normally.
+    Backs the audio-grid wrappers so they use the braced ``:::{name}`` fence.
+    Emits exactly what MyST's colon_fence emitted for the brace-less form (a
+    ``container`` flagged ``is_div``), so the rendered DOM and its CSS are
+    unchanged.
     """
 
     has_content = True
@@ -213,9 +173,7 @@ class ClassContainerDirective(Directive):
         return [node]
 
 
-# The audio-grid wrappers, registered as directives so authors write
-# ``:::{audio-figure}`` (etc.) with the same braced fence as every other
-# directive. The split tool emits these names too (tools/split_chapters.py).
+# The audio-grid wrapper names, registered as directives below.
 _GRID_WRAPPERS = ("audio-figure", "audio-board", "audio-list")
 
 

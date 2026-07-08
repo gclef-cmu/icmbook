@@ -1,8 +1,6 @@
-"""The ``{pyquist}`` cross-reference role.
+"""The ``{pyquist}`` role — link prose to the Pyquist API reference.
 
-Registered via Jupyter Book's ``local_extensions`` in ``_config.yml``. Provides a
-single primitive for linking prose to the Pyquist API reference using the *same*
-spelling students write in code:
+Authors write the same spelling students use in code:
 
     {pyquist}`Score`              -> pq.Score                     (top-level export)
     {pyquist}`Audio.segment`      -> pq.Audio.segment             (method of an export)
@@ -10,27 +8,10 @@ spelling students write in code:
     {pyquist}`score.Score`        -> pq.score.Score               (explicit module)
     {pyquist}`audio`              -> pq.audio                     (a submodule)
 
-Each renders as inline code (``pq.…``) hyperlinked to the matching entry on the
-API pages under ``content/pyquist/api/`` (which register py-domain targets via
-``.. automodule:: pyquist.<module>``). An unresolved symbol warns at build time,
-keeping the prose and the library in sync.
-
-Display rules, chosen so the rendered text is always copy-pasteable, valid code:
-
-- A bare name Pyquist re-exports at the top level (``Score``, ``Audio``,
-  ``play``, …) shows as ``pq.<name>`` — exactly how students reach it.
-- A bare name that lives only in a submodule (``frequency_to_pitch`` in
-  ``pyquist.helper``) shows fully qualified as ``pq.helper.<name>``, because
-  ``pq.frequency_to_pitch`` is not importable.
-- A name the author already qualified with a submodule (``audio.Audio``) is
-  shown verbatim as ``pq.audio.Audio``.
-
-The top-level export set and the symbol->submodule map are read from the
-installed ``pyquist`` package. At the book root the ``pyquist/`` submodule
-checkout shadows the editable install as an empty namespace package, so the
-top-level ``__all__`` is read from the real ``__init__.py`` on disk rather than
-the imported package object (submodules still import directly). If Pyquist cannot
-be introspected the role degrades to verbatim display plus a fuzzy link.
+Renders as inline code linked into the API pages; the displayed text is
+always importable as written (bare submodule-only names get qualified). An
+unresolved symbol warns at build time. If Pyquist can't be introspected the
+role degrades to verbatim display plus a fuzzy link.
 """
 from __future__ import annotations
 
@@ -44,9 +25,8 @@ from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxRole
 
-# Submodules documented under content/pyquist/api/ (each via `.. automodule::`).
-# A name whose leading dotted part is one of these is treated as already
-# qualified by the author.
+# Submodules documented under content/pyquist/api/; a name starting with one
+# of these is treated as already qualified by the author.
 _SUBMODULES = ("audio", "score", "device", "plot", "helper", "web")
 
 
@@ -66,9 +46,8 @@ def _index() -> tuple[frozenset[str], dict[str, object]] | tuple[None, None]:
                 pass  # an absent/optional submodule should not break the role
         if not modules:
             return None, None
-        # Read top-level __all__ from the real __init__.py: at the book root
-        # `import pyquist` yields an empty namespace package (no __all__), but a
-        # submodule's file sits next to the true source.
+        # Read __all__ from the real __init__.py on disk: at the book root the
+        # pyquist/ checkout shadows the install as an empty namespace package.
         any_mod = next(iter(modules.values()))
         init = Path(any_mod.__file__).with_name("__init__.py")
         top: set[str] = set()

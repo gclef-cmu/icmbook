@@ -5,10 +5,8 @@ on:
     branches:
       - main
   workflow_dispatch:
-  # Builds are deterministic: Pyquist is a pinned git submodule, so the book
-  # only changes when the repo does. Pull upstream Pyquist deliberately with
-  # `git submodule update --remote pyquist && git commit`, which triggers the
-  # `push` build above.
+  # Builds are deterministic: the book only changes when the repo (incl. the
+  # pinned pyquist submodule) does.
 
 permissions:
   contents: read
@@ -30,42 +28,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-        # NOTE: do NOT set `submodules: true` here. This repo has two
-        # submodules — `pyquist/` (public) and `icm-text/` (a PRIVATE fork in a
-        # different repo). The default GITHUB_TOKEN can't read the private one,
-        # so `submodules: true` would fail. The build doesn't need icm-text
-        # anyway: its prose is already split into the committed content/ch*/
-        # files. We fetch only pyquist below.
+        # NOTE: do NOT set `submodules: true` — icm-text is PRIVATE and the
+        # default GITHUB_TOKEN can't read it. The build doesn't need it (its
+        # prose is already split into content/ch*/); only pyquist is fetched
+        # below, over HTTPS so no SSH key is needed.
 
-      # The build only needs the pyquist submodule (autodoc introspects it).
-      # Override its URL to HTTPS so the public repo clones without an SSH key,
-      # and init *only* pyquist — never the private icm-text fork.
       - name: Fetch pyquist submodule (public, over HTTPS)
         run: |
           git config submodule.pyquist.url https://github.com/gclef-cmu/pyquist.git
           # --remote follows the branch in .gitmodules (currently
-          # browser-recording, so the build gets pq.record_widget()). That
-          # branch must be pushed to gclef-cmu/pyquist. Revert to a plain
-          # `--init` pin once it's merged to main.
+          # browser-recording); revert to a plain `--init` pin once merged.
           git submodule update --init --remote pyquist
 
-      # Pyquist's `device` module imports `sounddevice`, which dlopens the
-      # PortAudio C library at import time. autodoc imports every module it
-      # documents, so without this system package the build dies with
-      # `OSError: PortAudio library not found`. (Same package the upstream
-      # Pyquist README's Linux install section calls out.)
+      # autodoc imports pyquist.device, whose sounddevice dependency dlopens
+      # PortAudio at import time — without this the build dies.
       - name: Install PortAudio (system dep of sounddevice)
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
 
-      # Persist the jupyter-cache between runs so a push only executes the
-      # notebooks it changed — this is what keeps build times flat as the
-      # number of interactive-widget pages grows. jupyter-cache itself
-      # invalidates per-notebook by content hash; the cache KEY only has to
-      # bust when the execution environment changes (packages, widget
-      # library, execution config, pyquist), because stale outputs from an
-      # old environment would otherwise be served forever. The sha suffix
-      # makes every run save an updated cache; restore-keys picks the
-      # newest cache for the same environment.
+      # Manim's MathTex shells out to latex/dvisvgm ({animation} clips).
+      # Video encoding uses manim's bundled PyAV, so no ffmpeg.
+      - name: Install TeX Live (manim MathTex dep)
+        run: sudo apt-get install -y texlive texlive-latex-extra dvisvgm
+
+      # Persist the jupyter-cache so a push only executes the notebooks it
+      # changed. jupyter-cache invalidates per-notebook by content hash; the
+      # KEY busts only when the execution environment changes (stale outputs
+      # from an old environment would otherwise be served forever). The sha
+      # suffix saves an updated cache each run.
       - name: Restore notebook execution cache
         uses: actions/cache@v4
         with:
@@ -85,22 +74,17 @@ jobs:
           channel-priority: strict
           conda-remove-defaults: "true"
 
-      # conda's jupyter-book already installed UPSTREAM sphinx-thebe, and the
-      # TeachBooks fork reuses the same dist name AND version (0.3.1), so the
-      # pip section of environment.yml is silently skipped as "already
-      # satisfied". Built that way, pages carry upstream's page glue and the
-      # live-code layer crashes in the browser (JS-literal config tag instead
-      # of JSON — this broke the first live-code deploy). Force the fork in;
-      # `make book` independently refuses to build with upstream
-      # (check-thebe-fork), which would fail this job loudly instead.
+      # conda already installed upstream sphinx-thebe (same dist name AND
+      # version as the fork), so pip silently skips environment.yml's pin —
+      # and upstream-built pages break the live-code layer in the browser.
+      # Force the fork in; `make book`'s check-thebe-fork guards this too.
       - name: Force-install TeachBooks sphinx-thebe fork
         run: |
           pip install --force-reinstall --no-deps \
             "sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0"
 
-      # Confirm the autodoc-driven API pages will introspect the submodule
-      # checkout (environment.yml installs it editable as `-e ./pyquist`),
-      # not a stray copy from a wheel cache.
+      # Confirm autodoc will introspect the submodule checkout, not a stray
+      # copy from a wheel cache.
       - name: Verify Pyquist resolves to the submodule
         run: |
           python -c "import pyquist; print('pyquist at', pyquist.__path__[0])"

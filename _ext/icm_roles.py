@@ -1,28 +1,12 @@
-"""Custom inline primitives for the textbook.
+"""Custom inline primitives: ``{vocab}`` and ``{unit}``.
 
-Registered via Jupyter Book's ``local_extensions`` in ``_config.yml``. Provides
-the two book-specific primitives that have no native MyST equivalent:
+``{vocab}`term``` italicizes a term and links it to its glossary entry.
 
-- ``{vocab}`term``` — italicize a vocabulary term (CSS class ``vocab``) and add
-  it to the book's global index (genindex). Implemented as a docutils role.
-- ``{unit}`num``` / ``{unit}`num,denom``` — typeset units in a common form. One
-  argument renders a single unit (``\\text{num}``); two render a fraction
-  (``\\frac{\\text{num}}{\\text{denom}}``). The numerator and denominator may be
-  separated by a comma or a slash, so ``{unit}`cycles,second``` and
-  ``{unit}`cycles/second``` are equivalent.
-
-``{unit}`` is **not** a docutils role: it expands to *raw LaTeX* and does not
-inject math mode, so it composes with the surrounding math. Wrap it in ``$…$``
-to use it inline (``${unit}`cycles,second`$``) or drop it unwrapped into a
-``$$…$$`` block. The expansion runs as a ``source-read`` text substitution
-before MyST parses the page, skipping fenced code blocks so that ``{unit}``
-*examples* in the templates render literally. (A docutils role could not do
-this: MyST never processes roles inside ``$…$``/``$$…$$`` math, so a role could
-never be used in block latex.)
-
-Authoring note: MyST does not support the ``:role[text]`` syntax from the
-CommonMark generic-directives proposal, so ``{vocab}`` is authored as a MyST
-role: ``{vocab}`periodic```.
+``{unit}`num``` / ``{unit}`num,denom``` typesets a unit or a unit fraction
+(comma or slash both separate). It is not a docutils role — it expands to raw
+LaTeX as a ``source-read`` substitution, because MyST never processes roles
+inside ``$…$``/``$$…$$`` math. Wrap it in ``$…$`` inline or drop it into a
+math block; fenced code blocks are skipped so examples render literally.
 """
 from __future__ import annotations
 
@@ -36,12 +20,9 @@ from sphinx.util.docutils import SphinxRole
 
 
 class VocabRole(SphinxRole):
-    """``{vocab}`term``` — italicize a term and link it to its glossary entry.
+    """``{vocab}`term``` — an italic link to the term's glossary entry.
 
-    Emits a cross-reference to a ``{glossary}`` term (Sphinx's ``std:term``).
-    The glossary supplies the definition *and* the global-index entry, so the
-    term renders as an italic link to its definition. An unknown term warns at
-    build time, which keeps the glossary and prose in sync.
+    An unknown term warns at build time, keeping glossary and prose in sync.
     """
 
     def run(self):
@@ -60,11 +41,9 @@ class VocabRole(SphinxRole):
         return [refnode], []
 
 
-# ``{unit}`num``` or ``{unit}`num,denom```. Matches a single-backtick argument;
-# the lone ``{unit}`` mention (no argument) used when *documenting* the feature
-# carries no trailing argument and so is intentionally left untouched.
+# ``{unit}`…``` with an argument; a bare ``{unit}`` mention (as in docs about
+# the feature) is left untouched.
 UNIT_RE = re.compile(r"\{unit\}`([^`]+)`")
-# A line that opens or closes a fenced code block (``` or ~~~, length >= 3).
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 
 
@@ -77,13 +56,7 @@ def _unit_latex(arg: str) -> str:
 
 
 def _expand_text(text: str) -> str:
-    """Expand every ``{unit}`…``` in a block of Markdown, outside code fences.
-
-    Walks the text line by line, tracking fenced code blocks (the same way
-    ``tools/split_chapters.py`` does) so that ``{unit}`` examples shown inside
-    ```` ```markdown ```` fences are left verbatim, and rewrites every other
-    occurrence in place.
-    """
+    """Expand every ``{unit}`…``` in Markdown text, outside code fences."""
     out: list[str] = []
     fence: str | None = None
     for line in text.splitlines(keepends=True):
@@ -103,19 +76,13 @@ def _expand_text(text: str) -> str:
 
 
 def substitute_units(app: Sphinx, docname: str, source: list[str]) -> None:
-    """Expand ``{unit}`…``` to raw LaTeX in page source, outside code fences.
+    """``source-read`` handler: expand ``{unit}`…``` to raw LaTeX.
 
-    Sphinx ``source-read`` handler. Markdown pages are rewritten directly.
-
-    Notebooks need special care: ``source-read`` hands us the *raw ``.ipynb``
-    JSON*, and myst-nb decodes that JSON a second time after we run. Splicing
-    raw LaTeX into the JSON text as if it were Markdown would let that second
-    decode mangle the backslash escapes — ``\\frac`` becomes a form-feed plus
-    ``rac``, ``\\text`` becomes a tab plus ``ext`` — which surfaces as "Math
-    input error" in the browser. (The line-based fence tracking is also moot on
-    JSON, whose lines all start with ``"``.) So for a notebook we decode the
-    JSON, expand ``{unit}`` inside each Markdown cell, and re-encode, letting
-    ``json.dumps`` escape the injected LaTeX correctly.
+    Markdown pages are rewritten directly. Notebooks arrive as raw .ipynb
+    JSON that myst-nb decodes again after us — splicing LaTeX into the JSON
+    text would let that second decode mangle the backslashes (``\\frac`` →
+    form-feed + ``rac``). So decode, expand each Markdown cell, re-encode,
+    and let ``json.dumps`` escape the LaTeX correctly.
     """
     text = source[0]
     if str(app.env.doc2path(docname)).endswith(".ipynb"):

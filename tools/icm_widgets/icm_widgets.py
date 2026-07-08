@@ -1,12 +1,9 @@
 """icm_widgets — parameter sliders for the book's interactive widgets.
 
-The sanctioned way to put **sliders** on a page widget with no kernel and no
-HTML/JavaScript in the notebook cell (the widget guideline in the interactive
-template is binding: cells are pure Python against the approved libraries).
-
-An author builds a figure exactly as for the house ``FuncAnimation`` pattern —
-static axes plus dynamic artists moved by an ``update(**params)`` callback —
-and declares the parameters::
+The sanctioned way to put sliders on a page widget with no kernel and no
+HTML/JavaScript in the notebook cell. Build the figure as for the house
+``FuncAnimation`` pattern — static axes plus dynamic artists moved by an
+``update(**params)`` callback — and declare the parameters::
 
     from icm_widgets import ParamPlayer, slider, play
 
@@ -22,27 +19,13 @@ and declares the parameters::
         phase=play(0, 2 * np.pi, frames=12, period=1.0),
     )
 
-At construction time matplotlib renders every grid combination: one full
-background frame (axes, ticks, labels — the figure's static chrome) plus one
-small *transparent, marks-only* overlay frame per combination, in which only
-the ``dynamic`` artists are visible. The widget displays as self-contained
-HTML: a JSON spec of those frames plus its own small mount script — exactly
-the ``anim.to_jshtml()`` precedent — so it renders identically on the built
-book page, in VS Code's notebook view, and in vanilla Jupyter. Every pixel
-is matplotlib's; the script does no math beyond computing a frame index.
-On book pages the controls pick up the house styling from custom.css
-(``.icm-widget`` rules); elsewhere they fall back to native controls with
-the same layout.
-
-Frames are **SVG** by default (``frame_format="svg"``): vector, so the
-widget is crisp at any display density, and the base64 text gzips ~3:1 on
-the wire. Figures with raster content (imshow, spectrograms) should pass
-``frame_format="png"``. Keep the grid (product of all value counts) in the
-low hundreds — ``ParamPlayer.weight_mb`` reports the embedded size so a
-build-time assert can guard it.
-
-The same code runs in the browser kernel on Run (the wheel is installed by
-live-cells.js), so a student re-executing the cell re-renders the frames.
+Construction renders every grid combination up front: one full background
+frame plus one transparent, marks-only overlay per combination. The widget
+displays as self-contained HTML (frames + a small mount script), so it looks
+the same on the book page, in VS Code, and in vanilla Jupyter; every pixel is
+matplotlib's. Frames are SVG by default; pass ``frame_format="png"`` for
+raster content (imshow, spectrograms). Keep the grid in the low hundreds —
+``weight_mb`` reports the embedded size.
 """
 from __future__ import annotations
 
@@ -60,8 +43,8 @@ __all__ = [
     "house_style", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL",
 ]
 
-# The book's plot palette — Carnegie Mellon's colors. One source of truth so a
-# widget imports the names instead of pasting the hex codes.
+# The book's plot palette (Carnegie Mellon's colors) — import the names
+# instead of pasting hex codes.
 RED, BLUE, GOLD, IRON, TEAL, STEEL = (
     "#C41230", "#007BC0", "#FDB515", "#6D6E71", "#008F91", "#E0E0E0",
 )
@@ -70,19 +53,16 @@ RED, BLUE, GOLD, IRON, TEAL, STEEL = (
 def house_style():
     """Apply the book's house plotting style to matplotlib's rcParams.
 
-    The single source of truth every interactive widget shares (call it once in
-    the widget's style cell): a dpi that keeps the embedded player a sane size,
-    a bottom margin so x-axis labels are never cropped, mathtext (no LaTeX),
-    open spines, and the book's greys. The ``animation.*`` keys only matter for
-    ``to_jshtml()`` widgets and are harmless everywhere else, so one call covers
-    both the FuncAnimation and ParamPlayer patterns.
+    Call once in the widget's style cell. The ``animation.*`` keys only
+    matter for ``to_jshtml()`` widgets and are harmless elsewhere, so one
+    call covers both the FuncAnimation and ParamPlayer patterns.
     """
     import matplotlib.pyplot as plt
 
     plt.rcParams.update({
         "figure.dpi": 64,                # sets the embedded player's size
-        "figure.subplot.bottom": 0.18,   # reserve room so x-axis labels aren't cropped
-        "animation.html": "jshtml",      # to_jshtml widgets: vector SVG frames
+        "figure.subplot.bottom": 0.18,   # room so x-axis labels aren't cropped
+        "animation.html": "jshtml",
         "animation.frame_format": "svg",
         "animation.embed_limit": 40,     # MB; matplotlib's 20 MB default drops frames
         "text.usetex": False,            # mathtext: no LaTeX install needed
@@ -127,8 +107,7 @@ class play:
 
     One full sweep takes ``period`` seconds; if ``rate`` names another
     parameter, the sweep speed is multiplied by that parameter's current
-    value (a phasor at 2 Hz rotates twice as fast). At most one ``play``
-    dimension per widget.
+    value. At most one ``play`` dimension per widget.
     """
 
     lo: float
@@ -147,9 +126,8 @@ class ParamPlayer:
 
     ``update(**params)`` must only move the ``dynamic`` artists (set_data,
     set_text, set_color — the FuncAnimation discipline). The figure is closed
-    after rendering; the ParamPlayer object itself is the thing to display
-    (make it the cell's trailing expression, and ``glue`` it if a Markdown
-    page should re-embed it).
+    after rendering; display the ParamPlayer itself (make it the cell's
+    trailing expression, or ``glue`` it for a Markdown page).
     """
 
     def __init__(self, fig, update, *, dynamic, depends=None, frame_format="svg", **params):
@@ -166,12 +144,11 @@ class ParamPlayer:
         dynamic = list(dynamic)
         names = list(params)
 
-        # ``depends`` maps an artist to the subset of parameters it responds
-        # to. Artists with the same subset render together as one LAYER whose
-        # frame grid covers only those parameters — so a low-ink artist that
-        # follows the played dimension (a dot, a vector) can afford many more
-        # animation frames than the full product grid would allow. Artists
-        # not listed depend on every parameter (one layer, the v0.1 behavior).
+        # ``depends`` maps an artist to the parameters it responds to.
+        # Artists sharing a subset render together as one layer whose frame
+        # grid covers only those parameters, so a low-ink artist can afford
+        # many more frames than the full product grid. Unlisted artists
+        # depend on every parameter.
         depends = depends or {}
         for a, dep in depends.items():
             unknown = set(dep) - set(names)
@@ -195,21 +172,16 @@ class ParamPlayer:
 
         fig.canvas.draw()  # finalize layout before measuring/rendering
 
-        # Frames ship as SVG by default: vector, so the widget is crisp at any
-        # display density and zoom (the runtime rasterizes at devicePixelRatio),
-        # and base64 SVG text gzips ~3:1 on the wire where PNG doesn't compress
-        # at all. A figure with raster content (imshow, a spectrogram) should
-        # pass frame_format="png" — SVG would embed the raster into every frame.
+        # SVG frames stay crisp at any zoom and gzip well; raster content
+        # (imshow, spectrograms) should use PNG instead — SVG would embed the
+        # raster into every frame.
         if frame_format not in ("svg", "png"):
             raise ValueError(f'frame_format must be "svg" or "png", got {frame_format!r}')
         mime = "svg+xml" if frame_format == "svg" else "png"
 
-        # Crop every frame to a FIXED box that includes the axis labels. Saving at
-        # the raw figure bbox clips any label a short figure pushes past its bottom
-        # edge (figure.subplot.bottom is only a fraction of height, so it can't
-        # guarantee room). get_tightbbox measures the drawn content (labels
-        # included); reusing the SAME box for the background and every transparent
-        # overlay keeps the layers pixel-aligned.
+        # Crop every frame to one FIXED box that includes the axis labels
+        # (the raw figure bbox can clip labels on short figures). Reusing the
+        # same box for the background and every overlay keeps them aligned.
         save_bbox = fig.get_tightbbox()
 
         def frame(transparent):
@@ -223,9 +195,8 @@ class ParamPlayer:
             a.set_visible(False)
         background = frame(False)
 
-        # Overlays: ONLY one layer's artists at a time, on transparency. Axis
-        # chrome is switched off and every other visible artist hidden, so
-        # overlay pixels never double-draw what the background already shows.
+        # Overlays: one layer's artists at a time, on transparency, with axis
+        # chrome and everything else hidden so nothing double-draws.
         hidden = []
         for ax in fig.axes:
             ax.set_axis_off()
@@ -318,9 +289,8 @@ class ParamPlayer:
 
 
 # Layout-only fallback styling, scoped to this widget instance. The book's
-# custom.css (.icm-widget rules) layers the house branding — red slider
-# thumbs, pill play button — on top; in VS Code / vanilla Jupyter the native
-# controls show with the same layout.
+# custom.css layers the house branding on top; elsewhere the native controls
+# show with the same layout.
 _WIDGET_CSS = """\
 #%(uid)s { max-width: 100%%; margin: 0.4rem auto; }
 #%(uid)s .icm-widget-stage { position: relative; }
@@ -379,11 +349,9 @@ _WIDGET_CSS = """\
 }
 """
 
-# The mount runtime, embedded with every widget (the anim.to_jshtml()
-# precedent: self-contained output, renders anywhere). Frames are held as
-# persistent, pre-decoded Image objects and composited layer-by-layer onto a
-# canvas — one drawImage per layer per repaint, so slider drags and playback
-# run at display rate. No math beyond frame indexing ever runs client-side.
+# The mount runtime, embedded with every widget so it renders anywhere.
+# Frames are composited layer by layer onto a canvas — one drawImage per
+# layer per repaint. No math beyond frame indexing runs client-side.
 _WIDGET_JS = """\
 (function () {
   "use strict";
@@ -401,9 +369,8 @@ _WIDGET_JS = """\
   bg.alt = "";
   var canvas = document.createElement("canvas");
   var ctx = canvas.getContext("2d");
-  // The frames are SVG: back the canvas at devicePixelRatio so the browser
-  // rasterizes the vectors at the display's native density (the CSS size is
-  // set by the stylesheet). Re-size on ratio changes (zoom, monitor move).
+  // Back the canvas at devicePixelRatio so the SVG frames rasterize at the
+  // display's native density; re-size on ratio changes (zoom, monitor move).
   function pixelRatio() {
     return Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
   }
@@ -438,12 +405,10 @@ _WIDGET_JS = """\
   dims.forEach(function (d) { dimByName[d.p.name] = d; });
 
   var needsDraw = true;
-  // Frames are SVG data URIs. A small widget decodes everything up front —
-  // compositing is then pure drawImage. Past EAGER_LIMIT total frames that
-  // strategy wedges the page (thousands of live SVG documents), so a large
-  // widget materializes Image objects on demand around the playhead, keeps
-  // the last-good frame per layer so playback never flickers, and evicts
-  // FIFO. The prefetch keeps sequential playback a few frames ahead.
+  // A small widget decodes every frame up front. Past EAGER_LIMIT total
+  // frames that wedges the page (thousands of live SVG documents), so a
+  // large widget decodes frames on demand around the playhead, keeps the
+  // last-good frame per layer so playback never flickers, and evicts FIFO.
   var EAGER_LIMIT = 256;
   var LRU_MAX = 192;
   var totalFrames = spec.layers.reduce(function (s, L) {
@@ -505,10 +470,9 @@ _WIDGET_JS = """\
       var im = imageAt(lay, layerIndex(lay));
       if (im.complete && im.naturalWidth) lay.last = im;
       // A cold frame draws the previous one for a tick instead of
-      // flickering; its onload flags needsDraw and the real frame lands on
-      // the next repaint. Explicit destination size: SVG intrinsic size is
-      // in pt (inches x 72) and the backing store is devicePixelRatio-
-      // scaled — the browser rasterizes the vectors at the drawn size.
+      // flickering; its onload flags needsDraw. Destination size is
+      // explicit: SVG intrinsic size is in pt and the backing store is
+      // devicePixelRatio-scaled.
       var draw = im.complete && im.naturalWidth ? im : lay.last;
       if (draw) ctx.drawImage(draw, 0, 0, canvas.width, canvas.height);
       prefetch(lay);
@@ -579,7 +543,7 @@ _WIDGET_JS = """\
   function loop(ts) {
     if (last !== null && playing && playDim) {
       // One sweep takes `period` seconds, scaled by the rate parameter's
-      // current value (a phasor at 2 Hz rotates twice as fast).
+      // current value.
       var period = playDim.p.period / (playDim.p.rate ? valueOf(playDim.p.rate) : 1);
       head = (head + (ts - last) / 1000 / period * playDim.n) %% playDim.n;
       var idx = Math.floor(head);

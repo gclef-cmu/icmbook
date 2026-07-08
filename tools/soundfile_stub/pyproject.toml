@@ -1,15 +1,8 @@
-# Browser-only stand-in for the real `soundfile` package. Built into
-# _static/wheels/ by `make wheels` and installed in the Pyodide kernel
-# BEFORE pyquist, so micropip sees pyquist's `soundfile` dependency as
-# already satisfied. Never published to PyPI.
-#
-# Why: the live-code kernel currently runs Pyodide 0.27.x (the newest the
-# released thebe-lite/pyodide_kernel stack supports), and the Pyodide
-# distribution only ships a real WASM soundfile from 0.28. PyPI's pure
-# soundfile wheel needs a native libsndfile and dies on import in the
-# browser. This stub implements the two calls pyquist makes (sf.read /
-# sf.write) for WAV via the stdlib; other formats raise a clear error.
-# Delete this stub once the kernel stack reaches Pyodide >= 0.28.
+# Browser-only stand-in for `soundfile`, WAV-only via the stdlib. Wheeled by
+# `make wheels` and installed in the Pyodide kernel BEFORE pyquist, so
+# micropip sees the dependency as satisfied. Exists because the kernel stack
+# caps at Pyodide 0.27.x, which ships no WASM soundfile (0.28 does — delete
+# this stub when the stack gets there). Never published to PyPI.
 [build-system]
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"

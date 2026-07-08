@@ -1,8 +1,7 @@
-# Browser-only stand-in for the real `sounddevice` package. Built into
-# _static/wheels/ by `make wheels` and installed in the Pyodide kernel
-# BEFORE pyquist, so micropip sees pyquist's `sounddevice` dependency as
-# already satisfied and never pulls the real PortAudio-based package
-# (which cannot work in WebAssembly). Never published to PyPI.
+# Browser-only stand-in for `sounddevice` (PortAudio can't exist in WASM).
+# Wheeled by `make wheels` and installed in the Pyodide kernel BEFORE pyquist,
+# so micropip sees the dependency as satisfied and never pulls the real
+# package. Never published to PyPI.
 [build-system]
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"

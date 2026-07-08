@@ -1,24 +1,13 @@
 #!/usr/bin/env python3
 """Split each icm-text/{n}-{slug}/index.md into per-section files under content/ch{nn}/.
 
-Treats the `icm-text/` git submodule (the pinned ground-truth prose repo) as
-the source of truth. For each chapter folder:
-  - Parses the chapter number from the folder-name prefix (e.g. "2-foo" -> 2).
-  - Strips YAML frontmatter and pulls the chapter title from the first `# ` heading.
-  - Splits the body on `## ` headings, respecting fenced code blocks so that
-    `#`-comments inside ```python``` blocks aren't mistaken for headings.
-  - Writes content/ch{nn}/index.md containing `# {n}. {title}` plus the intro
-    paragraphs that appeared before the first `## ` section.
-  - Writes content/ch{nn}/{ii}.md for each section, demoting every heading one
-    level (## -> #, ### -> ##, ...) and prefixing the leading heading with
-    `{chapter}.{section_index}`.
-  - Copies the chapter's assets/, code/, and figures/ subdirs across so relative
-    `./assets/...` links in the source still resolve in the generated tree.
-  - Regenerates the chapter parts block of _toc.yml in place.
+Older, pure-Markdown variant of tools/split_chapters.py: same chapter
+splitting (frontmatter stripped, body split on `## ` headings outside code
+fences, headings demoted, assets copied, _toc.yml regenerated), plus a
+remark→MyST translation pass for the upstream directive/role syntax.
 
-Run via `make split`. WARNING: this wipes content/ch*/ and regenerates it from
-icm-text/, dropping any local styling overrides — review `git diff content/`
-afterward. Generated content/ch*/ directories are gitignored.
+WARNING: wipes content/ch*/, dropping any local overrides — review
+`git diff content/` afterward.
 """
 from __future__ import annotations
 
@@ -28,7 +17,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SOURCE = REPO / "icm-text"  # ground-truth prose, pinned git submodule
+SOURCE = REPO / "icm-text"  # ground-truth prose submodule
 CONTENT = REPO / "content"
 TOC = REPO / "_toc.yml"
 
@@ -36,16 +25,9 @@ CHAPTER_FOLDER_RE = re.compile(r"^(\d+)-(.+)$")
 FRONTMATTER_RE = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
-# Upstream remark-style block directives `:::name` / `:::name[arg]` → MyST
-# `:::{myst} arg`. Maps each upstream name to its MyST directive; the optional
-# `[arg]` becomes the directive's argument (e.g. the definition/example title).
-#   audio       — the book's {audio} directive (_ext/icm_audio.py)
-#   definition  — {prf:definition} (sphinx-proof)
-#   example     — {prf:example}    (sphinx-proof)
-#   aside       — {note}           (a skippable aside)
-#   tip         — {tip}
-#   exercise    — {exercise}       (sphinx-exercise)
-# `figure` is handled separately (SIMPLE_FIGURE_RE) since it carries an image.
+# Upstream remark-style `:::name` / `:::name[arg]` → the matching MyST
+# directive, with `[arg]` becoming the directive argument. `figure` is
+# handled separately (SIMPLE_FIGURE_RE) since it carries an image.
 _BLOCK_DIRECTIVE_MAP = {
     "audio": "audio",
     "definition": "prf:definition",
@@ -57,30 +39,16 @@ _BLOCK_DIRECTIVE_MAP = {
 BLOCK_DIRECTIVE_RE = re.compile(
     r"^(\s*)(:{3,})(" + "|".join(_BLOCK_DIRECTIVE_MAP) + r")(?:\[([^\]]*)\])?\s*$"
 )
-# Simple figure: a `:::figure` block whose first line is a single `:figure!`
-# image, e.g.
-#     :::figure
-#     :figure![alt text](./assets/x.png)
-#
-#     caption…
-#     :::
-# → MyST `:::{figure} ./assets/x.png` + `:alt: alt text`, keeping the caption.
-# Multi-line (matches the opener + image lines); the caption and closing `:::`
-# are left as-is. Grid figures (whose first line is math/`:audio`, not an image)
-# don't match and are left untouched — they depend on the still-deferred inline
-# `:audio`/`:figure!` pattern.
+# A `:::figure` block whose first line is a single `:figure![alt](path)`
+# image → MyST `:::{figure} path` + `:alt:`, keeping the caption. Grid
+# figures (first line is math or `:audio`) don't match and stay untouched.
 SIMPLE_FIGURE_RE = re.compile(
     r"^(?P<indent>[ \t]*)(?P<colons>:{3,})figure[ \t]*\n"
     r"(?P=indent):figure!\[(?P<alt>[^\]]*)\]\((?P<path>[^)\s]+)\)[ \t]*\n",
     re.MULTILINE,
 )
-# Upstream remark-style inline roles `:name[content]` → MyST `` {name}`content` ``.
-# Only the names listed here are translated (others are left untouched). Both
-# roles are defined in _ext/icm_roles.py:
-#   unit  — renders a unit fraction; works in prose only, not inside `$…$`/`$$…$$`
-#           math (a markdown role can't be parsed there).
-#   vocab — italicizes a term and links it to its Glossary entry; the term must
-#           be defined in content/glossary.md or the build warns.
+# Upstream inline roles `:name[content]` → MyST `` {name}`content` `` for the
+# names listed here (both defined in _ext/icm_roles.py); others are left alone.
 _INLINE_ROLE_NAMES = ("unit", "vocab")
 INLINE_ROLE_RE = re.compile(r":(" + "|".join(_INLINE_ROLE_NAMES) + r")\[([^\]]+)\]")
 
@@ -93,10 +61,10 @@ def _simple_figure_sub(m: re.Match) -> str:
 
 
 def split_body(body: str):
-    """Walk the body, splitting on `## ` headings outside fenced code blocks.
+    """Split the body on `## ` headings outside fenced code blocks.
 
     Returns (intro_block_lines, [(section_title, section_content_lines), ...]).
-    The intro block still contains the chapter `# ` heading; callers handle it.
+    The intro block still contains the chapter `# ` heading.
     """
     lines = body.splitlines(keepends=True)
     intro_lines: list[str] = []
@@ -130,7 +98,7 @@ def split_body(body: str):
         else:
             cur_lines.append(line)
             stripped = line.strip()
-            # Close on a line that is only fence chars of the same kind, length >= opener.
+            # A fence closes on a line of only fence chars, >= opener length.
             if (
                 stripped
                 and set(stripped) == {fence[0]}
@@ -143,10 +111,7 @@ def split_body(body: str):
 
 
 def demote_headings(lines: list[str]) -> list[str]:
-    """Demote markdown headings by one level (## -> #, ### -> ##, ...).
-
-    Lines inside fenced code blocks are left untouched.
-    """
+    """Demote headings one level (## -> #, ...), skipping fenced code blocks."""
     out: list[str] = []
     fence: str | None = None
     for line in lines:
@@ -176,24 +141,11 @@ def demote_headings(lines: list[str]) -> list[str]:
 def translate_directives(lines: list[str]) -> list[str]:
     """Translate upstream remark-style directives to their MyST equivalents.
 
-    The icm-text source is authored in the professor's remark flavor; MyST
-    (Jupyter Book) needs slightly different markers. This is the one seam
-    between the two renderers, so the source stays authored upstream-style and
-    renders correctly here. Currently handled:
-
-    - Block: ``:::name`` / ``:::name[arg]`` → ``:::{myst} arg`` for the names in
-      ``_BLOCK_DIRECTIVE_MAP`` (audio, definition, example, aside, tip,
-      exercise). A brace-less ``:::name`` would otherwise fall through MyST's
-      ``colon_fence`` to a generic ``<div class="name">``.
-    - Inline: ``:unit[a,b]`` → ``{unit}`a,b` `` and ``:vocab[term]`` →
-      ``{vocab}`term` `` (the roles in ``_ext/icm_roles.py``). See
-      ``_INLINE_ROLE_NAMES`` for the full list.
-
-    Simple ``:::figure`` blocks are handled before this pass by
-    ``SIMPLE_FIGURE_RE``; ``figure`` is intentionally absent from the block map.
-
-    Fence-aware: lines inside ``` ``` ``` / ``~~~`` code blocks are left
-    untouched, so syntax examples that *show* the upstream form survive verbatim.
+    Block directives per ``_BLOCK_DIRECTIVE_MAP`` (a brace-less ``:::name``
+    would otherwise render as a generic div), inline roles per
+    ``_INLINE_ROLE_NAMES``. Fence-aware, so syntax examples inside code
+    blocks survive verbatim. Simple ``:::figure`` blocks are handled before
+    this pass by ``SIMPLE_FIGURE_RE``.
     """
     out: list[str] = []
     fence: str | None = None
@@ -293,12 +245,8 @@ def split_chapter(folder: Path) -> dict | None:
 
 
 def regenerate_toc(results: list[dict]) -> None:
-    """Replace the chapter parts block in _toc.yml with one generated from results.
-
-    The "chapter parts block" is the first top-level `  - chapters:` entry whose
-    body references `content/ch`. Other parts (templates, course, reference) are
-    left untouched.
-    """
+    """Replace the chapter parts block of _toc.yml (the first `- chapters:`
+    entry referencing content/ch); other parts are left untouched."""
     text = TOC.read_text()
     lines = text.splitlines()
     parts_starts = [i for i, l in enumerate(lines) if l.rstrip() == "  - chapters:"]
