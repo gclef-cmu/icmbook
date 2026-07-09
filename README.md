@@ -217,6 +217,39 @@ jupyterlite pyodide-kernel ≥ 0.6. When that ships:
 - `thebe_config.exclude_patterns` in `_config.yml` keeps book sources (and
   dotfiles — `**` alone misses `.git/`!) out of `_build/html`. Don't loosen it.
 
+## Color palette
+
+One palette serves prose, figures, widgets, and animations. Tools should
+import the named constants (from `icm_widgets` / `icm_anim`), never paste hex
+codes.
+
+| Name | Hex | Use |
+|---|---|---|
+| RED | `#C41230` | Carnegie red — primary accent, links |
+| BLUE | `#007BC0` | plot series |
+| GOLD | `#FDB515` | plot series, accents |
+| TEAL | `#008F91` | plot series |
+| IRON | `#6D6E71` | iron gray — muted accents |
+| STEEL | `#E0E0E0` | light strokes / fills |
+| INK | `#3B3B3B` | figure/animation text on light pages |
+| INK_DARK | `#ECECEC` | figure/animation text on dark pages |
+| page (light) | `#FFFFFF` | `--pst-color-background`; baked into animations (`icm_anim._PAGE`) |
+| page (dark) | `#101010` | `--pst-color-background` override in `custom.css`; baked into animations (`icm_anim._PAGE_DARK`) |
+
+Source of truth: `RED…STEEL` live in `tools/icm_widgets/icm_widgets.py`
+(re-exported by `icm_anim`); the page backgrounds live in `_static/custom.css`
+and `tools/icm_anim/icm_anim.py` and **must stay in sync**.
+
+The dark page color is `#101010`, not the theme's stock `#121212`, because
+animations bake the page color into H.264 video and grey 18 has no exact code
+in limited-range YUV — it always decodes one step darker (grey 16 round-trips
+exactly; so do 15, 17, 22, while 18–21 do not). For the same reason `icm_anim`
+stamps sRGB color metadata into every clip (`_tag_srgb`): browsers disagree on
+how to decode untagged video — Safari gamma-shifts every color, and at 720p
+Chrome/Firefox assume a bt709 matrix while the encoder uses bt601, drifting
+saturated colors. If the dark background ever changes, pick a grey that
+round-trips through video and update both definitions.
+
 ## Troubleshooting
 
 - **`make: jupyter-book: No such file or directory`** — the `icmbook` conda env

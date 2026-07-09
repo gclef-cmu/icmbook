@@ -18,6 +18,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import av
+from av.bitstream import BitStreamFilterContext
 from IPython.display import HTML
 from manim import DecimalNumber, MathTex, Scene, Tex, Text, tempconfig
 
@@ -30,7 +32,11 @@ __all__ = ["show", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL", "INK", "INK_D
 INK = "#3B3B3B"  # house label/axis grey (same as house_style())
 INK_DARK = "#ECECEC"
 _PAGE = "#FFFFFF"  # the theme's light page background
-_PAGE_DARK = "#121212"  # the theme's dark page background
+# Must match --pst-color-background in custom.css, and both must be a grey
+# that survives the mp4's limited-range YUV round trip exactly (the theme's
+# stock #121212 does not — it decodes one step darker and the clip shows as
+# a darker rectangle on the page).
+_PAGE_DARK = "#101010"
 
 # Quality words mapped to manim's presets.
 _QUALITIES = {
@@ -42,6 +48,36 @@ _QUALITIES = {
 # Only text-like classes get a themed default ink; geometry (Line, Dot, ...)
 # takes explicit colors in scenes.
 _THEMED = (Text, Tex, MathTex, DecimalNumber)
+
+# Manim writes mp4s without color metadata, so browsers guess: Safari
+# gamma-shifts every color (the background stops matching the page) and the
+# others assume a bt709 matrix at 720p while the encoder used bt601 (house
+# colors drift). Stamping sRGB transfer + the bt601 matrix actually used
+# makes browsers decode clip colors like page colors. Metadata-only —
+# pixels aren't re-encoded.
+_SRGB_TAG = (
+    "h264_metadata=colour_primaries=1:transfer_characteristics=13:"
+    "matrix_coefficients=6:video_full_range_flag=0"
+)
+
+
+def _tag_srgb(movie: Path) -> Path:
+    """Remux ``movie`` with sRGB color metadata; returns the tagged file."""
+    tagged = movie.with_name(movie.stem + "-srgb.mp4")
+    with av.open(str(movie)) as inp, av.open(str(tagged), "w") as outp:
+        in_v = inp.streams.video[0]
+        out_v = outp.add_stream_from_template(in_v)
+        bsf = BitStreamFilterContext(_SRGB_TAG, in_v, out_v)
+        for packet in inp.demux(in_v):
+            if packet.dts is None:  # demuxer's end-of-stream flush
+                continue
+            for out in bsf.filter(packet) or []:
+                out.stream = out_v
+                outp.mux(out)
+        for out in bsf.flush() or []:
+            out.stream = out_v
+            outp.mux(out)
+    return tagged
 
 
 def _apply_theme(dark: bool) -> None:
@@ -82,7 +118,7 @@ def _render(scene_cls: type[Scene], dark: bool, quality: str) -> str:
                 sys.stdout.write(out.getvalue())
                 sys.stderr.write(err.getvalue())
                 raise
-            movie = Path(scene.renderer.file_writer.movie_file_path)
+            movie = _tag_srgb(Path(scene.renderer.file_writer.movie_file_path))
             return base64.b64encode(movie.read_bytes()).decode("ascii")
     finally:
         _reset_theme()

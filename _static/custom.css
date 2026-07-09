@@ -46,6 +46,12 @@ html[data-theme="light"] {
 
 /* ---- Dark mode ------------------------------------------------------- */
 html[data-theme="dark"] {
+  /* Not the theme's #121212: animations bake the page color into mp4, and
+     #121212 can't survive the codec's limited-range YUV round trip (always
+     decodes one step darker). #101010 round-trips exactly; keep in sync
+     with _PAGE_DARK in tools/icm_anim. */
+  --pst-color-background:  #101010;
+
   --pst-color-primary:     var(--cmu-red-bright);
   --pst-color-link:        #ef6f81;
   --pst-color-link-hover:  #f4a4b0;
