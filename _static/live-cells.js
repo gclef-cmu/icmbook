@@ -393,7 +393,7 @@
           navigator.clipboard.writeText(cm.getValue()).then(function () {
             var was = fresh.innerHTML;
             fresh.innerHTML =
-              '<span style="font-size:0.9em;color:#2e8b57;">✓</span>';
+              '<span style="font-size:0.9em;color:var(--live-ok);">✓</span>';
             setTimeout(function () {
               fresh.innerHTML = was;
             }, 1200);

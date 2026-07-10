@@ -108,9 +108,9 @@ html[data-theme="dark"] {
   --cm-comment: #ffd900;
   --cm-def: #00e0e0;
   --cm-name: #f8f8f2;
-  --live-chip-bg: var(--icm-box-bg, #21262e);
-  --live-chip-border: var(--icm-box-border, #3a414c);
-  --live-chip-fg: #cfd3d9;
+  --live-chip-bg: var(--icm-box-bg, #292521);
+  --live-chip-border: var(--icm-box-border, #453f39);
+  --live-chip-fg: #d5d2cf;
 }
 
 /* Recolor the left bar by state — the cell input and the collapsed "Show

@@ -58,15 +58,30 @@ html[data-theme="dark"] {
   --pst-color-inline-code: #f3aab3;
   --pst-color-accent:      var(--cmu-gold);
 
+  /* The theme's dark surfaces are blue-slate; re-anchor them near the light
+     paper hue so both modes share one temperature. heading, table-heading,
+     table-outer-border, and the zebra pair follow via the theme's own
+     var()s. */
+  --pst-color-text-base:          #d8d4d0;   /* also the figure-card tone */
+  --pst-color-text-muted:         #a7a29e;
+  --pst-color-blockquote-notch:   #a7a29e;
+  --pst-color-surface:            #34302b;
+  --pst-color-on-background:      #2b2723;
+  --pst-color-border:             #5b544d;
+  --pst-color-border-muted:       #34302b;
+  --pst-color-table-inner-border: #453f39;
+  --pst-color-table-row-hover-bg: #4d2c2f;   /* theme default is purple */
+  --pst-color-target:             #64501a;   /* dim gold */
+
   --icm-accent:    var(--cmu-red-bright);
   --icm-accent-2:  var(--cmu-gold);
   --icm-accent-3:  #a3a4a7;   /* lightened iron gray for dark surfaces */
-  --icm-box-bg:      #21262e;
-  --icm-box-border:  #3a414c;
+  --icm-box-bg:      #292521;
+  --icm-box-border:  #453f39;
   --icm-title-bg:    rgba(232, 84, 106, 0.14);
   --icm-title-bg-2:  rgba(253, 181, 21, 0.14);
   --icm-title-bg-3:  rgba(163, 164, 167, 0.14);
-  --icm-ex-bg:       #262830;
+  --icm-ex-bg:       #292827;
   --live-code-bg:    #2b2b2b;   /* code-cell panel (collapsed hide-input bar) */
 }
 
@@ -198,11 +213,11 @@ html[data-theme="light"] {
   --ad-see-bg:    #efeaf3;  --ad-see-title:    #e3dbeb;  --ad-see-spine:    #8773a3;
 }
 html[data-theme="dark"] {
-  --ad-note-bg:   #1d2733;  --ad-note-title:   #243140;  --ad-note-spine:   #7ea0c0;
-  --ad-tip-bg:    #1f2a1d;  --ad-tip-title:    #283627;  --ad-tip-spine:    #86b075;
-  --ad-imp-bg:    #2b1d20;  --ad-imp-title:    #38242a;  --ad-imp-spine:    #e8546a;
-  --ad-warn-bg:   #2d1c16;  --ad-warn-title:   #3c2820;  --ad-warn-spine:   #ef6a4d;
-  --ad-see-bg:    #241e2b;  --ad-see-title:    #2e2538;  --ad-see-spine:    #a895c0;
+  --ad-note-bg:   #1b2630;  --ad-note-title:   #22303e;  --ad-note-spine:   #7ea0c0;
+  --ad-tip-bg:    #1f271c;  --ad-tip-title:    #273323;  --ad-tip-spine:    #86b075;
+  --ad-imp-bg:    #2f2021;  --ad-imp-title:    #3d282a;  --ad-imp-spine:    #e8546a;
+  --ad-warn-bg:   #2f201d;  --ad-warn-title:   #3d2924;  --ad-warn-spine:   #ef6a4d;
+  --ad-see-bg:    #27222e;  --ad-see-title:    #322b3c;  --ad-see-spine:    #a895c0;
 }
 
 .admonition.note      { --ad-bg: var(--ad-note-bg); --ad-title: var(--ad-note-title); --ad-spine: var(--ad-note-spine); }
@@ -801,7 +816,7 @@ html[data-theme="dark"] {
   background: var(--cmu-red-dark);
 }
 html[data-theme="dark"] .bd-article a.glossary-nav-letter {
-  color: #1a1d23 !important;
+  color: #1e1d1b !important;
 }
 .bd-article .glossary-nav-letter.is-empty {
   color: var(--pst-color-text-muted);
@@ -1330,7 +1345,9 @@ html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(.anima
 }
 html[data-theme="dark"] .icm-widget,
 html[data-theme="dark"] div.cell div.cell_output .animation {
-  background-color: #e9ebee;
+  /* Same hex as --pst-color-text-base, which is what the theme paints its
+     figure legibility cards with — one light-card tone everywhere. */
+  background-color: #d8d4d0;
   border-radius: 4px;
   padding: 0.5rem;
   color: #262626; /* the players' own light face keeps dark ink */
