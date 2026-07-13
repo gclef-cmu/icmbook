@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "icm-widgets"
 version = "0.5.0"
-description = "Plot palette for Computer Music Principles."
+description = "Plot palette for CMU Intro to Computer Music."
 requires-python = ">=3.10"
 dependencies = []
 

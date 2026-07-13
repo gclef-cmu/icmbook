@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "icm-plotly"
 version = "0.3.0"
-description = "House plotly template and widget-cell plumbing for Computer Music Principles interactive pages."
+description = "House plotly template and widget-cell plumbing for CMU Intro to Computer Music interactive pages."
 requires-python = ">=3.10"
 dependencies = []
 

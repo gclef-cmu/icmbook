@@ -1,12 +1,12 @@
 #######################################################################################
-# Jupyter Book configuration for "Computer Music Principles"
+# Jupyter Book configuration for "CMU Intro to Computer Music"
 # Course: 15-322 / 15-622, Carnegie Mellon University
 #
 # Docs: https://jupyterbook.org/customize/config.html
 #######################################################################################
 
 # Book metadata
-title: Computer Music Principles
+title: CMU Intro to Computer Music
 author: "Chris Donahue"
 email: "chrisdonahue@cmu.edu"
 copyright: "2026 Chris Donahue. All rights reserved."

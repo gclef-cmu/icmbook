@@ -1,6 +1,6 @@
-# Computer Music Principles
+# CMU Intro to Computer Music
 
-Source for the **15-322 / 15-622 Computer Music Principles** textbook at Carnegie
+Source for **CMU Intro to Computer Music**, the 15-322 / 15-622 textbook at Carnegie
 Mellon University, built with [Jupyter Book](https://jupyterbook.org).
 
 Two pinned git submodules keep builds reproducible:

@@ -14,7 +14,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "icm-anim"
 version = "0.1.0"
-description = "Narrative-animation rendering for Computer Music Principles pages (manim scenes baked to inert looping video)."
+description = "Narrative-animation rendering for CMU Intro to Computer Music pages (manim scenes baked to inert looping video)."
 requires-python = ">=3.10"
 dependencies = ["manim>=0.20,<0.21"]
 

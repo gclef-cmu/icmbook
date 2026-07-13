@@ -1,4 +1,4 @@
-# Conda environment for building "Computer Music Principles".
+# Conda environment for building "CMU Intro to Computer Music".
 #
 #   conda env create -f environment.yml
 #   conda activate icmbook

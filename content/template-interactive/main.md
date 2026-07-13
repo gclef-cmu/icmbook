@@ -65,7 +65,9 @@ there, what the reader experiences:
    not-yet-run setup — the cells above it **from the same companion notebook
    only** (each is self-contained, so the rest of the page never runs on its
    behalf) — then the cell itself. Reloading the page restores the built
-   page — that is the reset button.
+   page — that is the reset button. One caution: the page's notebooks all
+   execute in **one shared Python kernel**, so their top-level names can
+   collide — the capture rule in Section 2 exists because of this.
 
 Because the same cells run at build, in the reader's browser, and in
 VS Code, **write every cell against the browser kernel** (Section 4); the
@@ -101,7 +103,7 @@ every example on this page reads instantly:
    def controls(fig):
        amp = widgets.FloatSlider(description="Amplitude", min=0, max=2, value=1)
 
-       def update(a):
+       def update(a, y0=y0):
            fig.data[0].y = a * y0
 
        widgets.interactive_output(update, {"a": amp})
@@ -132,6 +134,14 @@ The rules of the pattern — each one earned by a real failure:
   `fig.data[i].x/y` (and `marker.color` etc.), never rebuilds the figure.
   Wrap multi-trace updates in `with fig.batch_update():` so they repaint
   as one frame.
+- **Capture what the callback reads** — snapshot every top-level name
+  `update(...)` uses as a default argument: `def update(a, y0=y0):`. The
+  callback fires long after its cell ran, and **all of a page's notebooks
+  share one Python kernel** — self-contained means each runs on its own,
+  not that its names are private. Without the capture, the moment another
+  notebook on the page rebinds `t` or `y0`, the sliders silently compute
+  from the wrong array (this page's starter once drew a flat line on the
+  first drag because Section 7's widget had rebound `t` behind its back).
 - **Fix the axes** — `fixedrange=True` and explicit ranges, so the view
   doesn't jump while data moves (the page hides plotly's toolbar; sliders
   are the interface).
@@ -324,6 +334,7 @@ difference.
 | The figure shows but the sliders never arrive | The widget cell is missing its `# autorun` marker — without it the reader must press ▶ Run for the live upgrade |
 | The page bakes megabytes of inert widget-state JSON | ipywidgets (a `FigureWidget` counts) leaked into `figure()` or the top of the cell — everything slider-shaped goes inside `controls(fig)`, which never runs at build |
 | The sliders take a while to arrive | Expected only on a first visit — the kernel + packages are ~45 MB, served by the book itself, downloaded once, cached, and pre-warmed while the reader is on other pages; the figure is already on screen and the status pill bottom-right shows progress |
+| A slider draws garbage after another widget on the page has run, and re-running its own cell cures it | The callback reads a top-level name (`t`, `y0`, …) that another notebook on the page rebound — every notebook shares the one kernel. Capture the name as a default argument: `def update(a, f, t=t):` (Section 2's capture rule) |
 | Slider drags feel laggy | The `update` callback is doing real work per tick — precompute arrays outside it and only assign precomputed data (see the demo's `sums`/`partials`) |
 | The figure repaints in visible stages | Multiple trace assignments per tick — wrap them in `with fig.batch_update():` |
 | `ModuleNotFoundError: icm_plotly` on your own machine | Outside this repo it isn't installed — `pip install -e tools/icm_plotly tools/icm_widgets`; never add them to the `%pip` line |
