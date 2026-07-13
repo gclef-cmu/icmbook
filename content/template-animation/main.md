@@ -9,16 +9,17 @@ from the interactive-widget pipeline, because it does a different job:
 |                        | Interactive widget                                  | Narrative animation                          |
 |------------------------|-----------------------------------------------------|----------------------------------------------|
 | Template               | [Template - Interactive](../template-interactive/index) | this page                                |
-| Engine                 | matplotlib + `icm_widgets`                          | manim + `icm_anim`                           |
+| Engine                 | plotly + ipywidgets (`icm_plotly`)                  | manim + `icm_anim`                           |
 | The reader can         | drag sliders, edit the code, re-run live            | watch — it plays like a figure               |
-| What ships in the page | an HTML/JavaScript player                           | one bare `<video>` tag, mp4 inlined — autoplays muted, loops, no controls |
+| What ships in the page | a live plotly figure (the in-browser kernel starts on page load) | one bare `<video>` tag, mp4 inlined — autoplays muted, loops, no controls |
 | The code on the page   | visible or collapsible, always runnable             | never shown, never runnable                  |
 | Best for               | exploring a parameter                               | telling one story well — morphing shapes, math that moves, choreography |
 
-Why a second engine: everything a widget ships (player JavaScript, control styling)
-has to be defended against the theme and the live-code layer. An animation bakes to
-**inert media** — no script, no styles, nothing to fight. The cost is symmetry: a
-clip cannot be edited or re-run in the browser, so it narrates; it never explores.
+Why a second engine: a widget is live — it needs the in-browser kernel and its
+libraries, and everything it renders has to coexist with the theme and the
+live-code layer. An animation bakes to **inert media** — no script, no styles,
+no kernel, nothing to fight. The cost is symmetry: a clip cannot be edited or
+re-run in the browser, so it narrates; it never explores.
 
 This page in the sidebar is the *generated* `index.ipynb`. Edit `main.md` or a
 companion notebook, then run `make template-animation` to regenerate it.
@@ -93,8 +94,8 @@ The rules of the shape:
   `anim.STEEL`, plus `anim.INK` for one-off label greys — never manim's bare
   names.** `from manim import *` rebinds `RED`/`BLUE`/`GOLD`/`TEAL` to manim's
   neon palette, so a bare `RED` silently draws the wrong red. The `anim.*` names
-  are the `icm_widgets` palette — the same single source of truth as every
-  figure and widget in the book.
+  are the book's palette (single-sourced in `icm_widgets`, the same names
+  `icm_plotly` re-exports) — shared with every figure and widget in the book.
 - **Clips follow the reader's theme by default** (`theme="auto"`): the scene is
   rendered twice — house palette on the light page, and on the theme's dark
   background — and the page displays whichever matches the light/dark toggle.

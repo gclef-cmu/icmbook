@@ -1,4 +1,4 @@
-.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork template-interactive template-animation
+.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork vendor-pyodide template-interactive template-animation
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
@@ -79,7 +79,25 @@ vendor-thebe:
 		mv $(THEBE_DIST)/tmp2/package/lib $(THEBE_DIST)/core; \
 		rm -rf $(THEBE_DIST)/tmp1 $(THEBE_DIST)/tmp2 $(THEBE_DIST)/lite/*.map $(THEBE_DIST)/core/*.map; \
 		cp $(THEBE_DIST)/lite/service-worker.js vendor/service-worker.js; \
+		python3 -c "import pathlib; \
+			p = pathlib.Path('$(THEBE_DIST)/core/index.js'); \
+			s = p.read_text(); \
+			cdn = '\"https://cdn.jsdelivr.net/npm/\"'; \
+			p.write_text(s.replace(cdn, '(window.__icmWidgetsCdn||' + cdn + ')'))"; \
 		touch $(THEBE_DIST)/.ok; \
+	fi
+	@# ^ the python step patches thebe's widget-frontend loader: its CDN base
+	@# (jsdelivr, hardcoded — no config path) becomes overridable so
+	@# live-cells.js can point it at the book's own /widgets-cdn/ mirror.
+
+# Self-hosted Pyodide runtime (core + the kernel stack's package closure),
+# so widget pages never touch a CDN at runtime. Served at /pyodide/ via
+# html_extra_path; version pinned in tools/vendor_pyodide.py, and the
+# pyodideUrl in _static/live-cells.js points here.
+PYODIDE_DIST := vendor/pyodide
+vendor-pyodide:
+	@if [ ! -f $(PYODIDE_DIST)/.ok ]; then \
+		python3 tools/vendor_pyodide.py && touch $(PYODIDE_DIST)/.ok; \
 	fi
 
 # Build the wheels the in-browser kernel installs: pyquist from the pinned
@@ -90,7 +108,39 @@ wheels:
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/sounddevice_stub
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/soundfile_stub
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/icm_widgets
+	python3 -m pip wheel --no-deps -q -w _static/wheels ./tools/icm_plotly
 	python3 -m pip wheel --no-deps -q -w _static/wheels ./pyquist
+	@# plotly.js for baked figures, copied from the installed plotly package
+	@# so the JS always matches the build's figure schema. Under vendor/
+	@# (html_extra_path), NOT _static — any .js there loads on every page.
+	python3 -c "import pathlib, shutil, plotly; \
+		src = pathlib.Path(plotly.__file__).parent / 'package_data' / 'plotly.min.js'; \
+		dst = pathlib.Path('vendor/plotly-dist'); dst.mkdir(parents=True, exist_ok=True); \
+		shutil.copy(src, dst / 'plotly.min.js')"
+	@# The plotly widget stack (dependency closure included), self-hosted in
+	@# wheels/widgets/ with its own manifest so widget pages never fetch
+	@# from PyPI at runtime. live-cells.js installs it per-page, deps=False.
+	@# In a subdir on purpose: the main manifest globs _static/wheels/*.whl
+	@# and installs on EVERY live page — these only on plotly pages.
+	python3 -m pip download -q --no-deps --only-binary=:all: \
+		--implementation py --abi none --platform any \
+		-d _static/wheels/widgets \
+		plotly anywidget ipywidgets narwhals psygnal typing-extensions \
+		comm widgetsnbextension jupyterlab-widgets
+	python3 -c "import glob, json, os; \
+		ws = sorted(os.path.basename(p) for p in glob.glob('_static/wheels/widgets/*.whl')); \
+		open('_static/wheels/widgets/manifest.json', 'w').write(json.dumps(ws))"
+	@# anywidget's FRONTEND: the widget manager fetches it from a CDN at
+	@# render time (npm/anywidget@~X.Y.*/dist/index.js). Serve it ourselves —
+	@# live-cells.js points data-jupyter-widgets-cdn at /widgets-cdn/, and the
+	@# AMD build ships inside the wheel we just downloaded.
+	python3 -c "import glob, pathlib, zipfile; \
+		w = glob.glob('_static/wheels/widgets/anywidget-*.whl')[0]; \
+		ver = pathlib.Path(w).name.split('-')[1]; \
+		major, minor = ver.split('.')[:2]; \
+		dst = pathlib.Path('vendor/widgets-cdn/anywidget@~%s.%s.*/dist' % (major, minor)); \
+		dst.mkdir(parents=True, exist_ok=True); \
+		(dst / 'index.js').write_bytes(zipfile.ZipFile(w).read('anywidget/nbextension/index.js'))"
 	@# Install-order manifest for live-cells.js: the stubs must install
 	@# before pyquist so micropip treats those dependencies as satisfied and
 	@# never fetches the real packages.
@@ -112,7 +162,7 @@ check-thebe-fork:
 		echo "  pip install --force-reinstall --no-deps 'sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0'"; \
 		exit 1; }
 
-book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe
+book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendor-pyodide
 	@# PIP_DISABLE_PIP_VERSION_CHECK: keeps pip's "new release" notice out of
 	@# baked %pip cell output. ICM_BOOK_BUILD: kernel-only preview cells
 	@# guard on this and build nothing.

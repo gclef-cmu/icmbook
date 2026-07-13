@@ -184,6 +184,41 @@ html[data-theme="dark"] .live-status-connected {
   color: var(--live-ok);
 }
 
+/* Live plotly widgets: the modebar collides with the page's svg/button CSS
+ * and the widgets' axes are fixedrange — sliders are the interface, so drop
+ * the toolbar rather than restyle it. */
+.cell_output.live-output .js-plotly-plot .modebar-container {
+  display: none;
+}
+
+/* Baked plotly figures render into their .icm-plotly-fig container. */
+.icm-plotly-fig {
+  margin: 0.4rem 0;
+}
+
+/* --- autorun placeholder ---
+ * Holds the spot for a widget that runs on page load (`# autorun` cells),
+ * so the page doesn't jump when it arrives. Removed once the run settles. */
+.live-autorun-wait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18rem;
+  padding: 1em;
+  text-align: center;
+  font-size: 0.85rem;
+  font-family: var(--pst-font-family-base, sans-serif);
+  color: var(--pst-color-text-muted, #6d6e71);
+  border: 1px dashed var(--pst-color-border, #d0d0d0);
+  border-radius: 6px;
+  animation: live-autorun-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-autorun-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.45; }
+}
+
 /* --- editors: match the static look exactly ---------------------------
  * Geometry measured from the built page: .cell_input pre → radius 4px,
  * padding 16px, menlo/consolas 13px, line-height 16.25px. Colors come from

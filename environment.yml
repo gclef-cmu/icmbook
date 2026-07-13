@@ -20,6 +20,11 @@ dependencies:
   - scipy
   - matplotlib
   - pysoundfile
+  # Interactive-widget stack (plotly FigureWidget + ipywidgets, e.g. 5.2).
+  # Build-time only here; the browser kernel installs them per-page from
+  # PyPI via live-cells.js pypiFeatures.
+  - plotly
+  - anywidget
   - sphinx-exercise
   - sphinx-proof
   - pip:
@@ -38,9 +43,12 @@ dependencies:
       # time and feeds autodoc. Installed from the pinned submodule; run
       # `git submodule update --init` after cloning.
       - -e ./pyquist
-      # icm-widgets: the parameter-slider widget API; also wheeled into
+      # icm-widgets: the matplotlib house style + palette; also wheeled into
       # _static/wheels for the browser kernel.
       - -e ./tools/icm_widgets
+      # icm-plotly: house plotly template + the widget cells' build/live
+      # display switch; also wheeled into _static/wheels.
+      - -e ./tools/icm_plotly
       # Manim + icm-anim: the {animation} directive's engine. Build-only —
       # manim has no Pyodide build, so it's never wheeled for the browser.
       # Encoding uses manim's bundled PyAV (no system ffmpeg); MathTex scenes

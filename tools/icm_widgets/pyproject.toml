@@ -1,17 +1,19 @@
-# The book's parameter-slider widget API (widget cells stay pure Python; the
-# widget's HTML is self-contained). Wheeled into _static/wheels by
-# `make wheels` for the browser kernel, and installed editable via
-# environment.yml for build-time execution. Never published to PyPI.
+# The book's plot palette — the color single-source-of-truth that icm_plotly
+# and icm_anim import from. Wheeled into _static/wheels by `make wheels` for
+# the browser kernel, and installed editable via environment.yml for
+# build-time execution. Never published to PyPI. (The matplotlib widget
+# machinery this package used to hold was retired for plotly + ipywidgets —
+# see tools/icm_plotly.)
 [build-system]
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "icm-widgets"
-version = "0.3.0"
-description = "Parameter-slider widgets for Computer Music Principles interactive pages (pre-rendered matplotlib frame grids)."
+version = "0.5.0"
+description = "Plot palette for Computer Music Principles."
 requires-python = ">=3.10"
-dependencies = ["numpy", "matplotlib"]
+dependencies = []
 
 [tool.setuptools]
 py-modules = ["icm_widgets"]

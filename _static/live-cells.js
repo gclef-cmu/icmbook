@@ -47,13 +47,28 @@
   var sessionRef = null; // ThebeSession from bootstrap
   var activationDone = false; // silences boot narration after connect
   var pendingFocus = null; // cell clicked before its editor existed
+  var pageCodeSnapshot = ""; // cell sources captured BEFORE editors mount
 
   if (document.readyState !== "loading") init();
   else document.addEventListener("DOMContentLoaded", init);
 
   function init() {
     var cells = codeCells();
-    if (!cells.length) return; // prose page: do nothing, load nothing
+    if (!cells.length) {
+      // Prose page: nothing to mount — but quietly pre-warm the browser
+      // cache with the kernel runtime, so the widget page the student
+      // reaches next boots without downloading anything.
+      warmCaches();
+      return;
+    }
+    // Snapshot the page's code NOW, from the static <pre>s: once CodeMirror
+    // mounts it renders text lazily, so hidden or off-screen editors expose
+    // no textContent and any later scrape misses what the page uses.
+    pageCodeSnapshot = Array.prototype.map
+      .call(document.querySelectorAll(".cell_input"), function (e) {
+        return e.textContent;
+      })
+      .join("\n");
     cells.forEach(addChip);
     beautifyOutputs(document); // baked audio outputs -> book audio chips
     watchDynamicAudio(); // catch the recorder's player (added on click) too
@@ -68,13 +83,159 @@
         ensureMounted().then(focusPending).catch(function () {});
       });
     });
+    // Third-party widget frontends (anywidget, for FigureWidget) load from
+    // a CDN by default; point thebe's loader (patched overridable by
+    // make vendor-thebe) at the book's own copy (make wheels →
+    // vendor/widgets-cdn/).
+    (function () {
+      var me = document.querySelector('script[src*="live-cells.js"]');
+      var prefix = me ? me.getAttribute("src").replace(/_static\/live-cells\.js.*$/, "") : "";
+      var root = prefix ? prefix.replace(/\/$/, "") : ".";
+      window.__icmWidgetsCdn = new URL(
+        root + "/widgets-cdn/", document.baseURI).href;
+    })();
+    // Baked plotly figures (icm_plotly.show at build) render immediately —
+    // the real figure, no kernel — from the inert JSON in the page.
+    renderBakedPlotly();
+    // Cells tagged `icm-autorun` (the splitter's `# autorun` marker) run on
+    // page load: their widget must be interactive without a button press.
+    // A placeholder holds the spot while the kernel starts — unless the
+    // cell has a baked figure, which IS the placeholder (the live widget
+    // replaces it via the usual baked-output swap).
+    var autorun = cells.filter(function (c) {
+      return c.classList.contains("tag_icm-autorun");
+    });
+    autorun.forEach(function (cell) {
+      if (!cell.querySelector(".icm-plotly-fig")) addAutorunPlaceholder(cell);
+    });
     // Mount once the page settles. A mount failure leaves the static page
-    // intact, so it only reports to the console.
+    // intact, so it only reports to the console. Autorun pages skip the
+    // idle wait — their widgets need the kernel as soon as possible, so
+    // the boot chain starts at t=0 instead of ~2 s in.
     var kick = function () {
-      ensureMounted().then(schedulePrewarm).catch(function () {});
+      ensureMounted()
+        .then(function () {
+          schedulePrewarm();
+          autorun.forEach(function (cell) {
+            enqueueRun(cell, { auto: true });
+          });
+        })
+        .catch(function () {});
     };
-    if ("requestIdleCallback" in window) requestIdleCallback(kick, { timeout: 1500 });
+    if (autorun.length) kick();
+    else if ("requestIdleCallback" in window) requestIdleCallback(kick, { timeout: 1500 });
     else setTimeout(kick, 250);
+  }
+
+  // The spot where an autorun cell's widget will land: a quiet output-shaped
+  // card so the page doesn't jump when the widget arrives. Removed when the
+  // cell's run settles (success or failure — errors surface via the status
+  // pill and the cell's own error card).
+  function addAutorunPlaceholder(cell) {
+    var wait = document.createElement("div");
+    wait.className = "cell_output docutils container live-autorun-wait";
+    wait.textContent = "Interactive demo — starting Python…";
+    cell.appendChild(wait);
+  }
+
+  function removeAutorunPlaceholder(cell) {
+    var wait = cell.querySelector(".live-autorun-wait");
+    if (wait) wait.remove();
+  }
+
+  // ----- baked plotly figures ---------------------------------------------
+
+  // icm_plotly.show bakes each figure as inert JSON in an .icm-plotly-fig
+  // div. Render them with the book's vendored plotly.js (copied from the
+  // build's plotly package by `make wheels`, served from vendor/ like the
+  // thebe bundles) — the figure appears the moment the page opens, and the
+  // cell's first live execution swaps it for the interactive widget.
+  function renderBakedPlotly() {
+    var nodes = document.querySelectorAll(".icm-plotly-fig");
+    if (!nodes.length) return;
+    var me = document.querySelector('script[src*="live-cells.js"]');
+    var prefix = me ? me.getAttribute("src").replace(/_static\/live-cells\.js.*$/, "") : "";
+    var root = prefix ? prefix.replace(/\/$/, "") : ".";
+    loadScript(root + "/plotly-dist/plotly.min.js")
+      .then(function () {
+        nodes.forEach(function (node) {
+          var spec = node.querySelector(
+            'script[type="application/vnd.icm-plotly+json"]'
+          );
+          if (!spec) return;
+          var fig = JSON.parse(spec.textContent);
+          window.Plotly.newPlot(node, fig.data, fig.layout, {
+            displayModeBar: false,
+            responsive: true,
+          });
+        });
+      })
+      .catch(function (e) {
+        console.error("[live] baked plotly", e);
+      });
+  }
+
+  // ----- cross-page cache warming -----------------------------------------
+
+  // Fetch the kernel runtime into the browser's HTTP cache from prose pages,
+  // so a later widget page boots with zero downloads. Pure fetch(): nothing
+  // executes, nothing mounts. Once per session; respects data-saver.
+  function warmCaches() {
+    if (navigator.connection && navigator.connection.saveData) return;
+    try {
+      if (sessionStorage.getItem("icm-live-warmed")) return;
+    } catch (e) {
+      return; // storage blocked: skip rather than re-warm every page
+    }
+    var me = document.querySelector('script[src*="live-cells.js"]');
+    var prefix = me ? me.getAttribute("src").replace(/_static\/live-cells\.js.*$/, "") : "";
+    var root = prefix ? prefix.replace(/\/$/, "") : ".";
+    var grab = function (url) {
+      return fetch(new URL(url, document.baseURI).href, { priority: "low" })
+        .then(function (r) { return r.ok ? r.blob() : null; })
+        .catch(function () {});
+    };
+    var run = function () {
+      var jobs = [
+        grab(root + "/thebe-dist/core/index.js"),
+        grab(root + "/thebe-dist/lite/thebe-lite.min.js"),
+        grab(root + "/thebe-dist/lite/pypi/all.json"),
+        grab(root + "/plotly-dist/plotly.min.js"),
+      ];
+      // pyodide runtime + package closure (list written by make vendor-pyodide)
+      jobs.push(
+        fetch(new URL(root + "/pyodide/warm-manifest.json", document.baseURI).href)
+          .then(function (r) { return r.json(); })
+          .then(function (names) {
+            return Promise.all(names.map(function (n) {
+              return grab(root + "/pyodide/" + n);
+            }));
+          })
+          .catch(function () {})
+      );
+      // the book's wheels + the plotly widget stack
+      ["/_static/wheels/", "/_static/wheels/widgets/"].forEach(function (dir) {
+        jobs.push(
+          fetch(new URL(root + dir + "manifest.json", document.baseURI).href)
+            .then(function (r) { return r.json(); })
+            .then(function (names) {
+              return Promise.all(names.map(function (n) {
+                return grab(root + dir + n);
+              }));
+            })
+            .catch(function () {})
+        );
+      });
+      Promise.all(jobs).then(function () {
+        try { sessionStorage.setItem("icm-live-warmed", "1"); } catch (e) {}
+      });
+    };
+    var idle = function () {
+      if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 8000 });
+      else setTimeout(run, 4000);
+    };
+    if (document.readyState === "complete") idle();
+    else window.addEventListener("load", idle, { once: true });
   }
 
   function focusPending() {
@@ -334,7 +495,7 @@
       // mount-time and steady-state kernel events stay silent.
       if (!kernelRequested || activationDone) return;
       if (data.status === "ready" || data.status === "attached") return;
-      status("Starting Python (" + data.status + ") — first visit downloads ~25 MB");
+      status("Starting Python (" + data.status + ") — a first visit downloads ~45 MB");
     });
 
     // bootstrap renders the editors right away, then awaits the gated
@@ -484,7 +645,7 @@
 
   async function startKernel() {
     await ensureMounted();
-    status("Starting Python — first visit downloads ~25 MB");
+    status("Starting Python — a first visit downloads ~45 MB");
     await loadScript(thebeConfig.rootPath + "/thebe-dist/lite/thebe-lite.min.js");
 
     // Pin the runtime. Pyodide 0.27.7: pyquist needs numpy>=2.0 (so >=0.27)
@@ -497,7 +658,12 @@
     // the page-level litePluginSettings unconditionally.
     var liteSettings = {
       "@jupyterlite/pyodide-kernel-extension:kernel": {
-        pyodideUrl: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js",
+        // Self-hosted (make vendor-pyodide → vendor/pyodide, served at
+        // /pyodide/): no CDN at runtime. Same 0.27.7 pin as before.
+        pyodideUrl: new URL(
+          thebeConfig.rootPath + "/pyodide/pyodide.js",
+          document.baseURI
+        ).href,
         pipliteUrls: [
           new URL(thebeConfig.rootPath + "/thebe-dist/lite/pypi/all.json", document.baseURI).href,
         ],
@@ -521,7 +687,9 @@
     nbRef = boot.notebook;
     sessionRef = boot.session;
 
-    status("Installing pyquist…");
+    // One message covers the whole install phase — the book's wheels plus
+    // any per-page extras (plotly is ~10 MB of it on widget pages).
+    status("Installing packages…");
     await installWheels(thebeConfig);
     await runInitCells_();
 
@@ -545,22 +713,30 @@
     manifest.forEach(function (name) {
       lines.push('await micropip.install("' + new URL(name, base).href + '")');
     });
-    // Optional PyPI extras, installed only when a cell on THIS page uses
-    // them, so other pages don't pay for them. Keyed on strings in the code.
-    var pageCode = Array.prototype.map
-      .call(document.querySelectorAll(".cell_input"), function (e) {
-        return e.textContent;
-      })
-      .join("\n");
-    var pypiFeatures = [
-      // browseraudio: in-browser mic recording for pq.record().
-      { pkg: "browseraudio", when: ["browseraudio", "pq.record"] },
-    ];
-    pypiFeatures.forEach(function (f) {
-      if (f.when.some(function (s) { return pageCode.indexOf(s) !== -1; })) {
-        lines.push('await micropip.install("' + f.pkg + '")');
-      }
-    });
+    // Extras installed only when a cell on THIS page uses them, so other
+    // pages don't pay for them. Keyed on strings in the pre-mount code
+    // snapshot (post-mount DOM scrapes miss lazily-rendered editors).
+    var pageCode = pageCodeSnapshot;
+    // The plotly widget stack, self-hosted under wheels/widgets/ (`make
+    // wheels`) so widget pages never touch PyPI at runtime — a stalled
+    // 10 MB PyPI fetch used to hang the whole boot at "installing".
+    // deps=False: the manifest IS the dependency closure. The baked-figure
+    // div is the second signal, in case the code scrape ever misses.
+    if (pageCode.indexOf("plotly") !== -1 || document.querySelector(".icm-plotly-fig")) {
+      var wbase = new URL(config.rootPath + "/_static/wheels/widgets/", document.baseURI);
+      var widgets = await (await fetch(new URL("manifest.json", wbase))).json();
+      var urls = widgets.map(function (name) {
+        return '"' + new URL(name, wbase).href + '"';
+      });
+      lines.push(
+        "await micropip.install([" + urls.join(", ") + "], deps=False)"
+      );
+    }
+    // browseraudio (pq.record mic capture) stays on PyPI: small, and only
+    // recording pages use it.
+    if (["browseraudio", "pq.record"].some(function (s) { return pageCode.indexOf(s) !== -1; })) {
+      lines.push('await micropip.install("browseraudio")');
+    }
     // Browser-kernel shims: a no-op myst_nb.glue (build-time-only library)
     // and the RcParams patch the TeachBooks extension applies for matplotlib.
     lines.push(
@@ -569,7 +745,10 @@
       '    _m = types.ModuleType("myst_nb"); _m.glue = lambda *a, **k: None; sys.modules["myst_nb"] = _m',
       "import matplotlib",
       'if not hasattr(matplotlib.RcParams, "_get"):',
-      "    matplotlib.RcParams._get = dict.get"
+      "    matplotlib.RcParams._get = dict.get",
+      // Build the font cache now, during setup, so its "this may take a
+      // moment" stderr lands here instead of in the first cell's output.
+      "import matplotlib.font_manager"
     );
     // The inlined chapter scripts locate their output folder via __file__,
     // which a notebook cell doesn't have — they'd NameError on Run. Define
@@ -623,12 +802,13 @@
   // ----- execution --------------------------------------------------------
 
   // Serialize runs: several clicked chips queue instead of interleaving.
-  function enqueueRun(cell) {
-    if (!leaveGuardArmed) {
+  function enqueueRun(cell, opts) {
+    var auto = opts && opts.auto;
+    if (!leaveGuardArmed && !auto) {
       leaveGuardArmed = true;
       // Leaving loses the kernel state the student built by running cells.
-      // Armed on the first Run, not at boot — a prewarmed kernel with
-      // nothing run isn't state worth nagging about.
+      // Armed on the first explicit Run, not at boot or autorun — state the
+      // page rebuilds by itself isn't worth nagging about.
       window.addEventListener("beforeunload", function (e) {
         e.preventDefault();
         e.returnValue = "";
@@ -641,6 +821,18 @@
       })
       .catch(function () {
         /* reported by the pipeline; keep the queue alive */
+      })
+      .then(function () {
+        removeAutorunPlaceholder(cell);
+        // Live FigureWidgets can render at a stale width; they're
+        // responsive (icm_plotly sets it), so resize kicks snap them to
+        // their real container. Delayed: execution settling is not view
+        // rendering — the widget's DOM appears a beat later.
+        [400, 1200, 2500].forEach(function (ms) {
+          setTimeout(function () {
+            window.dispatchEvent(new Event("resize"));
+          }, ms);
+        });
       });
   }
 
