@@ -115,6 +115,11 @@ VISIBILITY_MARKER_RE = re.compile(r"^#\s*(hide|collapse|show)\s*$", re.IGNORECAS
 # `remove-output` tag); the cell still executes at build and in the browser.
 NO_OUTPUT_MARKER_RE = re.compile(r"^#\s*no-output\s*$", re.IGNORECASE)
 
+# `# autorun` makes the live layer run the cell (and its setup chain) on
+# page load instead of waiting for the reader's first Run — for widget
+# cells whose output must be interactive without a button press.
+AUTORUN_MARKER_RE = re.compile(r"^#\s*autorun\s*$", re.IGNORECASE)
+
 
 def cell_visibility(source: str) -> str:
     """Return "hide", "collapse" or "show" for a notebook code cell."""
@@ -129,6 +134,13 @@ def cell_no_output(source: str) -> bool:
     """True if the cell carries a whole-line ``# no-output`` marker."""
     return any(
         NO_OUTPUT_MARKER_RE.match(line.strip()) for line in source.splitlines()
+    )
+
+
+def cell_autorun(source: str) -> bool:
+    """True if the cell carries a whole-line ``# autorun`` marker."""
+    return any(
+        AUTORUN_MARKER_RE.match(line.strip()) for line in source.splitlines()
     )
 
 
@@ -201,6 +213,8 @@ def build_section_notebook(
                         tags.append("hide-input")
                     if cell_no_output(c.source):
                         tags.append("remove-output")
+                    if cell_autorun(c.source):
+                        tags.append("icm-autorun")
                 meta["tags"] = tags
                 cc["metadata"] = meta
                 cells.append(cc)

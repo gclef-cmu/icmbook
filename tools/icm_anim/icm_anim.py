@@ -29,7 +29,7 @@ from icm_widgets import BLUE, GOLD, IRON, RED, STEEL, TEAL  # noqa: F401
 
 __all__ = ["show", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL", "INK", "INK_DARK"]
 
-INK = "#3B3B3B"  # house label/axis grey (same as house_style())
+INK = "#3B3B3B"  # house label/axis grey
 INK_DARK = "#ECECEC"
 _PAGE = "#FFFFFF"  # the theme's light page background
 # Must match --pst-color-background in custom.css, and both must be a grey
