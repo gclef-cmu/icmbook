@@ -36,7 +36,7 @@ COURSE_DEST = CONTENT / "course"
 COURSE_SKIP_FILES = {"README.md"}  # contributor placeholder, not a course page
 COURSE_CAPTION = "- caption: Course Information"
 # Sidebar order for course pages/sections; anything not listed sorts after.
-COURSE_ORDER = ("home", "about", "schedule", "projects", "resources", "showcase")
+COURSE_ORDER = ("home", "about", "schedule", "assignments", "resources", "showcase")
 
 CHAPTER_FOLDER_RE = re.compile(r"^(\d+)-(.+)$")
 FRONTMATTER_RE = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
@@ -453,7 +453,7 @@ def natural_key(name: str):
 
 
 def _toc_ref(path: Path) -> str:
-    """content/course/projects/1.md -> 'content/course/projects/1' (TOC file ref)."""
+    """content/course/assignments/01.md -> 'content/course/assignments/01' (TOC file ref)."""
     return "content/" + path.relative_to(CONTENT).with_suffix("").as_posix()
 
 
