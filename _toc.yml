@@ -9,12 +9,19 @@ parts:
       - file: content/course/home
       - file: content/course/about
       - file: content/course/schedule
-      - file: content/course/projects/index
+      - file: content/course/assignments/index
         sections:
-          - file: content/course/projects/1
-          - file: content/course/projects/2
-          - file: content/course/projects/3/index
-          - file: content/course/projects/4/index
+          - file: content/course/assignments/01
+          - file: content/course/assignments/02
+          - file: content/course/assignments/03
+          - file: content/course/assignments/04
+          - file: content/course/assignments/05
+          - file: content/course/assignments/06
+          - file: content/course/assignments/07
+          - file: content/course/assignments/08
+          - file: content/course/assignments/09
+          - file: content/course/assignments/322-final
+          - file: content/course/assignments/622-final
       - file: content/course/resources/index
         sections:
           - file: content/course/resources/1-software
@@ -79,6 +86,20 @@ parts:
           - file: content/ch05/07
           - file: content/ch05/08
           - file: content/ch05/09
+      - file: content/ch06/index
+      - file: content/ch07/index
+      - file: content/ch08/index
+      - file: content/ch09/index
+      - file: content/ch10/index
+      - file: content/ch11/index
+      - file: content/ch12/index
+      - file: content/ch13/index
+      - file: content/ch14/index
+      - file: content/ch15/index
+      - file: content/ch16/index
+      - file: content/ch17/index
+      - file: content/ch18/index
+      - file: content/ch19/index
       - file: content/reference/index
         sections:
           - file: content/pyquist/Overview

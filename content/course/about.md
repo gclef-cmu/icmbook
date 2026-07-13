@@ -4,12 +4,12 @@
 theory and practice from a computer science perspective, in Python. Students
 learn how sound is represented digitally, how to synthesize and manipulate it,
 and how to build small musical systems — culminating in open-ended creative
-projects.
+assignments and a final project.
 
 ## Description
 
 TODO — a paragraph on course themes (digital audio, synthesis, scores and
-timbre, additive synthesis) and how the lectures, projects, and textbook fit
+timbre, additive synthesis) and how the lectures, assignments, and textbook fit
 together.
 
 ## Learning goals
@@ -24,7 +24,7 @@ By the end of the course, students should be able to:
 
 | Component | Weight |
 |---|---|
-| Projects | TODO |
+| Assignments | TODO |
 | Participation | TODO |
 | Final showcase | TODO |
 

@@ -4,7 +4,7 @@
 Fall 2026.
 
 Welcome! This is the course website. Use the sidebar to find the syllabus,
-weekly schedule, projects, resources, and a showcase of student work. The
+weekly schedule, assignments, resources, and a showcase of student work. The
 companion **Textbook** is in the section below.
 
 ## Course at a glance
@@ -29,7 +29,7 @@ companion **Textbook** is in the section below.
 
 - [About the course](about.md)
 - [Schedule](schedule.md)
-- [Projects](projects/index.md)
+- [Assignments](assignments/index.md)
 - [Resources](resources/index.md)
 - [Showcase](showcase.md)
 
