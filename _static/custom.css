@@ -582,7 +582,7 @@ html[data-theme="dark"] {
 .bd-article table.sched-table tr:has(> td:first-child > p > strong) > td {
   background: var(--icm-sched-band-bg);
   /* the page-colored border is a gap: weeks chunk into visible blocks */
-  border-top: 0.6rem solid var(--pst-color-background);
+  border-top: 1rem solid var(--pst-color-background);
   border-left: 0;
   padding-top: 0.45rem;
   padding-bottom: 0.45rem;
@@ -597,6 +597,15 @@ html[data-theme="dark"] {
   text-transform: uppercase;
   font-size: 0.82em;
   letter-spacing: 0.08em;
+}
+/* Anchor stubs the {schedule} directive emits so the weeks appear in the
+   right-hand "On this page" menu; sched-toc.js moves their ids onto the
+   band rows, so the stubs themselves never render. */
+.bd-article section.sched-anchor {
+  display: none;
+}
+.bd-article table.sched-table tr {
+  scroll-margin-top: 4rem;
 }
 
 /* Inline colored text — attrs_inline spans/links: [text]{.c-blue}.

@@ -16,7 +16,10 @@ bolded. ``%`` lines are comments.
 
 The directive expands to the ``{list-table}`` the page used to hand-write
 (class ``sched-table``, attrs_inline color classes) and nested-parses it, so
-the rendered result is unchanged — only the authoring is different.
+the rendered result is unchanged — only the authoring is different. Each
+band also emits a hidden ``sched-anchor`` section so the weeks show up in
+the right-hand "On this page" menu; ``_static/page-toc.js`` moves the
+anchors onto the band rows at load.
 """
 from __future__ import annotations
 
@@ -40,12 +43,14 @@ class ScheduleDirective(Directive):
 
     def run(self):
         rows = [("Date", "Topic / Deadline", "Reading")]
+        bands = []
         for raw in self.content:
             line = raw.strip()
             if not line or line.startswith("%"):
                 continue
             if "|" not in line:
                 rows.append(("**%s**" % line, "", ""))
+                bands.append(line)
                 continue
 
             segs = [s.strip() for s in line.split("|")]
@@ -76,7 +81,13 @@ class ScheduleDirective(Directive):
 
         container = nodes.container()
         self.state.nested_parse(StringList(text), self.content_offset, container)
-        return container.children
+
+        anchors = []
+        for label in bands:
+            section = nodes.section(ids=[nodes.make_id(label)], classes=["sched-anchor"])
+            section += nodes.title(text=label)
+            anchors.append(section)
+        return list(container.children) + anchors
 
 
 def setup(app: Sphinx) -> dict:
