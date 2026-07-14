@@ -9,10 +9,12 @@ inside ``$…$``/``$$…$$`` math. Wrap it in ``$…$`` inline or drop it into a
 math block; fenced code blocks are skipped so examples render literally.
 
 ``:{blue}[text]`` / ``:{blue}[text](url)`` colors inline text or a whole
-link. Also a ``source-read`` substitution, not a role — roles cannot nest the
-bold and links this needs. It expands to the MyST ``attrs_inline`` form
-(``[text]{.c-blue}``, classes in ``_static/custom.css``), so that form works
-too. Fenced code blocks and inline code spans are left alone.
+link; ``:{blue-highlight}[text]`` renders it as a highlighter chip on the
+matching tint instead. Also a ``source-read`` substitution, not a role —
+roles cannot nest the bold and links this needs. It expands to the MyST
+``attrs_inline`` form (``[text]{.c-blue}`` / ``[text]{.c-blue-highlight}``,
+classes in ``_static/custom.css``), so that form works too. Fenced code
+blocks and inline code spans are left alone.
 """
 from __future__ import annotations
 
@@ -52,8 +54,10 @@ class VocabRole(SphinxRole):
 UNIT_RE = re.compile(r"\{unit\}`([^`]+)`")
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 
-# ``:{color}[text]`` plus an optional ``(url)`` right after the bracket.
-COLOR_RE = re.compile(r":\{(blue|green|orange|pink|gray)\}\[([^\[\]]*)\](\([^()]*\))?")
+# ``:{color}[text]`` plus an optional ``(url)`` right after the bracket;
+# a ``-highlight`` suffix picks the chip class instead of the text color.
+COLOR_RE = re.compile(
+    r":\{((?:blue|green|orange|pink|gray)(?:-highlight)?)\}\[([^\[\]]*)\](\([^()]*\))?")
 CODE_RE = re.compile(r"`+[^`]*`+")
 
 

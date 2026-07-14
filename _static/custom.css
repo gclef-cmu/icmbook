@@ -50,6 +50,14 @@ html[data-theme="light"] {
   --icm-ex-bg:       #f0f0f1;
   --live-code-bg:    #f3f4f5;   /* code-cell panel (collapsed hide-input bar) */
   --icm-sched-head-bg: rgba(109, 110, 113, 0.25);  /* darker than the week bands */
+  --icm-sched-band-bg: rgba(109, 110, 113, 0.17);  /* week bands: above the row tints */
+  /* Schedule row tints — Okabe-Ito hues as backgrounds (validated
+     colorblind-safe as a set, all pairs) */
+  --icm-row-blue:   rgba(0, 114, 178, 0.13);
+  --icm-row-green:  rgba(0, 158, 115, 0.13);
+  --icm-row-orange: rgba(213, 94, 0, 0.13);
+  --icm-row-pink:   rgba(204, 121, 167, 0.16);
+  --icm-row-gray:   rgba(109, 110, 113, 0.13);
 }
 
 /* ---- Dark mode ------------------------------------------------------- */
@@ -92,6 +100,15 @@ html[data-theme="dark"] {
   --icm-ex-bg:       #292827;
   --live-code-bg:    #2b2b2b;   /* code-cell panel (collapsed hide-input bar) */
   --icm-sched-head-bg: rgba(163, 164, 167, 0.28);  /* stronger than the week bands */
+  --icm-sched-band-bg: rgba(163, 164, 167, 0.20);  /* week bands: above the row tints */
+  /* Schedule row tints — brightened hues, strong enough that the hue still
+     reads over #101010 and never blends into the gray week bands
+     (validated, all pairs) */
+  --icm-row-blue:   rgba(86, 180, 233, 0.24);
+  --icm-row-green:  rgba(0, 199, 149, 0.19);
+  --icm-row-orange: rgba(240, 130, 50, 0.21);
+  --icm-row-pink:   rgba(228, 147, 192, 0.21);
+  --icm-row-gray:   rgba(163, 164, 167, 0.19);
 }
 
 /* ---- Typography: the textbook serif, scoped to article content ------- */
@@ -532,6 +549,9 @@ html[data-theme="dark"] {
    their bold sits inside a color span. */
 .bd-article table.sched-table {
   font-size: 0.9em;
+  /* the theme frames tables in surface gray; recolor it to match the
+     hairlines inside */
+  border: 1px solid var(--icm-box-border);
   --pst-color-table-row-zebra-low-bg: transparent;
   --pst-color-table-row-zebra-high-bg: transparent;
   --pst-color-table-heading-bg: var(--icm-sched-head-bg);
@@ -546,20 +566,37 @@ html[data-theme="dark"] {
   border-left: 1px solid var(--icm-box-border);
 }
 .bd-article table.sched-table td {
-  border-top: 1px solid var(--icm-box-border);
+  /* inset shadow, not a border: at a shared edge border-collapse keeps only
+     the widest border, so the bands' thick gap border would swallow a real
+     border-bottom and leave each week block open at the bottom */
+  box-shadow: inset 0 -1px 0 0 var(--icm-box-border);
+}
+/* The table frame closes the last row — no shadow, or the edge doubles. */
+.bd-article table.sched-table tbody tr:last-child > td {
+  box-shadow: none;
 }
 .bd-article table.sched-table td:nth-child(1),
 .bd-article table.sched-table td:nth-child(3) {
   white-space: nowrap;
 }
 .bd-article table.sched-table tr:has(> td:first-child > p > strong) > td {
-  background: var(--icm-title-bg-3);
-  border-top: 0;
+  background: var(--icm-sched-band-bg);
+  /* the page-colored border is a gap: weeks chunk into visible blocks */
+  border-top: 0.6rem solid var(--pst-color-background);
+  border-left: 0;
   padding-top: 0.45rem;
   padding-bottom: 0.45rem;
 }
-.bd-article table.sched-table tr:has(> td:first-child > p > strong) td:nth-child(2) {
-  color: var(--pst-color-text-muted);
+/* No gap on the first band — its thick border would swallow the header's
+   red rule (widest border wins under border-collapse). */
+.bd-article table.sched-table tbody tr:first-child > td {
+  border-top: 0;
+}
+/* The band label reads as a section header, not a data row. */
+.bd-article table.sched-table tr:has(> td:first-child > p > strong) td:first-child strong {
+  text-transform: uppercase;
+  font-size: 0.82em;
+  letter-spacing: 0.08em;
 }
 
 /* Inline colored text — attrs_inline spans/links: [text]{.c-blue}.
@@ -569,6 +606,59 @@ html[data-theme="dark"] {
 .bd-article .c-orange, .bd-article a.c-orange:hover { color: var(--icm-c-orange); }
 .bd-article .c-pink,   .bd-article a.c-pink:hover   { color: var(--icm-c-pink); }
 .bd-article .c-gray,   .bd-article a.c-gray:hover   { color: var(--icm-c-gray); }
+
+/* On the schedule page a color class marks a row's CATEGORY, not text color:
+   the row gets a tinted background, the text returns to normal, and links
+   look like ordinary site links. Breaks (c-gray) keep muted text and no tint
+   so they don't read as week bands. */
+.bd-article table.sched-table tr:has(.c-blue) > td   { background: var(--icm-row-blue); }
+.bd-article table.sched-table tr:has(.c-green) > td  { background: var(--icm-row-green); }
+.bd-article table.sched-table tr:has(.c-orange) > td { background: var(--icm-row-orange); }
+.bd-article table.sched-table tr:has(.c-pink) > td   { background: var(--icm-row-pink); }
+
+.bd-article .sched-table .c-blue,
+.bd-article .sched-table .c-green,
+.bd-article .sched-table .c-orange,
+.bd-article .sched-table .c-pink {
+  color: inherit;
+}
+.bd-article .sched-table a.c-blue,
+.bd-article .sched-table a.c-green,
+.bd-article .sched-table a.c-orange,
+.bd-article .sched-table a.c-pink {
+  color: var(--pst-color-link);
+}
+.bd-article .sched-table a.c-blue:hover,
+.bd-article .sched-table a.c-green:hover,
+.bd-article .sched-table a.c-orange:hover,
+.bd-article .sched-table a.c-pink:hover {
+  color: var(--pst-color-link-hover);
+}
+
+/* Highlighter chips — :{blue-highlight}[text]: the schedule row tints as
+   inline swatches, usable anywhere. */
+.bd-article .c-blue-highlight,
+.bd-article .c-green-highlight,
+.bd-article .c-orange-highlight,
+.bd-article .c-pink-highlight,
+.bd-article .c-gray-highlight {
+  color: inherit;
+  padding: 0.05em 0.45em;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.bd-article .c-blue-highlight   { background: var(--icm-row-blue); }
+.bd-article .c-green-highlight  { background: var(--icm-row-green); }
+.bd-article .c-orange-highlight { background: var(--icm-row-orange); }
+.bd-article .c-pink-highlight   { background: var(--icm-row-pink); }
+.bd-article .c-gray-highlight   { background: var(--icm-row-gray); }
+
+/* Chips are unbreakable; don't justify a paragraph that carries them. */
+.bd-article p:has(.c-blue-highlight, .c-green-highlight, .c-orange-highlight,
+                  .c-pink-highlight, .c-gray-highlight) {
+  text-align: left;
+  hyphens: manual;
+}
 
 /* Parameters / Returns / Raises field names get the red accent. */
 .bd-article dl.py dl.field-list > dt {

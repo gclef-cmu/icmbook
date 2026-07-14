@@ -972,7 +972,9 @@ Color inline text with the `:{color}[…]` shorthand, never with a hand-written
 `<span style="color:…">`. Five colors, matching the Okabe-Ito palette:
 `:{blue}[…]`, `:{green}[…]`, `:{orange}[…]`, `:{pink}[…]`, `:{gray}[…]`.
 Markdown still works inside the brackets, and appending a link target colors
-the whole link — underline included.
+the whole link — underline included. A `-highlight` suffix
+(`:{blue-highlight}[…]`) renders the text as a highlighter chip on the
+matching tint instead of coloring it.
 
 Source:
 
@@ -983,6 +985,9 @@ The schedule legend rides on these: :{blue}[**autograded**] ·
 
 To color a link, append its target:
 :{pink}[**see the Glossary (due)**](glossary.md).
+
+As highlighter chips: :{blue-highlight}[autograded] ·
+:{orange-highlight}[exam] · :{gray-highlight}[breaks].
 ````
 
 Rendered:
@@ -993,6 +998,9 @@ The schedule legend rides on these: :{blue}[**autograded**] ·
 
 To color a link, append its target:
 :{pink}[**see the Glossary (due)**](glossary.md).
+
+As highlighter chips: :{blue-highlight}[autograded] ·
+:{orange-highlight}[exam] · :{gray-highlight}[breaks].
 
 The shorthand is a `source-read` substitution like the unit one in §18
 (`_ext/icm_roles.py`): it expands to the MyST `attrs_inline` form
