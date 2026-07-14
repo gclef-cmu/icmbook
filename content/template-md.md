@@ -965,3 +965,36 @@ symbol: it stays a working link as the API moves, and a typo becomes a build
 warning instead of dead text. For the library *as a whole*, the prose
 substitution {{ pyquist }} (a plain link to its home page) is still the right
 tool.
+
+## 20. Colored text
+
+Color inline text with the `:{color}[…]` shorthand, never with a hand-written
+`<span style="color:…">`. Five colors, matching the Okabe-Ito palette:
+`:{blue}[…]`, `:{green}[…]`, `:{orange}[…]`, `:{pink}[…]`, `:{gray}[…]`.
+Markdown still works inside the brackets, and appending a link target colors
+the whole link — underline included.
+
+Source:
+
+````markdown
+The schedule legend rides on these: :{blue}[**autograded**] ·
+:{green}[**open-ended**] · :{orange}[**exam**] ·
+:{pink}[**final project**] · :{gray}[breaks / no class].
+
+To color a link, append its target:
+:{pink}[**see the Glossary (due)**](glossary.md).
+````
+
+Rendered:
+
+The schedule legend rides on these: :{blue}[**autograded**] ·
+:{green}[**open-ended**] · :{orange}[**exam**] ·
+:{pink}[**final project**] · :{gray}[breaks / no class].
+
+To color a link, append its target:
+:{pink}[**see the Glossary (due)**](glossary.md).
+
+The shorthand is a `source-read` substitution like the unit one in §18
+(`_ext/icm_roles.py`): it expands to the MyST `attrs_inline` form
+`[…]{.c-blue}` before parsing, so that form works too. The `c-*` classes are
+defined in `_static/custom.css`.

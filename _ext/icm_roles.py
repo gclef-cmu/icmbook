@@ -1,4 +1,4 @@
-"""Custom inline primitives: ``{vocab}`` and ``{unit}``.
+"""Custom inline primitives: ``{vocab}``, ``{unit}``, and ``:{color}[…]``.
 
 ``{vocab}`term``` italicizes a term and links it to its glossary entry.
 
@@ -7,6 +7,12 @@
 LaTeX as a ``source-read`` substitution, because MyST never processes roles
 inside ``$…$``/``$$…$$`` math. Wrap it in ``$…$`` inline or drop it into a
 math block; fenced code blocks are skipped so examples render literally.
+
+``:{blue}[text]`` / ``:{blue}[text](url)`` colors inline text or a whole
+link. Also a ``source-read`` substitution, not a role — roles cannot nest the
+bold and links this needs. It expands to the MyST ``attrs_inline`` form
+(``[text]{.c-blue}``, classes in ``_static/custom.css``), so that form works
+too. Fenced code blocks and inline code spans are left alone.
 """
 from __future__ import annotations
 
@@ -46,6 +52,10 @@ class VocabRole(SphinxRole):
 UNIT_RE = re.compile(r"\{unit\}`([^`]+)`")
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 
+# ``:{color}[text]`` plus an optional ``(url)`` right after the bracket.
+COLOR_RE = re.compile(r":\{(blue|green|orange|pink|gray)\}\[([^\[\]]*)\](\([^()]*\))?")
+CODE_RE = re.compile(r"`+[^`]*`+")
+
 
 def _unit_latex(arg: str) -> str:
     """Render a ``{unit}`` argument as raw LaTeX (no surrounding math mode)."""
@@ -55,8 +65,25 @@ def _unit_latex(arg: str) -> str:
     return r"\text{%s}" % parts[0]
 
 
+def _expand_colors(text: str) -> str:
+    """Expand ``:{color}[…]`` to its attrs_inline form, skipping inline code."""
+    def sub(segment: str) -> str:
+        return COLOR_RE.sub(
+            lambda m: "[%s]%s{.c-%s}" % (m.group(2), m.group(3) or "", m.group(1)),
+            segment)
+
+    out: list[str] = []
+    pos = 0
+    for m in CODE_RE.finditer(text):
+        out.append(sub(text[pos:m.start()]))
+        out.append(m.group(0))
+        pos = m.end()
+    out.append(sub(text[pos:]))
+    return "".join(out)
+
+
 def _expand_text(text: str) -> str:
-    """Expand every ``{unit}`…``` in Markdown text, outside code fences."""
+    """Expand ``{unit}`` and ``:{color}[…]`` in Markdown, outside code fences."""
     out: list[str] = []
     fence: str | None = None
     for line in text.splitlines(keepends=True):
@@ -66,7 +93,7 @@ def _expand_text(text: str) -> str:
                 fence = fm.group(1)
                 out.append(line)
                 continue
-            out.append(UNIT_RE.sub(lambda m: _unit_latex(m.group(1)), line))
+            out.append(_expand_colors(UNIT_RE.sub(lambda m: _unit_latex(m.group(1)), line)))
         else:
             out.append(line)
             stripped = line.strip()
@@ -75,8 +102,8 @@ def _expand_text(text: str) -> str:
     return "".join(out)
 
 
-def substitute_units(app: Sphinx, docname: str, source: list[str]) -> None:
-    """``source-read`` handler: expand ``{unit}`…``` to raw LaTeX.
+def substitute_inline(app: Sphinx, docname: str, source: list[str]) -> None:
+    """``source-read`` handler: expand ``{unit}`` and ``:{color}[…]``.
 
     Markdown pages are rewritten directly. Notebooks arrive as raw .ipynb
     JSON that myst-nb decodes again after us — splicing LaTeX into the JSON
@@ -104,7 +131,7 @@ def substitute_units(app: Sphinx, docname: str, source: list[str]) -> None:
 
 def setup(app: Sphinx) -> dict:
     app.add_role("vocab", VocabRole())
-    app.connect("source-read", substitute_units)
+    app.connect("source-read", substitute_inline)
     return {
         "version": "0.1",
         "parallel_read_safe": True,

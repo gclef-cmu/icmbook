@@ -22,6 +22,13 @@
   /* Theme variables, so they size both the left and right menus. */
   --pst-sidebar-font-size: 0.85rem;
   --pst-sidebar-font-size-mobile: 0.85rem;
+
+  /* Okabe-Ito accents for inline colored text (same in both themes) */
+  --icm-c-blue:   #0072B2;
+  --icm-c-green:  #009E73;
+  --icm-c-orange: #D55E00;
+  --icm-c-pink:   #CC79A7;
+  --icm-c-gray:   #6D6E71;
 }
 
 /* ---- Light mode ------------------------------------------------------ */
@@ -42,6 +49,7 @@ html[data-theme="light"] {
   --icm-title-bg-3:  rgba(109, 110, 113, 0.10);
   --icm-ex-bg:       #f0f0f1;
   --live-code-bg:    #f3f4f5;   /* code-cell panel (collapsed hide-input bar) */
+  --icm-sched-head-bg: rgba(109, 110, 113, 0.25);  /* darker than the week bands */
 }
 
 /* ---- Dark mode ------------------------------------------------------- */
@@ -83,6 +91,7 @@ html[data-theme="dark"] {
   --icm-title-bg-3:  rgba(163, 164, 167, 0.14);
   --icm-ex-bg:       #292827;
   --live-code-bg:    #2b2b2b;   /* code-cell panel (collapsed hide-input bar) */
+  --icm-sched-head-bg: rgba(163, 164, 167, 0.28);  /* stronger than the week bands */
 }
 
 /* ---- Typography: the textbook serif, scoped to article content ------- */
@@ -506,6 +515,60 @@ html[data-theme="dark"] {
   text-align: left;
   hyphens: manual;
 }
+
+/* Same for table cells — justified text in narrow columns leaves gaps. */
+.bd-article table td p,
+.bd-article table td li,
+.bd-article table th p,
+.bd-article table th li {
+  text-align: left;
+  hyphens: manual;
+}
+
+/* Week-band schedule table: a tinted full-width row starts each week and
+   the days sit under it — no zebra, hairlines between days, column lines
+   between cells (but not through the bands). A band row is one whose Date
+   cell is a bare bold ("**Week 2**"); deadline dates never match because
+   their bold sits inside a color span. */
+.bd-article table.sched-table {
+  font-size: 0.9em;
+  --pst-color-table-row-zebra-low-bg: transparent;
+  --pst-color-table-row-zebra-high-bg: transparent;
+  --pst-color-table-heading-bg: var(--icm-sched-head-bg);
+}
+.bd-article table.sched-table th,
+.bd-article table.sched-table td {
+  border: 0;
+  padding: 0.4rem 0.9rem 0.4rem 0.5rem;
+}
+.bd-article table.sched-table th ~ th,
+.bd-article table.sched-table td ~ td {
+  border-left: 1px solid var(--icm-box-border);
+}
+.bd-article table.sched-table td {
+  border-top: 1px solid var(--icm-box-border);
+}
+.bd-article table.sched-table td:nth-child(1),
+.bd-article table.sched-table td:nth-child(3) {
+  white-space: nowrap;
+}
+.bd-article table.sched-table tr:has(> td:first-child > p > strong) > td {
+  background: var(--icm-title-bg-3);
+  border-top: 0;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+.bd-article table.sched-table tr:has(> td:first-child > p > strong) td:nth-child(2) {
+  color: var(--pst-color-text-muted);
+}
+
+/* Inline colored text — attrs_inline spans/links: [text]{.c-blue}.
+   The :hover keeps classed links from snapping back to the theme color. */
+.bd-article .c-blue,   .bd-article a.c-blue:hover   { color: var(--icm-c-blue); }
+.bd-article .c-green,  .bd-article a.c-green:hover  { color: var(--icm-c-green); }
+.bd-article .c-orange, .bd-article a.c-orange:hover { color: var(--icm-c-orange); }
+.bd-article .c-pink,   .bd-article a.c-pink:hover   { color: var(--icm-c-pink); }
+.bd-article .c-gray,   .bd-article a.c-gray:hover   { color: var(--icm-c-gray); }
 
 /* Parameters / Returns / Raises field names get the red accent. */
 .bd-article dl.py dl.field-list > dt {
