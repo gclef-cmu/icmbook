@@ -87,6 +87,18 @@ parts:
           - file: content/ch05/08
           - file: content/ch05/09
       - file: content/ch06/index
+        sections:
+          - file: content/ch06/00
+          - file: content/ch06/01
+          - file: content/ch06/02
+          - file: content/ch06/03
+          - file: content/ch06/04
+          - file: content/ch06/05
+          - file: content/ch06/06
+          - file: content/ch06/07
+          - file: content/ch06/08
+          - file: content/ch06/09
+          - file: content/ch06/10
       - file: content/ch07/index
       - file: content/ch08/index
       - file: content/ch09/index
