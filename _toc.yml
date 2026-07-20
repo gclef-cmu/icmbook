@@ -24,9 +24,9 @@ parts:
           - file: content/course/assignments/622-final
       - file: content/course/resources/index
         sections:
-          - file: content/course/resources/1-software
+          - file: content/course/resources/1-accounts
           - file: content/course/resources/2-textbooks
-          - file: content/course/resources/3-jupyter
+          - file: content/course/resources/3-technical
       - file: content/course/showcase
       - file: content/course/syllabus
   - caption: Textbook

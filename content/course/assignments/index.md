@@ -54,7 +54,7 @@ This format centers around creating a musical composition by combining a creativ
 
 An ideal submission involves a non-trivial amount of programming in Python/Pyquist to accomplish a focused creative goal that conforms to all stated requirements. External tools (e.g., DAWs like Ableton Live) are allowed, but significant portions of your composition should be realized in code.
 
-Computer music does not have to sound like something you would hear on the radio! Grading will center around your technical achievments and realization of your creative intent, not the aesthetics of your composition.
+Computer music does not have to sound like something you would hear on the radio! Grading will center around your technical achievements and realization of your creative intent, not the aesthetics of your composition.
 
 **Submission files**
 
