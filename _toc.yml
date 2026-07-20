@@ -100,6 +100,15 @@ parts:
           - file: content/ch06/09
           - file: content/ch06/10
       - file: content/ch07/index
+        sections:
+          - file: content/ch07/00
+          - file: content/ch07/01
+          - file: content/ch07/02
+          - file: content/ch07/03
+          - file: content/ch07/04
+          - file: content/ch07/05
+          - file: content/ch07/06
+          - file: content/ch07/07
       - file: content/ch08/index
       - file: content/ch09/index
       - file: content/ch10/index
