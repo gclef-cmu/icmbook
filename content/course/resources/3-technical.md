@@ -18,14 +18,17 @@ If you follow these instructions carefully, you should not need to troubleshoot 
 
 Download the latest stable version of Python from https://www.python.org/downloads/. Choose the correct installer for your operating system.
 
-### Windows
+
+::::{tab-set}
+:::{tab-item} Windows
 1. Download the Windows installer.
 2. Run the installer.
 3. **Check the box that says "Add Python to PATH".**
 4. Click **Install Now**.
 5. When installation finishes, close the installer.
+:::
 
-### macOS
+:::{tab-item} macOS
 
 1. Download the macOS installer.
 2. Run the installer.
@@ -41,8 +44,9 @@ You should see something similar to
 ```text
 Python 3.13.0
 ```
+:::
 
-### Linux
+:::{tab-item} Linux
 
 Many Linux distributions already include Python.
 
@@ -66,6 +70,8 @@ Verify installation afterwards:
 ```bash
 python3 --version
 ```
+:::
+::::
 
 ---
 
@@ -102,37 +108,45 @@ You can always re-enable these extensions after the course if desired.
 
 We recommend keeping all your course files in a single directory. For the rest of the guide we will refer to this as **the course folder**, or `~/Documents/ICM`, but you should create it at a convenient location. Open this folder in VSCode using **File → Open Folder**. 
 
-# 6. Create a Virtual Environment
+## 6. Create a Virtual Environment
 
 Open a terminal inside VSCode and ensure your present working directory is the course folder, as this is where you are expected to keep your virtual environment. You can open a terminal by selecting ```Terminal → New Terminal```.
 
-### Windows
+::::{tab-set}
+:::{tab-item} Windows
 
 ```bash
 python -m venv .venv
 ```
+:::
 
-### macOS/Linux
+:::{tab-item} macOS/Linux
 
 ```bash
 python3 -m venv .venv
 ```
+:::
+::::
 
 This creates a virtual environment named `.venv` inside your course folder.
 
 ## 7. Activate the Virtual Environment
 
-### Windows
+::::{tab-set}
+:::{tab-item} Windows
 
 ```bash
 .venv\Scripts\activate
 ```
+:::
 
-### macOS/Linux
+:::{tab-item} macOS/Linux
 
 ```bash
 source .venv/bin/activate
 ```
+:::
+::::
 
 You should now see something similar to`(.venv)` at the beginning of your terminal prompt. Note that VSCode may automatically activate the virtual environment for you when you open a terminal in the future, but it is good to know how to do it manually. You can always deactivate the virtual environment by running `deactivate`.
 
@@ -216,9 +230,9 @@ Your folder should now look something like
 
 Open the Assignment 1 folder in VSCode and you're ready to begin.
 
-# Frequently Asked Questions
+## Frequently Asked Questions
 
-## VSCode can't find Python
+:::{dropdown} VSCode can't find Python
 
 Open the Command Palette and select
 
@@ -229,16 +243,19 @@ Python: Select Interpreter
 Choose the interpreter inside `.venv`.
 **Note:** Be sure to check the leading slash in the path. If you see a path like `/usr/bin/python` or `C:\Python39\python.exe`, you are not using the virtual environment. 
 More subtly, if you see a path like `/.venv/bin/python`, you are _still_ not using the correct environment. For macOS and Linux, there should not be a leading slash before `.venv`.
+:::
 
-## I accidentally installed packages globally
+:::{dropdown} I accidentally installed packages globally
 
 Activate your virtual environment and reinstall them there. You generally do **not** need to uninstall the global copy.
+:::
 
-## My notebook is using the wrong Python
+:::{dropdown} My notebook is using the wrong Python
 
 Click the kernel selector in the upper-right corner of the notebook and choose the interpreter from `.venv`.
+:::
 
-## `pip` says the package is installed, but Python can't import it
+:::{dropdown} `pip` says the package is installed, but Python can't import it
 
 This almost always means VSCode is using a different Python interpreter than the one where the package was installed.
 
@@ -246,9 +263,9 @@ Verify that:
 
 - your virtual environment is activated
 - VSCode is using the `.venv` interpreter
+:::
 
-
-## Something still isn't working
+:::{dropdown} Something still isn't working
 
 Before asking for help, check:
 
@@ -259,3 +276,4 @@ Before asking for help, check:
 - Did `pip install pyquist` complete successfully?
 
 If you've checked all of these and still have issues, include screenshots of the error and the commands you ran when asking for help.
+:::
